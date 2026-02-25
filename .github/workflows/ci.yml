@@ -34,3 +34,31 @@ jobs:
 
       - name: Test
         run: forge test -vvv
+
+  kontrol:
+    name: Kontrol Formal Verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Vyper
+        run: pip install "vyper>=0.4.0,<0.5"
+
+      - name: Install dependencies
+        run: forge soldeer install
+
+      - name: Build contracts
+        run: forge build
+
+      - name: Run Kontrol proofs
+        run: ./script/kontrol.sh prove-parity
