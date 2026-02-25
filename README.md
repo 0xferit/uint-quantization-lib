@@ -1,0 +1,177 @@
+# uint-quantization-lib
+
+A pure-function Solidity/Vyper library for shift-based `uint256` compression.
+
+Right-shift compression is lossy in general, but it becomes lossless when inputs are aligned to
+the step size `2^shift` (for example, with `shift = 40`, any value that is a multiple of
+`0x10000000000` is encoded exactly).
+
+## Installation
+
+```bash
+forge soldeer install uint-quantization-lib~1.0.0
+```
+
+Then add the remapping to `foundry.toml` (Soldeer does this automatically):
+
+```toml
+[profile.default]
+remappings = ["uint-quantization-lib-1.0.0/=dependencies/uint-quantization-lib-1.0.0/"]
+```
+
+## Solidity API
+
+Library: `UintQuantizationLib` (`src/UintQuantizationLib.sol`).
+
+### Encode / decode
+
+| Function | Description |
+|---|---|
+| `encode(uint256 value, uint256 shift)` | Floor encoding (`value >> shift`). |
+| `encodeCeil(uint256 value, uint256 shift)` | Ceiling encoding (rounds up if discarded bits are non-zero). |
+| `decode(uint256 compressed, uint256 shift)` | Lower-bound decode (`compressed << shift`). |
+| `decodeCeil(uint256 compressed, uint256 shift)` | Upper-bound decode (`(compressed << shift) \| ((1 << shift) - 1)`). |
+
+### Lossless mode
+
+| Function | Description |
+|---|---|
+| `isLossless(uint256 value, uint256 shift)` | Returns `true` when `value` is exactly representable at `shift` (`value % 2^shift == 0`). |
+| `encodeLossless(uint256 value, uint256 shift)` | Strict mode: reverts with `UintQuantizationLib__InexactInput` if not step-aligned. |
+| `encodeLosslessChecked(uint256 value, uint256 shift, uint256 targetBits)` | Strict + width-checked mode. |
+
+### Width-safe helpers
+
+| Function | Description |
+|---|---|
+| `encodeChecked(uint256 value, uint256 shift, uint256 targetBits)` | Reverts if encoded value does not fit `targetBits`. |
+| `encodeCeilChecked(uint256 value, uint256 shift, uint256 targetBits)` | Same as above for ceiling mode. |
+| `maxRepresentable(uint256 shift, uint256 targetBits)` | Max value that fits after encoding to `targetBits`. |
+
+### Introspection
+
+| Function | Description |
+|---|---|
+| `stepSize(uint256 shift)` | Returns `2^shift`. |
+| `remainder(uint256 value, uint256 shift)` | Returns discarded low bits. |
+
+### Errors
+
+```solidity
+error UintQuantizationLib__Overflow(uint256 encoded, uint256 targetBits);
+error UintQuantizationLib__InvalidShift(uint256 shift);
+error UintQuantizationLib__InexactInput(uint256 value, uint256 shift, uint256 remainder);
+```
+
+## Lossless signaling pattern
+
+Client-side flow for strict precision:
+
+1. Choose a protocol constant `SHIFT`.
+2. Validate `isLossless(value, SHIFT)` before sending the transaction.
+3. On-chain, call `encodeLosslessChecked(value, SHIFT, targetBits)` to enforce both exactness and
+   width safety.
+
+## Solidity usage
+
+```solidity
+import {UintQuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
+
+contract FeeAccumulator {
+    using UintQuantizationLib for uint256;
+
+    uint256 private constant SHIFT = 40; // step size = 0x10000000000
+    uint56 public storedFee;
+
+    function setFeeStrict(uint256 fee) external {
+        storedFee = uint56(fee.encodeLosslessChecked(SHIFT, 56));
+    }
+
+    function setFeeBounded(uint256 fee) external {
+        storedFee = uint56(fee.encodeCeilChecked(SHIFT, 56));
+    }
+
+    function getFeeLower() external view returns (uint256) {
+        return uint256(storedFee).decode(SHIFT);
+    }
+
+    function getFeeUpper() external view returns (uint256) {
+        return uint256(storedFee).decodeCeil(SHIFT);
+    }
+}
+```
+
+## Showcase and gas savings
+
+Showcase contracts under `src/showcase/` compare:
+
+- Raw baseline: two full-width `uint256` values stored in two slots.
+- Quantized path: two quantized values packed into one slot.
+
+This demonstrates where quantization creates real gas savings: fewer storage writes and denser
+state layout.
+
+Benchmark assertions live in `test/showcase/ShowcaseGas.t.sol`.
+
+Run the showcase suite:
+
+```bash
+forge test --match-path test/showcase/ShowcaseGas.t.sol -vv
+```
+
+Run with gas report:
+
+```bash
+forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
+```
+
+The suite includes assertions that quantized write paths are cheaper than the raw baseline for
+both Solidity and Vyper showcase contracts.
+
+## Vyper
+
+Module: `src/UintQuantizationLib.vy`.
+
+### Prerequisites
+
+```bash
+python3 --version   # requires Python >= 3.10 for Vyper 0.4.x
+pip install "vyper>=0.4.0,<0.5"
+vyper --version     # confirm 0.4.x
+```
+
+### Import
+
+```vyper
+from uint-quantization-lib-1.0.0.src import UintQuantizationLib as lib
+
+SHIFT: constant(uint256) = 40
+
+stored: uint56 = uint56(lib.encode_lossless_checked(value, SHIFT, 56))
+restored: uint256 = lib.decode(convert(stored, uint256), SHIFT)
+```
+
+Vyper names are snake_case equivalents:
+`encode_ceil`, `decode_ceil`, `step_size`, `max_representable`, `is_lossless`,
+`encode_lossless`, `encode_lossless_checked`.
+
+## Formal verification (Kontrol)
+
+Kontrol proof specs are under `test/kontrol/` and run through Docker:
+
+```bash
+./script/kontrol.sh list
+./script/kontrol.sh prove-core
+./script/kontrol.sh prove-parity
+```
+
+Core proofs cover floor/ceil semantics, strict lossless behavior, width checks, and overflow
+boundaries. Parity proofs check Solidity vs Vyper return/revert equivalence.
+
+## License
+
+MIT (see SPDX headers in source files).
+
+## Author
+
+[0xferit](https://github.com/0xferit) — ferit@cryptolab.net

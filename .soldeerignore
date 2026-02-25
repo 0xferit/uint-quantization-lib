@@ -1,0 +1,5 @@
+cache/
+out/
+dependencies/
+.kontrol/
+kore-rpc*.tar.gz
