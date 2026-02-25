@@ -3,43 +3,32 @@ pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
 import {
-    QuantizedERC20StateShowcase,
+    QuantizedETHStakingShowcase,
     QuantizedExtremePackingShowcase,
-    RawERC20StateShowcase,
+    RawETHStakingShowcase,
     RawExtremePackingShowcase
 } from "src/showcase/ShowcaseSolidityFixtures.sol";
 import {UintQuantizationLib} from "src/UintQuantizationLib.sol";
 
-interface IRawERC20StateShowcaseVyper {
-    function set_state_raw(uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor)
-        external;
+interface IRawETHStakingShowcaseVyper {
+    function stake() external payable;
+    function unstake() external;
 }
 
-interface IQuantizedERC20StateShowcaseVyper {
-    function set_state_floor(
-        uint256 _totalSupply,
-        uint256 _treasuryBalance,
-        uint256 _feeAccumulator,
-        uint256 _nonceCursor
-    ) external;
-    function set_state_strict(
-        uint256 _totalSupply,
-        uint256 _treasuryBalance,
-        uint256 _feeAccumulator,
-        uint256 _nonceCursor
-    ) external;
-    function encoded_state()
+interface IQuantizedETHStakingShowcaseVyper {
+    function stake() external payable;
+    function stake_exact() external payable;
+    function unstake() external;
+    function encoded_stake(address user)
         external
         view
-        returns (uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor);
-    function decode_state_floor()
-        external
-        view
-        returns (uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor);
-    function decode_state_ceil()
-        external
-        view
-        returns (uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor);
+        returns (uint96 amount, uint64 stakedAt, uint64 cooldownEndsAt, bool active);
+    function get_stake_floor(address user) external view returns (uint256);
+    function get_stake_ceil(address user) external view returns (uint256);
+    function max_deposit() external view returns (uint256);
+    function quote_protocol_fee(uint256 amount, uint256 feeShift) external view returns (uint256);
+    function stake_remainder(uint256 amount) external view returns (uint256);
+    function is_stake_lossless(uint256 amount) external view returns (bool);
 }
 
 interface IRawExtremePackingShowcaseVyper {
@@ -55,27 +44,25 @@ interface IQuantizedExtremePackingShowcaseVyper {
 }
 
 contract ShowcaseGasTest is Test {
+    using UintQuantizationLib for uint256;
+
     uint256 internal constant REAL_SHIFT = 16;
-    uint256 internal constant REAL_WIDTH = 40;
-    uint256 internal constant REAL_LANE_MAX = (uint256(1) << REAL_WIDTH) - 1;
+    uint256 internal constant REAL_AMOUNT_BITS = 96;
+    uint256 internal constant REAL_AMOUNT_MAX = (uint256(1) << REAL_AMOUNT_BITS) - 1;
 
     uint256 internal constant EXT_SHIFT = 8;
     uint256 internal constant EXT_WIDTH = 20;
     uint256 internal constant EXT_LANES = 12;
     uint256 internal constant EXT_LANE_MAX = (uint256(1) << EXT_WIDTH) - 1;
 
-    uint256 internal constant MIN_REAL_SAVINGS_BPS = 5_000; // >=50%
+    uint256 internal constant MIN_REAL_SAVINGS_BPS = 3_200; // >=32%
     uint256 internal constant MIN_EXTREME_SAVINGS_BPS = 8_000; // >=80%
 
-    uint256 internal constant REAL_TOTAL_SUPPLY_STRICT = uint256(1_000_000_000) << REAL_SHIFT;
-    uint256 internal constant REAL_TREASURY_STRICT = uint256(120_000_000) << REAL_SHIFT;
-    uint256 internal constant REAL_FEES_STRICT = uint256(8_500_000) << REAL_SHIFT;
-    uint256 internal constant REAL_NONCE_STRICT = uint256(450_000) << REAL_SHIFT;
+    uint256 internal constant REAL_STAKE_STRICT = uint256(2_500_000) << REAL_SHIFT;
+    uint256 internal constant REAL_STAKE_FLOOR = REAL_STAKE_STRICT + 321;
 
-    uint256 internal constant REAL_TOTAL_SUPPLY_FLOOR = REAL_TOTAL_SUPPLY_STRICT + 321;
-    uint256 internal constant REAL_TREASURY_FLOOR = REAL_TREASURY_STRICT + 1_024;
-    uint256 internal constant REAL_FEES_FLOOR = REAL_FEES_STRICT + 7;
-    uint256 internal constant REAL_NONCE_FLOOR = REAL_NONCE_STRICT + 65_535;
+    uint256 internal constant FEE_INPUT = 123_456_789;
+    uint256 internal constant FEE_SHIFT = 12;
 
     uint256 internal constant EXT_E0 = 1_000_000;
     uint256 internal constant EXT_E1 = 970_000;
@@ -103,97 +90,122 @@ contract ShowcaseGasTest is Test {
     uint256 internal constant EXT_R10 = 127;
     uint256 internal constant EXT_R11 = 191;
 
-    function test_real_life_floor_parity_and_bounds() public {
-        QuantizedERC20StateShowcase solidityQuantized = new QuantizedERC20StateShowcase();
-        IQuantizedERC20StateShowcaseVyper vyperQuantized =
-            IQuantizedERC20StateShowcaseVyper(deployCode("QuantizedERC20StateShowcase.vy"));
+    receive() external payable {}
 
-        solidityQuantized.setStateFloor(
-            REAL_TOTAL_SUPPLY_FLOOR, REAL_TREASURY_FLOOR, REAL_FEES_FLOOR, REAL_NONCE_FLOOR
-        );
-        vyperQuantized.set_state_floor(
-            REAL_TOTAL_SUPPLY_FLOOR, REAL_TREASURY_FLOOR, REAL_FEES_FLOOR, REAL_NONCE_FLOOR
-        );
-
-        _assertStaticcallEqual(
-            address(solidityQuantized),
-            solidityQuantized.encodedState.selector,
-            address(vyperQuantized),
-            vyperQuantized.encoded_state.selector
-        );
-        _assertStaticcallEqual(
-            address(solidityQuantized),
-            solidityQuantized.decodeStateFloor.selector,
-            address(vyperQuantized),
-            vyperQuantized.decode_state_floor.selector
-        );
-        _assertStaticcallEqual(
-            address(solidityQuantized),
-            solidityQuantized.decodeStateCeil.selector,
-            address(vyperQuantized),
-            vyperQuantized.decode_state_ceil.selector
-        );
-
-        (uint256 l0, uint256 l1, uint256 l2, uint256 l3) = solidityQuantized.decodeStateFloor();
-        (uint256 u0, uint256 u1, uint256 u2, uint256 u3) = solidityQuantized.decodeStateCeil();
-
-        assertLe(l0, REAL_TOTAL_SUPPLY_FLOOR);
-        assertLe(l1, REAL_TREASURY_FLOOR);
-        assertLe(l2, REAL_FEES_FLOOR);
-        assertLe(l3, REAL_NONCE_FLOOR);
-
-        assertGe(u0, REAL_TOTAL_SUPPLY_FLOOR);
-        assertGe(u1, REAL_TREASURY_FLOOR);
-        assertGe(u2, REAL_FEES_FLOOR);
-        assertGe(u3, REAL_NONCE_FLOOR);
+    function setUp() public {
+        vm.deal(address(this), 1_000_000 ether);
     }
 
-    function test_real_life_strict_round_trip_and_revert() public {
-        QuantizedERC20StateShowcase solidityQuantized = new QuantizedERC20StateShowcase();
-        IQuantizedERC20StateShowcaseVyper vyperQuantized =
-            IQuantizedERC20StateShowcaseVyper(deployCode("QuantizedERC20StateShowcase.vy"));
+    function test_real_life_floor_parity_bounds_and_helpers() public {
+        QuantizedETHStakingShowcase solidityQuantized = new QuantizedETHStakingShowcase();
+        IQuantizedETHStakingShowcaseVyper vyperQuantized =
+            IQuantizedETHStakingShowcaseVyper(deployCode("QuantizedETHStakingShowcase.vy"));
 
-        solidityQuantized.setStateStrict(
-            REAL_TOTAL_SUPPLY_STRICT, REAL_TREASURY_STRICT, REAL_FEES_STRICT, REAL_NONCE_STRICT
-        );
-        vyperQuantized.set_state_strict(
-            REAL_TOTAL_SUPPLY_STRICT, REAL_TREASURY_STRICT, REAL_FEES_STRICT, REAL_NONCE_STRICT
-        );
+        solidityQuantized.stake{value: REAL_STAKE_FLOOR}();
+        vyperQuantized.stake{value: REAL_STAKE_FLOOR}();
 
         _assertStaticcallEqual(
             address(solidityQuantized),
-            solidityQuantized.decodeStateFloor.selector,
+            solidityQuantized.encodedStake.selector,
             address(vyperQuantized),
-            vyperQuantized.decode_state_floor.selector
+            vyperQuantized.encoded_stake.selector,
+            abi.encode(address(this))
+        );
+        _assertStaticcallEqual(
+            address(solidityQuantized),
+            solidityQuantized.getStakeFloor.selector,
+            address(vyperQuantized),
+            vyperQuantized.get_stake_floor.selector,
+            abi.encode(address(this))
+        );
+        _assertStaticcallEqual(
+            address(solidityQuantized),
+            solidityQuantized.getStakeCeil.selector,
+            address(vyperQuantized),
+            vyperQuantized.get_stake_ceil.selector,
+            abi.encode(address(this))
         );
 
-        (uint256 s0, uint256 s1, uint256 s2, uint256 s3) = solidityQuantized.decodeStateFloor();
-        assertEq(s0, REAL_TOTAL_SUPPLY_STRICT);
-        assertEq(s1, REAL_TREASURY_STRICT);
-        assertEq(s2, REAL_FEES_STRICT);
-        assertEq(s3, REAL_NONCE_STRICT);
+        uint256 sFloor = solidityQuantized.getStakeFloor(address(this));
+        uint256 sCeil = solidityQuantized.getStakeCeil(address(this));
+        assertLe(sFloor, REAL_STAKE_FLOOR);
+        assertGe(sCeil, REAL_STAKE_FLOOR);
+
+        uint256 expectedMax = UintQuantizationLib.maxRepresentable(REAL_SHIFT, REAL_AMOUNT_BITS);
+        assertEq(solidityQuantized.maxDeposit(), expectedMax);
+        assertEq(vyperQuantized.max_deposit(), expectedMax);
+
+        uint256 expectedFee = FEE_INPUT.encodeCeil(FEE_SHIFT).decode(FEE_SHIFT);
+        assertEq(solidityQuantized.quoteProtocolFee(FEE_INPUT, FEE_SHIFT), expectedFee);
+        assertEq(vyperQuantized.quote_protocol_fee(FEE_INPUT, FEE_SHIFT), expectedFee);
+
+        uint256 expectedRemainder = REAL_STAKE_FLOOR.remainder(REAL_SHIFT);
+        assertEq(solidityQuantized.stakeRemainder(REAL_STAKE_FLOOR), expectedRemainder);
+        assertEq(vyperQuantized.stake_remainder(REAL_STAKE_FLOOR), expectedRemainder);
+        assertFalse(solidityQuantized.isStakeLossless(REAL_STAKE_FLOOR));
+        assertFalse(vyperQuantized.is_stake_lossless(REAL_STAKE_FLOOR));
+        assertTrue(solidityQuantized.isStakeLossless(REAL_STAKE_STRICT));
+        assertTrue(vyperQuantized.is_stake_lossless(REAL_STAKE_STRICT));
+    }
+
+    function test_real_life_stake_exact_round_trip_and_revert_on_inexact() public {
+        QuantizedETHStakingShowcase solidityQuantized = new QuantizedETHStakingShowcase();
+        IQuantizedETHStakingShowcaseVyper vyperQuantized =
+            IQuantizedETHStakingShowcaseVyper(deployCode("QuantizedETHStakingShowcase.vy"));
+
+        solidityQuantized.stakeExact{value: REAL_STAKE_STRICT}();
+        vyperQuantized.stake_exact{value: REAL_STAKE_STRICT}();
+
+        assertEq(solidityQuantized.getStakeFloor(address(this)), REAL_STAKE_STRICT);
+        assertEq(vyperQuantized.get_stake_floor(address(this)), REAL_STAKE_STRICT);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 UintQuantizationLib.UintQuantizationLib__InexactInput.selector,
-                REAL_TOTAL_SUPPLY_FLOOR,
+                REAL_STAKE_FLOOR,
                 REAL_SHIFT,
                 uint256(321)
             )
         );
-        solidityQuantized.setStateStrict(
-            REAL_TOTAL_SUPPLY_FLOOR, REAL_TREASURY_STRICT, REAL_FEES_STRICT, REAL_NONCE_STRICT
-        );
+        solidityQuantized.stakeExact{value: REAL_STAKE_FLOOR}();
 
-        bytes memory callData = abi.encodeWithSelector(
-            vyperQuantized.set_state_strict.selector,
-            REAL_TOTAL_SUPPLY_FLOOR,
-            REAL_TREASURY_STRICT,
-            REAL_FEES_STRICT,
-            REAL_NONCE_STRICT
-        );
-        (bool success,) = address(vyperQuantized).call(callData);
+        bytes memory callData = abi.encodeWithSelector(vyperQuantized.stake_exact.selector);
+        (bool success,) = address(vyperQuantized).call{value: REAL_STAKE_FLOOR}(callData);
         assertFalse(success);
+    }
+
+    function test_real_life_unstake_decodes_floor_value() public {
+        QuantizedETHStakingShowcase solidityQuantized = new QuantizedETHStakingShowcase();
+        IQuantizedETHStakingShowcaseVyper vyperQuantized =
+            IQuantizedETHStakingShowcaseVyper(deployCode("QuantizedETHStakingShowcase.vy"));
+
+        uint256 expectedPayout = REAL_STAKE_FLOOR.encode(REAL_SHIFT).decode(REAL_SHIFT);
+
+        uint256 solBefore = address(this).balance;
+        solidityQuantized.stake{value: REAL_STAKE_FLOOR}();
+        uint256 solMid = address(this).balance;
+        solidityQuantized.unstake();
+        uint256 solAfter = address(this).balance;
+
+        assertEq(solBefore - solMid, REAL_STAKE_FLOOR);
+        assertEq(solAfter - solMid, expectedPayout);
+        (, uint64 solStakedAt, uint64 solCooldownEndsAt, bool solActive) = solidityQuantized.encodedStake(address(this));
+        assertEq(solStakedAt, 0);
+        assertEq(solCooldownEndsAt, 0);
+        assertFalse(solActive);
+
+        uint256 vBefore = address(this).balance;
+        vyperQuantized.stake{value: REAL_STAKE_FLOOR}();
+        uint256 vMid = address(this).balance;
+        vyperQuantized.unstake();
+        uint256 vAfter = address(this).balance;
+
+        assertEq(vBefore - vMid, REAL_STAKE_FLOOR);
+        assertEq(vAfter - vMid, expectedPayout);
+        (, uint64 vStakedAt, uint64 vCooldownEndsAt, bool vActive) = vyperQuantized.encoded_stake(address(this));
+        assertEq(vStakedAt, 0);
+        assertEq(vCooldownEndsAt, 0);
+        assertFalse(vActive);
     }
 
     function test_extreme_floor_parity_and_bounds() public {
@@ -269,9 +281,9 @@ contract ShowcaseGasTest is Test {
     }
 
     function test_gas_real_life_solidity_zero_to_nonzero_savings_ge_target() public {
-        uint256 rawGas = _measureSolidityRealRaw();
-        uint256 floorGas = _measureSolidityRealQuantFloor();
-        uint256 strictGas = _measureSolidityRealQuantStrict();
+        uint256 rawGas = _measureSolidityRealRawStake();
+        uint256 floorGas = _measureSolidityRealQuantFloorStake();
+        uint256 strictGas = _measureSolidityRealQuantStrictStake();
 
         assertGt(rawGas, floorGas);
         assertGt(rawGas, strictGas);
@@ -280,9 +292,9 @@ contract ShowcaseGasTest is Test {
     }
 
     function test_gas_real_life_vyper_zero_to_nonzero_savings_ge_target() public {
-        uint256 rawGas = _measureVyperRealRaw();
-        uint256 floorGas = _measureVyperRealQuantFloor();
-        uint256 strictGas = _measureVyperRealQuantStrict();
+        uint256 rawGas = _measureVyperRealRawStake();
+        uint256 floorGas = _measureVyperRealQuantFloorStake();
+        uint256 strictGas = _measureVyperRealQuantStrictStake();
 
         assertGt(rawGas, floorGas);
         assertGt(rawGas, strictGas);
@@ -313,10 +325,8 @@ contract ShowcaseGasTest is Test {
     }
 
     function test_showcase_inputs_fit_lanes() public pure {
-        assertLe(REAL_TOTAL_SUPPLY_FLOOR >> REAL_SHIFT, REAL_LANE_MAX);
-        assertLe(REAL_TREASURY_FLOOR >> REAL_SHIFT, REAL_LANE_MAX);
-        assertLe(REAL_FEES_FLOOR >> REAL_SHIFT, REAL_LANE_MAX);
-        assertLe(REAL_NONCE_FLOOR >> REAL_SHIFT, REAL_LANE_MAX);
+        assertLe(REAL_STAKE_FLOOR >> REAL_SHIFT, REAL_AMOUNT_MAX);
+        assertLe(REAL_STAKE_STRICT >> REAL_SHIFT, REAL_AMOUNT_MAX);
 
         uint256[12] memory strictValues = _extremeStrictValues();
         uint256[12] memory floorValues = _extremeFloorValues();
@@ -327,8 +337,18 @@ contract ShowcaseGasTest is Test {
     }
 
     function _assertStaticcallEqual(address lhs, bytes4 lhsSelector, address rhs, bytes4 rhsSelector) internal view {
-        (bool lhsOk, bytes memory lhsData) = lhs.staticcall(abi.encodeWithSelector(lhsSelector));
-        (bool rhsOk, bytes memory rhsData) = rhs.staticcall(abi.encodeWithSelector(rhsSelector));
+        _assertStaticcallEqual(lhs, lhsSelector, rhs, rhsSelector, "");
+    }
+
+    function _assertStaticcallEqual(
+        address lhs,
+        bytes4 lhsSelector,
+        address rhs,
+        bytes4 rhsSelector,
+        bytes memory args
+    ) internal view {
+        (bool lhsOk, bytes memory lhsData) = lhs.staticcall(abi.encodePacked(lhsSelector, args));
+        (bool rhsOk, bytes memory rhsData) = rhs.staticcall(abi.encodePacked(rhsSelector, args));
         assertTrue(lhsOk);
         assertTrue(rhsOk);
         assertEq(keccak256(lhsData), keccak256(rhsData));
@@ -368,41 +388,41 @@ contract ShowcaseGasTest is Test {
         return ((rawGas - quantizedGas) * 10_000) / rawGas;
     }
 
-    function _measureSolidityRealRaw() internal returns (uint256) {
-        RawERC20StateShowcase raw = new RawERC20StateShowcase();
-        raw.setStateRaw(REAL_TOTAL_SUPPLY_FLOOR, REAL_TREASURY_FLOOR, REAL_FEES_FLOOR, REAL_NONCE_FLOOR);
+    function _measureSolidityRealRawStake() internal returns (uint256) {
+        RawETHStakingShowcase raw = new RawETHStakingShowcase();
+        raw.stake{value: REAL_STAKE_FLOOR}();
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
-    function _measureSolidityRealQuantFloor() internal returns (uint256) {
-        QuantizedERC20StateShowcase quantized = new QuantizedERC20StateShowcase();
-        quantized.setStateFloor(REAL_TOTAL_SUPPLY_FLOOR, REAL_TREASURY_FLOOR, REAL_FEES_FLOOR, REAL_NONCE_FLOOR);
+    function _measureSolidityRealQuantFloorStake() internal returns (uint256) {
+        QuantizedETHStakingShowcase quantized = new QuantizedETHStakingShowcase();
+        quantized.stake{value: REAL_STAKE_FLOOR}();
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
-    function _measureSolidityRealQuantStrict() internal returns (uint256) {
-        QuantizedERC20StateShowcase quantized = new QuantizedERC20StateShowcase();
-        quantized.setStateStrict(REAL_TOTAL_SUPPLY_STRICT, REAL_TREASURY_STRICT, REAL_FEES_STRICT, REAL_NONCE_STRICT);
+    function _measureSolidityRealQuantStrictStake() internal returns (uint256) {
+        QuantizedETHStakingShowcase quantized = new QuantizedETHStakingShowcase();
+        quantized.stakeExact{value: REAL_STAKE_STRICT}();
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
-    function _measureVyperRealRaw() internal returns (uint256) {
-        IRawERC20StateShowcaseVyper raw = IRawERC20StateShowcaseVyper(deployCode("RawERC20StateShowcase.vy"));
-        raw.set_state_raw(REAL_TOTAL_SUPPLY_FLOOR, REAL_TREASURY_FLOOR, REAL_FEES_FLOOR, REAL_NONCE_FLOOR);
+    function _measureVyperRealRawStake() internal returns (uint256) {
+        IRawETHStakingShowcaseVyper raw = IRawETHStakingShowcaseVyper(deployCode("RawETHStakingShowcase.vy"));
+        raw.stake{value: REAL_STAKE_FLOOR}();
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
-    function _measureVyperRealQuantFloor() internal returns (uint256) {
-        IQuantizedERC20StateShowcaseVyper quantized =
-            IQuantizedERC20StateShowcaseVyper(deployCode("QuantizedERC20StateShowcase.vy"));
-        quantized.set_state_floor(REAL_TOTAL_SUPPLY_FLOOR, REAL_TREASURY_FLOOR, REAL_FEES_FLOOR, REAL_NONCE_FLOOR);
+    function _measureVyperRealQuantFloorStake() internal returns (uint256) {
+        IQuantizedETHStakingShowcaseVyper quantized =
+            IQuantizedETHStakingShowcaseVyper(deployCode("QuantizedETHStakingShowcase.vy"));
+        quantized.stake{value: REAL_STAKE_FLOOR}();
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
-    function _measureVyperRealQuantStrict() internal returns (uint256) {
-        IQuantizedERC20StateShowcaseVyper quantized =
-            IQuantizedERC20StateShowcaseVyper(deployCode("QuantizedERC20StateShowcase.vy"));
-        quantized.set_state_strict(REAL_TOTAL_SUPPLY_STRICT, REAL_TREASURY_STRICT, REAL_FEES_STRICT, REAL_NONCE_STRICT);
+    function _measureVyperRealQuantStrictStake() internal returns (uint256) {
+        IQuantizedETHStakingShowcaseVyper quantized =
+            IQuantizedETHStakingShowcaseVyper(deployCode("QuantizedETHStakingShowcase.vy"));
+        quantized.stake_exact{value: REAL_STAKE_STRICT}();
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 

@@ -176,4 +176,30 @@ contract UintQuantizationLibSmokeTest is Test {
         );
         harness.encodeCeilChecked(value, 8, 8);
     }
+
+    function test_encodeChecked_shiftGte256_returnsZeroLikeEncode() public view {
+        assertEq(harness.encode(123_456, 300), 0);
+        assertEq(harness.encodeChecked(123_456, 300, 8), 0);
+    }
+
+    function testFuzz_decode_encode_is_lower_bound(uint256 value, uint8 shift) public view {
+        uint256 encoded = harness.encode(value, shift);
+        uint256 decoded = harness.decode(encoded, shift);
+        assertLe(decoded, value);
+    }
+
+    function testFuzz_decode_ceil_bounds_original_when_shift_valid(uint256 value, uint8 shift) public view {
+        uint256 encoded = harness.encode(value, shift);
+        uint256 lower = harness.decode(encoded, shift);
+        uint256 upper = harness.decodeCeil(encoded, shift);
+        assertLe(lower, value);
+        assertLe(value, upper);
+    }
+
+    function testFuzz_remainder_identity_matches_decode_delta(uint256 value, uint8 shift) public view {
+        uint256 encoded = harness.encode(value, shift);
+        uint256 decoded = harness.decode(encoded, shift);
+        uint256 rem = harness.remainder(value, shift);
+        assertEq(rem, value - decoded);
+    }
 }

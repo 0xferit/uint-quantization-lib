@@ -105,15 +105,24 @@ contract FeeAccumulator {
 
 Showcase contracts under `src/showcase/` compare:
 
-- Real-life example (ERC20-style state):
-  raw path stores 4 full-width `uint256` values (`RawERC20StateShowcase`),
-  quantized path packs all 4 into 1 slot (`QuantizedERC20StateShowcase`).
+- Real-life example (production-style ETH staking):
+  raw path uses realistic packed fields by default (`uint128 amount`, `uint64` timestamps, `bool active`)
+  in `RawETHStakingShowcase`, while the quantized path further compresses stake amount into `uint96`
+  in `QuantizedETHStakingShowcase`.
 - Extreme example (upper-bound packing showcase):
   raw path stores 12 full-width `uint256` values (`RawExtremePackingShowcase`),
   quantized path packs all 12 into 1 slot (`QuantizedExtremePackingShowcase`).
 
 This demonstrates where quantization creates real gas savings: fewer storage writes and denser
 state layout.
+
+The staking showcase intentionally exercises the full API surface:
+- `stake()` uses `encodeChecked`.
+- `stakeExact()` uses `encodeLosslessChecked`.
+- `unstake()` uses `decode`.
+- `quoteProtocolFee()` uses `encodeCeil`.
+- `maxDeposit()`, `stakeRemainder()`, and `isStakeLossless()` expose
+  `maxRepresentable`, `remainder`, and `isLossless` for frontend UX.
 
 Benchmark assertions live in `test/showcase/ShowcaseGas.t.sol`.
 
@@ -130,7 +139,7 @@ forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 ```
 
 The suite enforces that quantized write paths save at least:
-- 50% for the real-life showcase.
+- 32% for the real-life showcase.
 - 80% for the extreme showcase.
 These checks run for both Solidity and Vyper zero-to-nonzero writes.
 
@@ -138,10 +147,10 @@ Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t
 
 | Scenario | Raw write gas | Quantized floor write gas | Savings |
 |---|---:|---:|---:|
-| Solidity real-life (4 slots -> 1 slot) | 110,529 | 44,716 | 59.54% |
-| Vyper real-life (4 slots -> 1 slot) | 110,338 | 44,900 | 59.31% |
+| Solidity real-life staking | 65,921 | 43,920 | 33.37% |
+| Vyper real-life staking | 65,670 | 43,733 | 33.41% |
 | Solidity extreme (12 slots -> 1 slot) | 290,061 | 49,231 | 83.03% |
-| Vyper extreme (12 slots -> 1 slot) | 289,836 | 48,676 | 83.20% |
+| Vyper extreme (12 slots -> 1 slot) | 289,836 | 48,676 | 83.21% |
 
 ## Vyper
 

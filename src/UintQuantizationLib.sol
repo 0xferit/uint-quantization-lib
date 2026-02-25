@@ -119,6 +119,9 @@ library UintQuantizationLib {
     /// @notice Left-shifts `compressed` by `shift` and fills discarded bit positions with ones.
     ///         Gives the maximum possible original value that encodes to `compressed`.
     ///         Satisfies: decode(encode(v, shift), shift) <= v <= decodeCeil(encode(v, shift), shift).
+    /// @dev    Mirrors EVM shift semantics: if `compressed << shift` exceeds 256 bits, high bits
+    ///         are truncated. Callers that require arithmetic (non-wrapping) bounds must ensure
+    ///         the shifted value fits in uint256.
     /// @param compressed  Previously encoded value.
     /// @param shift       Number of bits that were discarded during encoding. Must be < 256.
     /// @return Upper bound on the original value.
@@ -170,6 +173,8 @@ library UintQuantizationLib {
 
     /// @notice Like `encode` but reverts if the encoded result does not fit in `targetBits`.
     ///         Reverts when `targetBits >= 256`.
+    /// @dev    Mirrors `encode` semantics for large shifts: for `shift >= 256`, the EVM
+    ///         right-shift returns 0 and this function succeeds if `targetBits < 256`.
     function encodeChecked(uint256 value, uint256 shift, uint256 targetBits) internal pure returns (uint256) {
         if (targetBits >= 256) {
             revert UintQuantizationLib__Overflow(targetBits, 256);

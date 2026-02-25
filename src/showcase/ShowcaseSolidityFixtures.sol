@@ -3,89 +3,132 @@ pragma solidity ^0.8.25;
 
 import {UintQuantizationLib} from "src/UintQuantizationLib.sol";
 
-/// @notice Baseline ERC20-style accounting state using four full-width storage slots.
-contract RawERC20StateShowcase {
-    uint256 public totalSupply;
-    uint256 public treasuryBalance;
-    uint256 public feeAccumulator;
-    uint256 public nonceCursor;
+/// @notice Production-style ETH staking baseline with default Solidity struct packing.
+contract RawETHStakingShowcase {
+    error RawETHStakingShowcase__ZeroAmount();
+    error RawETHStakingShowcase__AmountOverflow();
+    error RawETHStakingShowcase__NoStake();
+    error RawETHStakingShowcase__TransferFailed();
 
-    function setStateRaw(uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor)
-        external
-    {
-        totalSupply = _totalSupply;
-        treasuryBalance = _treasuryBalance;
-        feeAccumulator = _feeAccumulator;
-        nonceCursor = _nonceCursor;
+    uint64 public constant COOLDOWN = 1 days;
+
+    struct UserStakeRaw {
+        uint128 amount;
+        uint64 stakedAt;
+        uint64 cooldownEndsAt;
+        bool active;
+    }
+
+    mapping(address => UserStakeRaw) public stakes;
+
+    function stake() external payable {
+        if (msg.value == 0) revert RawETHStakingShowcase__ZeroAmount();
+        if (msg.value > type(uint128).max) revert RawETHStakingShowcase__AmountOverflow();
+
+        stakes[msg.sender] = UserStakeRaw({
+            amount: uint128(msg.value),
+            stakedAt: uint64(block.timestamp),
+            cooldownEndsAt: uint64(block.timestamp + COOLDOWN),
+            active: true
+        });
+    }
+
+    function unstake() external {
+        UserStakeRaw memory s = stakes[msg.sender];
+        if (!s.active) revert RawETHStakingShowcase__NoStake();
+
+        delete stakes[msg.sender];
+
+        (bool ok,) = msg.sender.call{value: s.amount}("");
+        if (!ok) revert RawETHStakingShowcase__TransferFailed();
     }
 }
 
-/// @notice Quantized ERC20-style accounting state packed into one storage slot.
-contract QuantizedERC20StateShowcase {
+/// @notice Storage-optimized ETH staking showcase operating on an already packed struct.
+contract QuantizedETHStakingShowcase {
     using UintQuantizationLib for uint256;
 
-    uint256 internal constant SHIFT = 16;
-    uint256 internal constant WIDTH = 40;
-    uint256 internal constant LANE_MASK = (uint256(1) << WIDTH) - 1;
+    error QuantizedETHStakingShowcase__ZeroAmount();
+    error QuantizedETHStakingShowcase__NoStake();
+    error QuantizedETHStakingShowcase__TransferFailed();
 
-    uint256 public packedState;
+    uint256 public constant SHIFT = 16;
+    uint256 public constant AMOUNT_BITS = 96;
+    uint64 public constant COOLDOWN = 1 days;
 
-    function setStateFloor(uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor)
-        external
-    {
-        uint256 e0 = _totalSupply.encodeChecked(SHIFT, WIDTH);
-        uint256 e1 = _treasuryBalance.encodeChecked(SHIFT, WIDTH);
-        uint256 e2 = _feeAccumulator.encodeChecked(SHIFT, WIDTH);
-        uint256 e3 = _nonceCursor.encodeChecked(SHIFT, WIDTH);
-
-        packedState = e0 | (e1 << 40) | (e2 << 80) | (e3 << 120);
+    struct UserStake {
+        uint96 amount;
+        uint64 stakedAt;
+        uint64 cooldownEndsAt;
+        bool active;
     }
 
-    function setStateStrict(uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor)
-        external
-    {
-        uint256 e0 = _totalSupply.encodeLosslessChecked(SHIFT, WIDTH);
-        uint256 e1 = _treasuryBalance.encodeLosslessChecked(SHIFT, WIDTH);
-        uint256 e2 = _feeAccumulator.encodeLosslessChecked(SHIFT, WIDTH);
-        uint256 e3 = _nonceCursor.encodeLosslessChecked(SHIFT, WIDTH);
+    mapping(address => UserStake) internal stakes;
 
-        packedState = e0 | (e1 << 40) | (e2 << 80) | (e3 << 120);
+    function stake() external payable {
+        if (msg.value == 0) revert QuantizedETHStakingShowcase__ZeroAmount();
+        uint96 encoded = uint96(msg.value.encodeChecked(SHIFT, AMOUNT_BITS));
+        stakes[msg.sender] = UserStake({
+            amount: encoded,
+            stakedAt: uint64(block.timestamp),
+            cooldownEndsAt: uint64(block.timestamp + COOLDOWN),
+            active: true
+        });
     }
 
-    function encodedState()
+    function stakeExact() external payable {
+        if (msg.value == 0) revert QuantizedETHStakingShowcase__ZeroAmount();
+        uint96 encoded = uint96(msg.value.encodeLosslessChecked(SHIFT, AMOUNT_BITS));
+        stakes[msg.sender] = UserStake({
+            amount: encoded,
+            stakedAt: uint64(block.timestamp),
+            cooldownEndsAt: uint64(block.timestamp + COOLDOWN),
+            active: true
+        });
+    }
+
+    function unstake() external {
+        UserStake memory s = stakes[msg.sender];
+        if (!s.active) revert QuantizedETHStakingShowcase__NoStake();
+
+        uint256 amount = uint256(s.amount).decode(SHIFT);
+        delete stakes[msg.sender];
+
+        (bool ok,) = msg.sender.call{value: amount}("");
+        if (!ok) revert QuantizedETHStakingShowcase__TransferFailed();
+    }
+
+    function encodedStake(address user)
         external
         view
-        returns (uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor)
+        returns (uint96 amount, uint64 stakedAt, uint64 cooldownEndsAt, bool active)
     {
-        uint256 p = packedState;
-        _totalSupply = p & LANE_MASK;
-        _treasuryBalance = (p >> 40) & LANE_MASK;
-        _feeAccumulator = (p >> 80) & LANE_MASK;
-        _nonceCursor = (p >> 120) & LANE_MASK;
+        UserStake memory s = stakes[user];
+        return (s.amount, s.stakedAt, s.cooldownEndsAt, s.active);
     }
 
-    function decodeStateFloor()
-        external
-        view
-        returns (uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor)
-    {
-        uint256 p = packedState;
-        _totalSupply = (p & LANE_MASK).decode(SHIFT);
-        _treasuryBalance = ((p >> 40) & LANE_MASK).decode(SHIFT);
-        _feeAccumulator = ((p >> 80) & LANE_MASK).decode(SHIFT);
-        _nonceCursor = ((p >> 120) & LANE_MASK).decode(SHIFT);
+    function getStakeFloor(address user) external view returns (uint256) {
+        return uint256(stakes[user].amount).decode(SHIFT);
     }
 
-    function decodeStateCeil()
-        external
-        view
-        returns (uint256 _totalSupply, uint256 _treasuryBalance, uint256 _feeAccumulator, uint256 _nonceCursor)
-    {
-        uint256 p = packedState;
-        _totalSupply = (p & LANE_MASK).decodeCeil(SHIFT);
-        _treasuryBalance = ((p >> 40) & LANE_MASK).decodeCeil(SHIFT);
-        _feeAccumulator = ((p >> 80) & LANE_MASK).decodeCeil(SHIFT);
-        _nonceCursor = ((p >> 120) & LANE_MASK).decodeCeil(SHIFT);
+    function getStakeCeil(address user) external view returns (uint256) {
+        return uint256(stakes[user].amount).decodeCeil(SHIFT);
+    }
+
+    function maxDeposit() external pure returns (uint256) {
+        return UintQuantizationLib.maxRepresentable(SHIFT, AMOUNT_BITS);
+    }
+
+    function quoteProtocolFee(uint256 amount, uint256 feeShift) external pure returns (uint256) {
+        return amount.encodeCeil(feeShift).decode(feeShift);
+    }
+
+    function stakeRemainder(uint256 amount) external pure returns (uint256) {
+        return amount.remainder(SHIFT);
+    }
+
+    function isStakeLossless(uint256 amount) external pure returns (bool) {
+        return amount.isLossless(SHIFT);
     }
 }
 
