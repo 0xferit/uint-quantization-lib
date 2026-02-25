@@ -49,6 +49,13 @@ jobs:
       - name: Install dependencies
         run: forge soldeer install
 
+      - name: Add swap space
+        run: |
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
       - name: Run Kontrol proofs
         env:
           KONTROL_IMAGE: runtimeverificationinc/kontrol:ubuntu-jammy-1.0.231
@@ -59,9 +66,9 @@ jobs:
             -v "${{ github.workspace }}:${{ github.workspace }}" \
             -w "${{ github.workspace }}" \
             "${KONTROL_IMAGE}" \
-            bash -c '
+            bash -lc '
               pip install "vyper>=0.4.0,<0.5" &&
-              kontrol build --config-file kontrol.toml &&
+              kontrol build --verbose --config-file kontrol.toml &&
               kontrol prove --config-file kontrol.toml --no-use-booster \
                 --match-test "ProofUintQuantizationSolidity.proof_*" &&
               kontrol prove --config-file kontrol.toml --no-use-booster \
