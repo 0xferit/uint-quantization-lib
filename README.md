@@ -205,6 +205,14 @@ Kontrol proof specs are under `test/kontrol/` and run through Docker:
 ./script/kontrol.sh prove-parity
 ```
 
+For high-throughput local proving on multi-core machines, use the `local-max` profile and explicit
+performance tuning:
+
+```bash
+kontrol prove --config-file kontrol.ci.toml --config-profile local-max --optimize-performance 12 --match-test "ProofUintQuantizationSolidity.proof_*"
+kontrol prove --config-file kontrol.ci.toml --config-profile local-max --optimize-performance 12 --match-test "ProofUintQuantizationVyper.proof_*"
+```
+
 Core proofs cover floor/ceil semantics, strict lossless behavior, width checks, and overflow
 boundaries. Parity proofs check Solidity vs Vyper return/revert equivalence.
 
