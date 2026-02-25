@@ -60,29 +60,3 @@ jobs:
 
       - name: Run tests
         run: forge test -vvv
-
-  gas-report:
-    name: Gas Report
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install Vyper
-        run: pip install vyper
-
-      - name: Install dependencies
-        run: forge soldeer install
-
-      - name: Generate gas snapshot
-        run: forge snapshot
