@@ -67,8 +67,6 @@ jobs:
 
       - name: Add swap space
         run: |
-          sudo swapoff /swapfile || true
-          sudo rm -f /swapfile
           sudo fallocate -l 4G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
@@ -83,7 +81,6 @@ jobs:
           docker run --rm \
             --user "$(id -u):$(id -g)" \
             -e "VYPER_VERSION=${VYPER_VERSION}" \
-            -e "HOME=${{ github.workspace }}" \
             -v "${{ github.workspace }}:${{ github.workspace }}" \
             -w "${{ github.workspace }}" \
             "${KONTROL_IMAGE}" \
