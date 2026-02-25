@@ -61,4 +61,24 @@ jobs:
         run: forge build
 
       - name: Run Kontrol proofs
-        run: ./script/kontrol.sh prove-parity
+        env:
+          KONTROL_IMAGE: runtimeverificationinc/kontrol:ubuntu-jammy-1.0.231
+        run: |
+          mkdir -p .kontrol
+          docker run --rm \
+            -v "${{ github.workspace }}:${{ github.workspace }}" \
+            -w "${{ github.workspace }}" \
+            "${KONTROL_IMAGE}" \
+            kontrol build --config-file kontrol.toml
+          docker run --rm \
+            -v "${{ github.workspace }}:${{ github.workspace }}" \
+            -w "${{ github.workspace }}" \
+            "${KONTROL_IMAGE}" \
+            kontrol prove --config-file kontrol.toml --no-use-booster \
+              --match-test 'ProofUintQuantizationSolidity.proof_*'
+          docker run --rm \
+            -v "${{ github.workspace }}:${{ github.workspace }}" \
+            -w "${{ github.workspace }}" \
+            "${KONTROL_IMAGE}" \
+            kontrol prove --config-file kontrol.toml --no-use-booster \
+              --match-test 'ProofUintQuantizationVyper.proof_*'
