@@ -83,11 +83,13 @@ jobs:
           docker run --rm \
             --user "$(id -u):$(id -g)" \
             -e "VYPER_VERSION=${VYPER_VERSION}" \
+            -e "HOME=${{ github.workspace }}" \
             -v "${{ github.workspace }}:${{ github.workspace }}" \
             -w "${{ github.workspace }}" \
             "${KONTROL_IMAGE}" \
             bash -lc '
-              pip install "vyper==${VYPER_VERSION}" &&
+              export PATH="$HOME/.local/bin:/home/user/.local/bin:$PATH" &&
+              python3 -m pip install --user "vyper==${VYPER_VERSION}" &&
               kontrol build --verbose --config-file kontrol.ci.toml &&
               kontrol prove --verbose --config-file kontrol.ci.toml --no-use-booster \
                 --match-test "ProofUintQuantizationSolidity.proof_*" &&
