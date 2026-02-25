@@ -81,16 +81,23 @@ jobs:
           mkdir -p .kontrol out cache
           chmod 755 .kontrol out cache
           docker run --rm \
-            --user "$(id -u):$(id -g)" \
+            --user root \
             -e "VYPER_VERSION=${VYPER_VERSION}" \
+            -e "HOST_UID=$(id -u)" \
+            -e "HOST_GID=$(id -g)" \
+            -e "PYTHONPATH=/home/user/.local/lib/python3.10/site-packages" \
+            -e "XDG_CACHE_HOME=/home/user/.cache" \
             -v "${{ github.workspace }}:${{ github.workspace }}" \
             -w "${{ github.workspace }}" \
             "${KONTROL_IMAGE}" \
             bash -lc '
-              pip install "vyper==${VYPER_VERSION}" &&
-              kontrol build --verbose --config-file kontrol.ci.toml &&
+              set -euo pipefail
+              trap "chown -R ${HOST_UID}:${HOST_GID} .kontrol out cache || true" EXIT
+              rm -f /home/user/.local/lib/python3.10/site-packages/typing.py
+              python3 -m pip install "vyper==${VYPER_VERSION}"
+              kontrol build --verbose --config-file kontrol.ci.toml
               kontrol prove --verbose --config-file kontrol.ci.toml --no-use-booster \
-                --match-test "ProofUintQuantizationSolidity.proof_*" &&
+                --match-test "ProofUintQuantizationSolidity.proof_*"
               kontrol prove --verbose --config-file kontrol.ci.toml --no-use-booster \
                 --match-test "ProofUintQuantizationVyper.proof_*"
             '
