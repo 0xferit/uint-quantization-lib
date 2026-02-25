@@ -105,8 +105,12 @@ contract FeeAccumulator {
 
 Showcase contracts under `src/showcase/` compare:
 
-- Raw baseline: two full-width `uint256` values stored in two slots.
-- Quantized path: two quantized values packed into one slot.
+- Real-life example (ERC20-style state):
+  raw path stores 4 full-width `uint256` values (`RawERC20StateShowcase`),
+  quantized path packs all 4 into 1 slot (`QuantizedERC20StateShowcase`).
+- Extreme example (upper-bound packing showcase):
+  raw path stores 12 full-width `uint256` values (`RawExtremePackingShowcase`),
+  quantized path packs all 12 into 1 slot (`QuantizedExtremePackingShowcase`).
 
 This demonstrates where quantization creates real gas savings: fewer storage writes and denser
 state layout.
@@ -125,8 +129,19 @@ Run with gas report:
 forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 ```
 
-The suite includes assertions that quantized write paths are cheaper than the raw baseline for
-both Solidity and Vyper showcase contracts.
+The suite enforces that quantized write paths save at least:
+- 50% for the real-life showcase.
+- 80% for the extreme showcase.
+These checks run for both Solidity and Vyper zero-to-nonzero writes.
+
+Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv`):
+
+| Scenario | Raw write gas | Quantized floor write gas | Savings |
+|---|---:|---:|---:|
+| Solidity real-life (4 slots -> 1 slot) | 110,529 | 44,716 | 59.54% |
+| Vyper real-life (4 slots -> 1 slot) | 110,338 | 44,900 | 59.31% |
+| Solidity extreme (12 slots -> 1 slot) | 290,061 | 49,231 | 83.03% |
+| Vyper extreme (12 slots -> 1 slot) | 289,836 | 48,676 | 83.20% |
 
 ## Vyper
 
