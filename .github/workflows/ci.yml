@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  VYPER_VERSION: "0.4.3"
+
 jobs:
   test:
     name: Build & Test
@@ -24,7 +27,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Vyper
-        run: pip install "vyper>=0.4.0,<0.5"
+        run: pip install "vyper==${VYPER_VERSION}"
 
       - name: Cache Soldeer dependencies
         uses: actions/cache@v4
@@ -44,6 +47,7 @@ jobs:
   kontrol:
     name: Kontrol Formal Verification
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -73,16 +77,18 @@ jobs:
           KONTROL_IMAGE: runtimeverificationinc/kontrol:ubuntu-jammy-1.0.231
         run: |
           mkdir -p .kontrol out cache
-          chmod 777 .kontrol out cache
+          chmod 755 .kontrol out cache
           docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e "VYPER_VERSION=${VYPER_VERSION}" \
             -v "${{ github.workspace }}:${{ github.workspace }}" \
             -w "${{ github.workspace }}" \
             "${KONTROL_IMAGE}" \
             bash -lc '
-              pip install "vyper>=0.4.0,<0.5" &&
-              kontrol build --verbose --config-file kontrol.toml &&
-              kontrol prove --config-file kontrol.toml --no-use-booster \
+              pip install "vyper==${VYPER_VERSION}" &&
+              kontrol build --verbose --config-file kontrol.ci.toml &&
+              kontrol prove --verbose --config-file kontrol.ci.toml --no-use-booster \
                 --match-test "ProofUintQuantizationSolidity.proof_*" &&
-              kontrol prove --config-file kontrol.toml --no-use-booster \
+              kontrol prove --verbose --config-file kontrol.ci.toml --no-use-booster \
                 --match-test "ProofUintQuantizationVyper.proof_*"
             '
