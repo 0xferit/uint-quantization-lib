@@ -26,6 +26,12 @@ jobs:
       - name: Install Vyper
         run: pip install "vyper>=0.4.0,<0.5"
 
+      - name: Cache Soldeer dependencies
+        uses: actions/cache@v4
+        with:
+          path: dependencies
+          key: soldeer-${{ hashFiles('soldeer.lock') }}
+
       - name: Install dependencies
         run: forge soldeer install
 
@@ -45,6 +51,12 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
         with:
           cache: true
+
+      - name: Cache Soldeer dependencies
+        uses: actions/cache@v4
+        with:
+          path: dependencies
+          key: soldeer-${{ hashFiles('soldeer.lock') }}
 
       - name: Install dependencies
         run: forge soldeer install
