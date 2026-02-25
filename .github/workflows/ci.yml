@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  VYPER_VERSION: "0.4.3"
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Vyper
+        run: pip install "vyper==${VYPER_VERSION}"
+
+      - name: Cache Soldeer dependencies
+        uses: actions/cache@v4
+        with:
+          path: dependencies
+          key: soldeer-${{ hashFiles('soldeer.lock') }}
+
+      - name: Install dependencies
+        run: forge soldeer install
+
+      - name: Build
+        run: forge build
+
+      - name: Test
+        run: forge test -vvv
+
+  kontrol:
+    name: Kontrol Formal Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: true
+
+      - name: Cache Soldeer dependencies
+        uses: actions/cache@v4
+        with:
+          path: dependencies
+          key: soldeer-${{ hashFiles('soldeer.lock') }}
+
+      - name: Install dependencies
+        run: forge soldeer install
+
+      - name: Add swap space
+        run: |
+          sudo swapoff /swapfile || true
+          sudo rm -f /swapfile
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
+      - name: Run Kontrol proofs
+        env:
+          KONTROL_IMAGE: runtimeverificationinc/kontrol:ubuntu-jammy-1.0.231
+        run: |
+          mkdir -p .kontrol out cache
+          chmod 755 .kontrol out cache
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e "VYPER_VERSION=${VYPER_VERSION}" \
+            -e "HOME=${{ github.workspace }}" \
+            -v "${{ github.workspace }}:${{ github.workspace }}" \
+            -w "${{ github.workspace }}" \
+            "${KONTROL_IMAGE}" \
+            bash -lc '
+              pip install "vyper==${VYPER_VERSION}" &&
+              kontrol build --verbose --config-file kontrol.ci.toml &&
+              kontrol prove --verbose --config-file kontrol.ci.toml --no-use-booster \
+                --match-test "ProofUintQuantizationSolidity.proof_*" &&
+              kontrol prove --verbose --config-file kontrol.ci.toml --no-use-booster \
+                --match-test "ProofUintQuantizationVyper.proof_*"
+            '
