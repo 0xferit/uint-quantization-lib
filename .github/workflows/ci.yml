@@ -69,16 +69,11 @@ jobs:
             -v "${{ github.workspace }}:${{ github.workspace }}" \
             -w "${{ github.workspace }}" \
             "${KONTROL_IMAGE}" \
-            kontrol build --config-file kontrol.toml
-          docker run --rm \
-            -v "${{ github.workspace }}:${{ github.workspace }}" \
-            -w "${{ github.workspace }}" \
-            "${KONTROL_IMAGE}" \
-            kontrol prove --config-file kontrol.toml --no-use-booster \
-              --match-test 'ProofUintQuantizationSolidity.proof_*'
-          docker run --rm \
-            -v "${{ github.workspace }}:${{ github.workspace }}" \
-            -w "${{ github.workspace }}" \
-            "${KONTROL_IMAGE}" \
-            kontrol prove --config-file kontrol.toml --no-use-booster \
-              --match-test 'ProofUintQuantizationVyper.proof_*'
+            bash -c '
+              pip install "vyper>=0.4.0,<0.5" &&
+              kontrol build --config-file kontrol.toml &&
+              kontrol prove --config-file kontrol.toml --no-use-booster \
+                --match-test "ProofUintQuantizationSolidity.proof_*" &&
+              kontrol prove --config-file kontrol.toml --no-use-booster \
+                --match-test "ProofUintQuantizationVyper.proof_*"
+            '
