@@ -21,6 +21,14 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Vyper
+        run: pip install vyper
+
       - name: Install dependencies
         run: forge soldeer install
 
@@ -39,6 +47,14 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Vyper
+        run: pip install vyper
+
       - name: Install dependencies
         run: forge soldeer install
 
@@ -56,6 +72,14 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Vyper
+        run: pip install vyper
 
       - name: Install dependencies
         run: forge soldeer install
