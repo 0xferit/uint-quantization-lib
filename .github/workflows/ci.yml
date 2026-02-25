@@ -46,25 +46,15 @@ jobs:
         with:
           cache: true
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install Vyper
-        run: pip install "vyper>=0.4.0,<0.5"
-
       - name: Install dependencies
         run: forge soldeer install
-
-      - name: Build contracts
-        run: forge build
 
       - name: Run Kontrol proofs
         env:
           KONTROL_IMAGE: runtimeverificationinc/kontrol:ubuntu-jammy-1.0.231
         run: |
-          mkdir -p .kontrol
+          mkdir -p .kontrol out cache
+          chmod 777 .kontrol out cache
           docker run --rm \
             -v "${{ github.workspace }}:${{ github.workspace }}" \
             -w "${{ github.workspace }}" \
