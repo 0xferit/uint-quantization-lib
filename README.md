@@ -141,7 +141,11 @@ forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 The suite enforces that quantized write paths save at least:
 - 32% for the real-life showcase.
 - 80% for the extreme showcase.
-These checks run for both Solidity and Vyper zero-to-nonzero writes.
+These threshold checks run for both Solidity and Vyper zero-to-nonzero writes.
+
+The suite also records nonzero-to-nonzero (warm overwrite) metrics without hard thresholds:
+- `test_gas_real_life_*_nonzero_to_nonzero_metrics`
+- `test_gas_extreme_*_nonzero_to_nonzero_metrics`
 
 Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv`):
 
@@ -151,6 +155,18 @@ Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t
 | Vyper real-life staking | 65,670 | 43,733 | 33.41% |
 | Solidity extreme (12 slots -> 1 slot) | 290,061 | 49,231 | 83.03% |
 | Vyper extreme (12 slots -> 1 slot) | 289,836 | 48,676 | 83.21% |
+
+Warm overwrite snapshot (`forge test --match-path test/showcase/ShowcaseGas.t.sol -vv`):
+
+| Scenario | Raw warm write gas | Quantized floor warm write gas | Quantized strict warm write gas |
+|---|---:|---:|---:|
+| Solidity real-life staking | 1,057 | 956 | 1,184 |
+| Vyper real-life staking | 606 | 669 | 843 |
+| Solidity extreme (12 lanes) | 2,885 | 4,055 | 7,142 |
+| Vyper extreme (12 lanes) | 2,660 | 3,500 | 6,234 |
+
+On warm overwrites, quantized paths are not guaranteed to be cheaper. Once cold-slot costs are gone,
+fixed encode/packing overhead can narrow or invert the gas advantage depending on the path.
 
 ## Vyper
 

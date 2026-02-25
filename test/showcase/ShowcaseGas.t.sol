@@ -59,6 +59,7 @@ contract ShowcaseGasTest is Test {
     uint256 internal constant MIN_EXTREME_SAVINGS_BPS = 8_000; // >=80%
 
     uint256 internal constant REAL_STAKE_STRICT = uint256(2_500_000) << REAL_SHIFT;
+    uint256 internal constant REAL_STAKE_STRICT_ALT = uint256(2_750_000) << REAL_SHIFT;
     uint256 internal constant REAL_STAKE_FLOOR = REAL_STAKE_STRICT + 321;
 
     uint256 internal constant FEE_INPUT = 123_456_789;
@@ -324,14 +325,85 @@ contract ShowcaseGasTest is Test {
         assertGe(_savingsBps(rawGas, strictGas), MIN_EXTREME_SAVINGS_BPS);
     }
 
+    function test_gas_real_life_solidity_nonzero_to_nonzero_metrics() public {
+        uint256 rawGas = _measureSolidityRealRawStakeWarm();
+        uint256 floorGas = _measureSolidityRealQuantFloorStakeWarm();
+        uint256 strictGas = _measureSolidityRealQuantStrictStakeWarm();
+
+        emit log_named_uint("warm_real_life_solidity_raw", rawGas);
+        emit log_named_uint("warm_real_life_solidity_quant_floor", floorGas);
+        emit log_named_uint("warm_real_life_solidity_quant_strict", strictGas);
+
+        assertGt(rawGas, 0);
+        assertGt(floorGas, 0);
+        assertGt(strictGas, 0);
+        assertLt(rawGas, _measureSolidityRealRawStake());
+        assertLt(floorGas, _measureSolidityRealQuantFloorStake());
+        assertLt(strictGas, _measureSolidityRealQuantStrictStake());
+    }
+
+    function test_gas_real_life_vyper_nonzero_to_nonzero_metrics() public {
+        uint256 rawGas = _measureVyperRealRawStakeWarm();
+        uint256 floorGas = _measureVyperRealQuantFloorStakeWarm();
+        uint256 strictGas = _measureVyperRealQuantStrictStakeWarm();
+
+        emit log_named_uint("warm_real_life_vyper_raw", rawGas);
+        emit log_named_uint("warm_real_life_vyper_quant_floor", floorGas);
+        emit log_named_uint("warm_real_life_vyper_quant_strict", strictGas);
+
+        assertGt(rawGas, 0);
+        assertGt(floorGas, 0);
+        assertGt(strictGas, 0);
+        assertLt(rawGas, _measureVyperRealRawStake());
+        assertLt(floorGas, _measureVyperRealQuantFloorStake());
+        assertLt(strictGas, _measureVyperRealQuantStrictStake());
+    }
+
+    function test_gas_extreme_solidity_nonzero_to_nonzero_metrics() public {
+        uint256 rawGas = _measureSolidityExtremeRawWarm();
+        uint256 floorGas = _measureSolidityExtremeQuantFloorWarm();
+        uint256 strictGas = _measureSolidityExtremeQuantStrictWarm();
+
+        emit log_named_uint("warm_extreme_solidity_raw", rawGas);
+        emit log_named_uint("warm_extreme_solidity_quant_floor", floorGas);
+        emit log_named_uint("warm_extreme_solidity_quant_strict", strictGas);
+
+        assertGt(rawGas, 0);
+        assertGt(floorGas, 0);
+        assertGt(strictGas, 0);
+        assertLt(rawGas, _measureSolidityExtremeRaw());
+        assertLt(floorGas, _measureSolidityExtremeQuantFloor());
+        assertLt(strictGas, _measureSolidityExtremeQuantStrict());
+    }
+
+    function test_gas_extreme_vyper_nonzero_to_nonzero_metrics() public {
+        uint256 rawGas = _measureVyperExtremeRawWarm();
+        uint256 floorGas = _measureVyperExtremeQuantFloorWarm();
+        uint256 strictGas = _measureVyperExtremeQuantStrictWarm();
+
+        emit log_named_uint("warm_extreme_vyper_raw", rawGas);
+        emit log_named_uint("warm_extreme_vyper_quant_floor", floorGas);
+        emit log_named_uint("warm_extreme_vyper_quant_strict", strictGas);
+
+        assertGt(rawGas, 0);
+        assertGt(floorGas, 0);
+        assertGt(strictGas, 0);
+        assertLt(rawGas, _measureVyperExtremeRaw());
+        assertLt(floorGas, _measureVyperExtremeQuantFloor());
+        assertLt(strictGas, _measureVyperExtremeQuantStrict());
+    }
+
     function test_showcase_inputs_fit_lanes() public pure {
         assertLe(REAL_STAKE_FLOOR >> REAL_SHIFT, REAL_AMOUNT_MAX);
         assertLe(REAL_STAKE_STRICT >> REAL_SHIFT, REAL_AMOUNT_MAX);
+        assertLe(REAL_STAKE_STRICT_ALT >> REAL_SHIFT, REAL_AMOUNT_MAX);
 
         uint256[12] memory strictValues = _extremeStrictValues();
+        uint256[12] memory strictValuesAlt = _extremeStrictValuesAlt();
         uint256[12] memory floorValues = _extremeFloorValues();
         for (uint256 i; i < EXT_LANES; ++i) {
             assertLe(strictValues[i] >> EXT_SHIFT, EXT_LANE_MAX);
+            assertLe(strictValuesAlt[i] >> EXT_SHIFT, EXT_LANE_MAX);
             assertLe(floorValues[i] >> EXT_SHIFT, EXT_LANE_MAX);
         }
     }
@@ -384,6 +456,21 @@ contract ShowcaseGasTest is Test {
         values[11] = (EXT_E11 << EXT_SHIFT) + EXT_R11;
     }
 
+    function _extremeStrictValuesAlt() internal pure returns (uint256[12] memory values) {
+        values[0] = (EXT_E0 + 1) << EXT_SHIFT;
+        values[1] = (EXT_E1 + 1) << EXT_SHIFT;
+        values[2] = (EXT_E2 + 1) << EXT_SHIFT;
+        values[3] = (EXT_E3 + 1) << EXT_SHIFT;
+        values[4] = (EXT_E4 + 1) << EXT_SHIFT;
+        values[5] = (EXT_E5 + 1) << EXT_SHIFT;
+        values[6] = (EXT_E6 + 1) << EXT_SHIFT;
+        values[7] = (EXT_E7 + 1) << EXT_SHIFT;
+        values[8] = (EXT_E8 + 1) << EXT_SHIFT;
+        values[9] = (EXT_E9 + 1) << EXT_SHIFT;
+        values[10] = (EXT_E10 + 1) << EXT_SHIFT;
+        values[11] = (EXT_E11 + 1) << EXT_SHIFT;
+    }
+
     function _savingsBps(uint256 rawGas, uint256 quantizedGas) internal pure returns (uint256) {
         return ((rawGas - quantizedGas) * 10_000) / rawGas;
     }
@@ -394,9 +481,23 @@ contract ShowcaseGasTest is Test {
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
+    function _measureSolidityRealRawStakeWarm() internal returns (uint256) {
+        RawETHStakingShowcase raw = new RawETHStakingShowcase();
+        raw.stake{value: REAL_STAKE_FLOOR}();
+        raw.stake{value: REAL_STAKE_STRICT}();
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
     function _measureSolidityRealQuantFloorStake() internal returns (uint256) {
         QuantizedETHStakingShowcase quantized = new QuantizedETHStakingShowcase();
         quantized.stake{value: REAL_STAKE_FLOOR}();
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
+    function _measureSolidityRealQuantFloorStakeWarm() internal returns (uint256) {
+        QuantizedETHStakingShowcase quantized = new QuantizedETHStakingShowcase();
+        quantized.stake{value: REAL_STAKE_FLOOR}();
+        quantized.stake{value: REAL_STAKE_STRICT}();
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
@@ -406,9 +507,23 @@ contract ShowcaseGasTest is Test {
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
+    function _measureSolidityRealQuantStrictStakeWarm() internal returns (uint256) {
+        QuantizedETHStakingShowcase quantized = new QuantizedETHStakingShowcase();
+        quantized.stakeExact{value: REAL_STAKE_STRICT}();
+        quantized.stakeExact{value: REAL_STAKE_STRICT_ALT}();
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
     function _measureVyperRealRawStake() internal returns (uint256) {
         IRawETHStakingShowcaseVyper raw = IRawETHStakingShowcaseVyper(deployCode("RawETHStakingShowcase.vy"));
         raw.stake{value: REAL_STAKE_FLOOR}();
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
+    function _measureVyperRealRawStakeWarm() internal returns (uint256) {
+        IRawETHStakingShowcaseVyper raw = IRawETHStakingShowcaseVyper(deployCode("RawETHStakingShowcase.vy"));
+        raw.stake{value: REAL_STAKE_FLOOR}();
+        raw.stake{value: REAL_STAKE_STRICT}();
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
@@ -419,10 +534,26 @@ contract ShowcaseGasTest is Test {
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
+    function _measureVyperRealQuantFloorStakeWarm() internal returns (uint256) {
+        IQuantizedETHStakingShowcaseVyper quantized =
+            IQuantizedETHStakingShowcaseVyper(deployCode("QuantizedETHStakingShowcase.vy"));
+        quantized.stake{value: REAL_STAKE_FLOOR}();
+        quantized.stake{value: REAL_STAKE_STRICT}();
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
     function _measureVyperRealQuantStrictStake() internal returns (uint256) {
         IQuantizedETHStakingShowcaseVyper quantized =
             IQuantizedETHStakingShowcaseVyper(deployCode("QuantizedETHStakingShowcase.vy"));
         quantized.stake_exact{value: REAL_STAKE_STRICT}();
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
+    function _measureVyperRealQuantStrictStakeWarm() internal returns (uint256) {
+        IQuantizedETHStakingShowcaseVyper quantized =
+            IQuantizedETHStakingShowcaseVyper(deployCode("QuantizedETHStakingShowcase.vy"));
+        quantized.stake_exact{value: REAL_STAKE_STRICT}();
+        quantized.stake_exact{value: REAL_STAKE_STRICT_ALT}();
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
@@ -433,10 +564,28 @@ contract ShowcaseGasTest is Test {
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
+    function _measureSolidityExtremeRawWarm() internal returns (uint256) {
+        RawExtremePackingShowcase raw = new RawExtremePackingShowcase();
+        uint256[12] memory firstValues = _extremeFloorValues();
+        uint256[12] memory secondValues = _extremeStrictValues();
+        raw.setExtremeRaw(firstValues);
+        raw.setExtremeRaw(secondValues);
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
     function _measureSolidityExtremeQuantFloor() internal returns (uint256) {
         QuantizedExtremePackingShowcase quantized = new QuantizedExtremePackingShowcase();
         uint256[12] memory values = _extremeFloorValues();
         quantized.setExtremeFloor(values);
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
+    function _measureSolidityExtremeQuantFloorWarm() internal returns (uint256) {
+        QuantizedExtremePackingShowcase quantized = new QuantizedExtremePackingShowcase();
+        uint256[12] memory firstValues = _extremeFloorValues();
+        uint256[12] memory secondValues = _extremeStrictValues();
+        quantized.setExtremeFloor(firstValues);
+        quantized.setExtremeFloor(secondValues);
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
@@ -447,10 +596,28 @@ contract ShowcaseGasTest is Test {
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
+    function _measureSolidityExtremeQuantStrictWarm() internal returns (uint256) {
+        QuantizedExtremePackingShowcase quantized = new QuantizedExtremePackingShowcase();
+        uint256[12] memory firstValues = _extremeStrictValues();
+        uint256[12] memory secondValues = _extremeStrictValuesAlt();
+        quantized.setExtremeStrict(firstValues);
+        quantized.setExtremeStrict(secondValues);
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
     function _measureVyperExtremeRaw() internal returns (uint256) {
         IRawExtremePackingShowcaseVyper raw = IRawExtremePackingShowcaseVyper(deployCode("RawExtremePackingShowcase.vy"));
         uint256[12] memory values = _extremeFloorValues();
         raw.set_extreme_raw(values);
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
+    function _measureVyperExtremeRawWarm() internal returns (uint256) {
+        IRawExtremePackingShowcaseVyper raw = IRawExtremePackingShowcaseVyper(deployCode("RawExtremePackingShowcase.vy"));
+        uint256[12] memory firstValues = _extremeFloorValues();
+        uint256[12] memory secondValues = _extremeStrictValues();
+        raw.set_extreme_raw(firstValues);
+        raw.set_extreme_raw(secondValues);
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
@@ -462,11 +629,31 @@ contract ShowcaseGasTest is Test {
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 
+    function _measureVyperExtremeQuantFloorWarm() internal returns (uint256) {
+        IQuantizedExtremePackingShowcaseVyper quantized =
+            IQuantizedExtremePackingShowcaseVyper(deployCode("QuantizedExtremePackingShowcase.vy"));
+        uint256[12] memory firstValues = _extremeFloorValues();
+        uint256[12] memory secondValues = _extremeStrictValues();
+        quantized.set_extreme_floor(firstValues);
+        quantized.set_extreme_floor(secondValues);
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
     function _measureVyperExtremeQuantStrict() internal returns (uint256) {
         IQuantizedExtremePackingShowcaseVyper quantized =
             IQuantizedExtremePackingShowcaseVyper(deployCode("QuantizedExtremePackingShowcase.vy"));
         uint256[12] memory values = _extremeStrictValues();
         quantized.set_extreme_strict(values);
+        return uint256(vm.lastCallGas().gasTotalUsed);
+    }
+
+    function _measureVyperExtremeQuantStrictWarm() internal returns (uint256) {
+        IQuantizedExtremePackingShowcaseVyper quantized =
+            IQuantizedExtremePackingShowcaseVyper(deployCode("QuantizedExtremePackingShowcase.vy"));
+        uint256[12] memory firstValues = _extremeStrictValues();
+        uint256[12] memory secondValues = _extremeStrictValuesAlt();
+        quantized.set_extreme_strict(firstValues);
+        quantized.set_extreme_strict(secondValues);
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
 }
