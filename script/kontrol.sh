@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ARTIFACT_DIR="${ROOT_DIR}/.kontrol"
 IMAGE="${KONTROL_DOCKER_IMAGE:-runtimeverificationinc/kontrol:ubuntu-jammy-1.0.231}"
 USE_BOOSTER="${KONTROL_USE_BOOSTER:-0}"
+CONFIG_FILE="${KONTROL_CONFIG_FILE:-kontrol.toml}"
+CONFIG_PROFILE="${KONTROL_CONFIG_PROFILE:-local-max}"
 
 usage() {
   cat <<'EOF'
@@ -40,9 +42,9 @@ prove_matches() {
   local -a patterns=("$@")
   ensure_runtime
   mkdir -p "${ARTIFACT_DIR}"
-  docker_kontrol "kontrol build --config-file kontrol.toml"
+  docker_kontrol "kontrol build --config-file ${CONFIG_FILE}"
   for pattern in "${patterns[@]}"; do
-    local prove_cmd="kontrol prove --config-file kontrol.toml --match-test '${pattern}'"
+    local prove_cmd="kontrol prove --config-file ${CONFIG_FILE} --config-profile ${CONFIG_PROFILE} --match-test '${pattern}'"
     if [[ "${USE_BOOSTER}" != "1" ]]; then
       prove_cmd+=" --no-use-booster"
     fi
@@ -64,8 +66,8 @@ case "${1:-}" in
     ensure_runtime
     mkdir -p "${ARTIFACT_DIR}"
     mkdir -p "${ROOT_DIR}/out/proofs"
-    docker_kontrol "kontrol build --config-file kontrol.toml"
-    docker_kontrol "kontrol list --config-file kontrol.toml"
+    docker_kontrol "kontrol build --config-file ${CONFIG_FILE}"
+    docker_kontrol "kontrol list --config-file ${CONFIG_FILE}"
     ;;
   clean)
     rm -rf "${ARTIFACT_DIR}"
