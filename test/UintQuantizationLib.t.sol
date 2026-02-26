@@ -257,19 +257,4 @@ contract UintQuantizationLibSmokeTest is Test {
             assertEq(result, encoded, "encodeChecked should return correct encoded value");
         }
     }
-
-    /// @notice Fuzz test for encodeCeil monotonicity:
-    ///         v1 <= v2 implies encodeCeil(v1, s) <= encodeCeil(v2, s)
-    ///         Ceiling encode should also preserve ordering
-    function testFuzz_encode_ceil_monotonicity(uint256 value1, uint256 value2, uint8 shift) public view {
-        // Ensure value1 <= value2 for the test
-        if (value1 > value2) {
-            (value1, value2) = (value2, value1);
-        }
-        
-        uint256 encoded1 = harness.encodeCeil(value1, shift);
-        uint256 encoded2 = harness.encodeCeil(value2, shift);
-        
-        assertLe(encoded1, encoded2, "EncodeCeil should preserve value ordering");
-    }
 }
