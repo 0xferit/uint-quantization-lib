@@ -69,11 +69,11 @@ contract ProofUintQuantizationVyper is ProofAssumptions {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode.selector, value, shift));
     }
 
-    function proof_parity_decode(uint256 compressed, uint256 shift) public view {
+    function prove_parity_decode(uint256 compressed, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.decode.selector, compressed, shift));
     }
 
-    function proof_parity_step_size(uint256 shift) public view {
+    function prove_parity_step_size(uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.step_size.selector, shift));
     }
 
@@ -95,7 +95,7 @@ contract ProofUintQuantizationVyper is ProofAssumptions {
         );
     }
 
-    function proof_parity_encode_lossless(uint256 value, uint256 shift) public view {
+    function prove_parity_encode_lossless(uint256 value, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_lossless.selector, value, shift));
     }
 

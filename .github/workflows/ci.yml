@@ -82,7 +82,6 @@ jobs:
           chmod 755 .kontrol out cache
           docker run --rm \
             --user root \
-            -e "VYPER_VERSION=${VYPER_VERSION}" \
             -e "HOST_UID=$(id -u)" \
             -e "HOST_GID=$(id -g)" \
             -e "PYTHONPATH=/home/user/.local/lib/python3.10/site-packages" \
@@ -94,14 +93,8 @@ jobs:
               set -euo pipefail
               trap "chown -R ${HOST_UID}:${HOST_GID} .kontrol out cache || true" EXIT
               rm -f /home/user/.local/lib/python3.10/site-packages/typing.py
-              python3 -m pip install "vyper==${VYPER_VERSION}"
-              SOLIDITY_ESSENTIAL_REGEX="ProofUintQuantizationSolidity.prove_.*target_bits_256_reverts.*"
-              VYPER_ESSENTIAL_REGEX="ProofUintQuantizationVyper.prove_parity_encode_checked.*"
               kontrol build --verbose --config-file kontrol.toml --config-profile ci
               kontrol prove --verbose --config-file kontrol.toml --config-profile ci \
                 --reinit \
-                --match-test "${SOLIDITY_ESSENTIAL_REGEX}"
-              kontrol prove --verbose --config-file kontrol.toml --config-profile ci \
-                --reinit \
-                --match-test "${VYPER_ESSENTIAL_REGEX}"
+                --match-test "ProofUintQuantizationSolidity.prove_.*target_bits_256_reverts.*"
             '

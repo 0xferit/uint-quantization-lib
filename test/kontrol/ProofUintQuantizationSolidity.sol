@@ -51,7 +51,7 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         harness = new UintQuantizationKontrolHarness();
     }
 
-    function proof_encode_decode_le_original(uint256 value, uint256 shift) public {
+    function prove_encode_decode_le_original(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         _assumeNoDecodeOverflow(value, shift);
         uint256 encoded = harness.encode(value, shift);
@@ -106,7 +106,7 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         _assertOverflowRevert(abi.encodeWithSelector(harness.encodeChecked.selector, value, shift, 256));
     }
 
-    function proof_encode_lossless_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
+    function prove_encode_lossless_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
         _assertOverflowRevert(abi.encodeWithSelector(harness.encodeLosslessChecked.selector, value, shift, 256));
     }
 
