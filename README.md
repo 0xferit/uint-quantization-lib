@@ -94,6 +94,13 @@ contract FeeAccumulator {
 }
 ```
 
+## Which encode function should I use?
+
+> - `encode` — Fast, unchecked floor encoding. Use when you know the value fits.
+> - `encodeChecked` — Reverts on overflow (value does not fit `targetBits`). Use for safe storage writes.
+> - `encodeLossless` — Reverts if any precision is lost. Use when exactness matters.
+> - `encodeLosslessChecked` — Reverts on overflow OR precision loss. Strictest mode.
+
 ## Showcase and gas savings
 
 Showcase contracts under `src/showcase/` compare:
