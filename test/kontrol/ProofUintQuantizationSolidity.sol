@@ -11,16 +11,8 @@ contract UintQuantizationKontrolHarness {
         return value.encode(shift);
     }
 
-    function encodeCeil(uint256 value, uint256 shift) external pure returns (uint256) {
-        return value.encodeCeil(shift);
-    }
-
     function decode(uint256 compressed, uint256 shift) external pure returns (uint256) {
         return compressed.decode(shift);
-    }
-
-    function decodeCeil(uint256 compressed, uint256 shift) external pure returns (uint256) {
-        return compressed.decodeCeil(shift);
     }
 
     function stepSize(uint256 shift) external pure returns (uint256) {
@@ -43,10 +35,6 @@ contract UintQuantizationKontrolHarness {
         return value.encodeChecked(shift, targetBits);
     }
 
-    function encodeCeilChecked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256) {
-        return value.encodeCeilChecked(shift, targetBits);
-    }
-
     function encodeLossless(uint256 value, uint256 shift) external pure returns (uint256) {
         return value.encodeLossless(shift);
     }
@@ -63,7 +51,7 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         harness = new UintQuantizationKontrolHarness();
     }
 
-    function prove_encode_decode_le_original(uint256 value, uint256 shift) public {
+    function proof_encode_decode_le_original(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         _assumeNoDecodeOverflow(value, shift);
         uint256 encoded = harness.encode(value, shift);
@@ -75,39 +63,7 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         assertLe(decoded, value);
     }
 
-    function prove_encode_ceil_decode_ge_original(uint256 value, uint256 shift) public {
-        _assumeShiftValid(shift);
-        _assumeNoDecodeOverflow(value, shift);
-        uint256 encodedCeil = harness.encodeCeil(value, shift);
-        uint256 decoded = harness.decode(encodedCeil, shift);
-        assertGe(decoded, value);
-    }
-
-    function prove_decode_le_value_le_decode_ceil(uint256 value, uint256 shift) public {
-        _assumeShiftValid(shift);
-        _assumeNoDecodeOverflow(value, shift);
-        uint256 encoded = harness.encode(value, shift);
-        uint256 lower = harness.decode(encoded, shift);
-        uint256 upper = harness.decodeCeil(encoded, shift);
-        assertLe(lower, value);
-        assertLe(value, upper);
-    }
-
-    function prove_encode_le_encode_ceil(uint256 value, uint256 shift) public {
-        _assumeShiftValid(shift);
-        uint256 floorEncoded = harness.encode(value, shift);
-        uint256 ceilEncoded = harness.encodeCeil(value, shift);
-        assertLe(floorEncoded, ceilEncoded);
-    }
-
-    function prove_encode_ceil_at_most_one_above_encode(uint256 value, uint256 shift) public {
-        _assumeShiftValid(shift);
-        uint256 floorEncoded = harness.encode(value, shift);
-        uint256 ceilEncoded = harness.encodeCeil(value, shift);
-        assertLe(ceilEncoded - floorEncoded, 1);
-    }
-
-    function prove_remainder_lt_step_size(uint256 value, uint256 shift) public {
+    function proof_remainder_lt_step_size(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         uint256 rem = harness.remainder(value, shift);
         uint256 step = harness.stepSize(shift);
@@ -150,11 +106,7 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         _assertOverflowRevert(abi.encodeWithSelector(harness.encodeChecked.selector, value, shift, 256));
     }
 
-    function prove_encode_ceil_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
-        _assertOverflowRevert(abi.encodeWithSelector(harness.encodeCeilChecked.selector, value, shift, 256));
-    }
-
-    function prove_encode_lossless_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
+    function proof_encode_lossless_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
         _assertOverflowRevert(abi.encodeWithSelector(harness.encodeLosslessChecked.selector, value, shift, 256));
     }
 
