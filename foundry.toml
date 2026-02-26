@@ -7,7 +7,7 @@ optimizer = true
 optimizer_runs = 0x10000
 
 [fuzz]
-runs = 0x1000
+runs = 0x10000
 
 [dependencies]
 forge-std = "1.14.0"
