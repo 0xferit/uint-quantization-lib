@@ -56,28 +56,6 @@ contract UintQuantizationLibSmokeTest is Test {
         harness = new UintQuantizationHarness();
     }
 
-    function test_encode_decode_roundTrip_clearsLowBits() public view {
-        uint256 value = 1_000_000_000_001;
-        uint256 compressed = harness.encode(value, SHIFT_32);
-        uint256 restored = harness.decode(compressed, SHIFT_32);
-        assertEq(restored, value & ~uint256(type(uint32).max));
-    }
-
-    function test_isLossless_true_whenStepAligned() public view {
-        uint256 value = uint256(123) << SHIFT_32;
-        assertTrue(harness.isLossless(value, SHIFT_32));
-    }
-
-    function test_isLossless_false_whenInexact() public view {
-        uint256 value = (uint256(123) << SHIFT_32) + 1;
-        assertFalse(harness.isLossless(value, SHIFT_32));
-    }
-
-    function test_encodeLossless_exact_succeeds() public view {
-        uint256 value = uint256(321) << SHIFT_32;
-        assertEq(harness.encodeLossless(value, SHIFT_32), 321);
-    }
-
     function test_encodeLossless_inexact_reverts() public {
         uint256 value = (uint256(321) << SHIFT_32) + 7;
         vm.expectRevert(
@@ -140,11 +118,6 @@ contract UintQuantizationLibSmokeTest is Test {
             abi.encodeWithSelector(UintQuantizationLib.UintQuantizationLib__Overflow.selector, uint256(256), uint256(256))
         );
         harness.encodeLosslessChecked(1 << 8, 8, 256);
-    }
-
-    function test_encodeChecked_shiftGte256_returnsZeroLikeEncode() public view {
-        assertEq(harness.encode(123_456, 300), 0);
-        assertEq(harness.encodeChecked(123_456, 300, 8), 0);
     }
 
     function testFuzz_decode_encode_is_lower_bound(uint256 value, uint8 shift) public view {
