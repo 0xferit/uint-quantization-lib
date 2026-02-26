@@ -42,6 +42,10 @@ def decode(compressed: uint256, shift_bits: uint256) -> uint256:
     """
     @notice Left-shifts `compressed` by `shift_bits`, restoring discarded bits as zeros.
     @dev    For shift_bits >= 256 the EVM returns 0 consistently; no revert is issued.
+            If `compressed << shift_bits` exceeds 2^256, high bits are silently truncated (standard
+            EVM SHL behavior). Callers who need arithmetic (non-wrapping) bounds should ensure
+            the shifted value fits in uint256 (e.g., via `max_representable` validation during
+            encoding).
     """
     if shift_bits >= 256:
         return 0
