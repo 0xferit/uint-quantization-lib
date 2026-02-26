@@ -56,14 +56,6 @@ contract UintQuantizationLibSmokeTest is Test {
         harness = new UintQuantizationHarness();
     }
 
-
-
-
-
-
-
-
-
     function test_encodeLossless_inexact_reverts() public {
         uint256 value = (uint256(321) << SHIFT_32) + 7;
         vm.expectRevert(
@@ -127,8 +119,6 @@ contract UintQuantizationLibSmokeTest is Test {
         );
         harness.encodeLosslessChecked(1 << 8, 8, 256);
     }
-
-
 
     function testFuzz_decode_encode_is_lower_bound(uint256 value, uint8 shift) public view {
         uint256 encoded = harness.encode(value, shift);
