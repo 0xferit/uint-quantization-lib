@@ -80,55 +80,55 @@ contract ProofUintQuantizationVyper is ProofAssumptions {
         solidityMirror = IUintQuantizationLibVyperProof(address(new UintQuantizationSolidityMirrorProof()));
     }
 
-    function proof_parity_encode(uint256 value, uint256 shift) public view {
+    function prove_parity_encode(uint256 value, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode.selector, value, shift));
     }
 
-    function proof_parity_encode_ceil(uint256 value, uint256 shift) public view {
+    function prove_parity_encode_ceil(uint256 value, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_ceil.selector, value, shift));
     }
 
-    function proof_parity_decode(uint256 compressed, uint256 shift) public view {
+    function prove_parity_decode(uint256 compressed, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.decode.selector, compressed, shift));
     }
 
-    function proof_parity_decode_ceil(uint256 compressed, uint256 shift) public view {
+    function prove_parity_decode_ceil(uint256 compressed, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.decode_ceil.selector, compressed, shift));
     }
 
-    function proof_parity_step_size(uint256 shift) public view {
+    function prove_parity_step_size(uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.step_size.selector, shift));
     }
 
-    function proof_parity_remainder(uint256 value, uint256 shift) public view {
+    function prove_parity_remainder(uint256 value, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.remainder.selector, value, shift));
     }
 
-    function proof_parity_is_lossless(uint256 value, uint256 shift) public view {
+    function prove_parity_is_lossless(uint256 value, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.is_lossless.selector, value, shift));
     }
 
-    function proof_parity_max_representable(uint256 shift, uint256 targetBits) public view {
+    function prove_parity_max_representable(uint256 shift, uint256 targetBits) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.max_representable.selector, shift, targetBits));
     }
 
-    function proof_parity_encode_checked(uint256 value, uint256 shift, uint256 targetBits) public view {
+    function prove_parity_encode_checked(uint256 value, uint256 shift, uint256 targetBits) public view {
         _assertParity(
             abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_checked.selector, value, shift, targetBits)
         );
     }
 
-    function proof_parity_encode_ceil_checked(uint256 value, uint256 shift, uint256 targetBits) public view {
+    function prove_parity_encode_ceil_checked(uint256 value, uint256 shift, uint256 targetBits) public view {
         _assertParity(
             abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_ceil_checked.selector, value, shift, targetBits)
         );
     }
 
-    function proof_parity_encode_lossless(uint256 value, uint256 shift) public view {
+    function prove_parity_encode_lossless(uint256 value, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_lossless.selector, value, shift));
     }
 
-    function proof_parity_encode_lossless_checked(uint256 value, uint256 shift, uint256 targetBits) public view {
+    function prove_parity_encode_lossless_checked(uint256 value, uint256 shift, uint256 targetBits) public view {
         _assertParity(
             abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_lossless_checked.selector, value, shift, targetBits)
         );

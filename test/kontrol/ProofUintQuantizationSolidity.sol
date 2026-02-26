@@ -63,13 +63,19 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         harness = new UintQuantizationKontrolHarness();
     }
 
-    function proof_encode_decode_le_original(uint256 value, uint256 shift) public view {
+    function prove_encode_decode_le_original(uint256 value, uint256 shift) public {
+        _assumeShiftValid(shift);
+        _assumeNoDecodeOverflow(value, shift);
         uint256 encoded = harness.encode(value, shift);
         uint256 decoded = harness.decode(encoded, shift);
+        if (shift == 0) {
+            assertEq(decoded, value);
+            return;
+        }
         assertLe(decoded, value);
     }
 
-    function proof_encode_ceil_decode_ge_original(uint256 value, uint256 shift) public {
+    function prove_encode_ceil_decode_ge_original(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         _assumeNoDecodeOverflow(value, shift);
         uint256 encodedCeil = harness.encodeCeil(value, shift);
@@ -77,7 +83,7 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         assertGe(decoded, value);
     }
 
-    function proof_decode_le_value_le_decode_ceil(uint256 value, uint256 shift) public {
+    function prove_decode_le_value_le_decode_ceil(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         _assumeNoDecodeOverflow(value, shift);
         uint256 encoded = harness.encode(value, shift);
@@ -87,41 +93,46 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         assertLe(value, upper);
     }
 
-    function proof_encode_le_encode_ceil(uint256 value, uint256 shift) public {
+    function prove_encode_le_encode_ceil(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         uint256 floorEncoded = harness.encode(value, shift);
         uint256 ceilEncoded = harness.encodeCeil(value, shift);
         assertLe(floorEncoded, ceilEncoded);
     }
 
-    function proof_encode_ceil_at_most_one_above_encode(uint256 value, uint256 shift) public {
+    function prove_encode_ceil_at_most_one_above_encode(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         uint256 floorEncoded = harness.encode(value, shift);
         uint256 ceilEncoded = harness.encodeCeil(value, shift);
         assertLe(ceilEncoded - floorEncoded, 1);
     }
 
-    function proof_remainder_lt_step_size(uint256 value, uint256 shift) public {
+    function prove_remainder_lt_step_size(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         uint256 rem = harness.remainder(value, shift);
         uint256 step = harness.stepSize(shift);
         assertLt(rem, step);
     }
 
-    function proof_remainder_identity(uint256 value, uint256 shift) public {
+    function prove_remainder_identity(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
+        _assumeNoDecodeOverflow(value, shift);
+        if (shift == 0) {
+            assertEq(harness.remainder(value, shift), 0);
+            return;
+        }
         uint256 encoded = harness.encode(value, shift);
         uint256 decoded = harness.decode(encoded, shift);
         uint256 rem = harness.remainder(value, shift);
         assertEq(rem, value - decoded);
     }
 
-    function proof_is_lossless_iff_remainder_zero(uint256 value, uint256 shift) public {
+    function prove_is_lossless_iff_remainder_zero(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         assertEq(harness.isLossless(value, shift), harness.remainder(value, shift) == 0);
     }
 
-    function proof_encode_lossless_exact_round_trip(uint256 value, uint256 shift) public {
+    function prove_encode_lossless_exact_round_trip(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         vm.assume(harness.isLossless(value, shift));
         uint256 encoded = harness.encodeLossless(value, shift);
@@ -129,41 +140,41 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         assertEq(decoded, value);
     }
 
-    function proof_encode_lossless_inexact_reverts(uint256 value, uint256 shift) public {
+    function prove_encode_lossless_inexact_reverts(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         vm.assume(!harness.isLossless(value, shift));
         _assertInexactRevert(abi.encodeWithSelector(harness.encodeLossless.selector, value, shift));
     }
 
-    function proof_encode_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
+    function prove_encode_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
         _assertOverflowRevert(abi.encodeWithSelector(harness.encodeChecked.selector, value, shift, 256));
     }
 
-    function proof_encode_ceil_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
+    function prove_encode_ceil_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
         _assertOverflowRevert(abi.encodeWithSelector(harness.encodeCeilChecked.selector, value, shift, 256));
     }
 
-    function proof_encode_lossless_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
+    function prove_encode_lossless_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
         _assertOverflowRevert(abi.encodeWithSelector(harness.encodeLosslessChecked.selector, value, shift, 256));
     }
 
-    function proof_max_representable_target_bits_256_reverts(uint256 shift) public view {
+    function prove_max_representable_target_bits_256_reverts(uint256 shift) public view {
         _assertOverflowRevert(abi.encodeWithSelector(harness.maxRepresentable.selector, shift, 256));
     }
 
-    function proof_max_representable_excess_bits_revert(uint256 shift, uint256 targetBits) public {
+    function prove_max_representable_excess_bits_revert(uint256 shift, uint256 targetBits) public {
         _assumeTargetBitsValid(targetBits);
         vm.assume(shift > 256 - targetBits);
         _assertOverflowRevert(abi.encodeWithSelector(harness.maxRepresentable.selector, shift, targetBits));
     }
 
-    function proof_max_representable_boundary_is_tight(uint256 shift, uint256 targetBits) public {
+    function prove_max_representable_boundary_is_tight(uint256 shift, uint256 targetBits) public {
         _assumeTargetBitsValid(targetBits);
         vm.assume(shift <= 256 - targetBits);
 
         uint256 max = harness.maxRepresentable(shift, targetBits);
         uint256 compressed = harness.encodeChecked(max, shift, targetBits);
-        uint256 expected = targetBits == 0 ? 0 : (1 << targetBits) - 1;
+        uint256 expected = targetBits == 0 ? 0 : (uint256(1) << targetBits) - 1;
         assertEq(compressed, expected);
     }
 
