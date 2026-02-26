@@ -43,11 +43,3 @@ def decode_extreme_floor() -> uint256[12]:
         values[i] = lib.decode((p >> (i * WIDTH)) & LANE_MASK, SHIFT)
     return values
 
-@external
-@view
-def decode_extreme_ceil() -> uint256[12]:
-    values: uint256[12] = empty(uint256[12])
-    p: uint256 = self.packed_extreme
-    for i: uint256 in range(12):
-        values[i] = lib.decode_ceil((p >> (i * WIDTH)) & LANE_MASK, SHIFT)
-    return values
