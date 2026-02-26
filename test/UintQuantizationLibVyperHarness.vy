@@ -10,20 +10,12 @@ from src import UintQuantizationLib as lib
 def encode(input_value: uint256, shift_bits: uint256) -> uint256:
     return lib.encode(input_value, shift_bits)
 
-@external
-@pure
-def encode_ceil(input_value: uint256, shift_bits: uint256) -> uint256:
-    return lib.encode_ceil(input_value, shift_bits)
 
 @external
 @pure
 def decode(compressed: uint256, shift_bits: uint256) -> uint256:
     return lib.decode(compressed, shift_bits)
 
-@external
-@pure
-def decode_ceil(compressed: uint256, shift_bits: uint256) -> uint256:
-    return lib.decode_ceil(compressed, shift_bits)
 
 @external
 @pure
@@ -50,10 +42,6 @@ def max_representable(shift_bits: uint256, target_bits: uint256) -> uint256:
 def encode_checked(input_value: uint256, shift_bits: uint256, target_bits: uint256) -> uint256:
     return lib.encode_checked(input_value, shift_bits, target_bits)
 
-@external
-@pure
-def encode_ceil_checked(input_value: uint256, shift_bits: uint256, target_bits: uint256) -> uint256:
-    return lib.encode_ceil_checked(input_value, shift_bits, target_bits)
 
 @external
 @pure
