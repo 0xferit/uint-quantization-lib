@@ -13,16 +13,8 @@ contract UintQuantizationHarness {
         return value.encode(shift);
     }
 
-    function encodeCeil(uint256 value, uint256 shift) external pure returns (uint256) {
-        return value.encodeCeil(shift);
-    }
-
     function decode(uint256 compressed, uint256 shift) external pure returns (uint256) {
         return compressed.decode(shift);
-    }
-
-    function decodeCeil(uint256 compressed, uint256 shift) external pure returns (uint256) {
-        return compressed.decodeCeil(shift);
     }
 
     function stepSize(uint256 shift) external pure returns (uint256) {
@@ -43,10 +35,6 @@ contract UintQuantizationHarness {
 
     function encodeChecked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256) {
         return value.encodeChecked(shift, targetBits);
-    }
-
-    function encodeCeilChecked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256) {
-        return value.encodeCeilChecked(shift, targetBits);
     }
 
     function encodeLossless(uint256 value, uint256 shift) external pure returns (uint256) {
@@ -75,13 +63,6 @@ contract UintQuantizationLibSmokeTest is Test {
         assertEq(restored, value & ~uint256(type(uint32).max));
     }
 
-    function test_decodeCeil_decode_boundsOriginal() public view {
-        uint256 value = (uint256(5) << SHIFT_32) + 999;
-        uint256 compressed = harness.encode(value, SHIFT_32);
-        assertLe(harness.decode(compressed, SHIFT_32), value);
-        assertGe(harness.decodeCeil(compressed, SHIFT_32), value);
-    }
-
     function test_isLossless_true_whenStepAligned() public view {
         uint256 value = uint256(123) << SHIFT_32;
         assertTrue(harness.isLossless(value, SHIFT_32));
@@ -108,13 +89,6 @@ contract UintQuantizationLibSmokeTest is Test {
             )
         );
         harness.encodeLossless(value, SHIFT_32);
-    }
-
-    function test_encodeCeil_shiftTooLarge_reverts() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(UintQuantizationLib.UintQuantizationLib__InvalidShift.selector, uint256(256))
-        );
-        harness.encodeCeil(42, 256);
     }
 
     function test_stepSize_shiftTooLarge_reverts() public {
@@ -161,27 +135,11 @@ contract UintQuantizationLibSmokeTest is Test {
         harness.encodeChecked(1, 0, 256);
     }
 
-    function test_encodeCeilChecked_targetBits256_reverts() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(UintQuantizationLib.UintQuantizationLib__Overflow.selector, uint256(256), uint256(256))
-        );
-        harness.encodeCeilChecked(1, 0, 256);
-    }
-
     function test_encodeLosslessChecked_targetBits256_reverts() public {
         vm.expectRevert(
             abi.encodeWithSelector(UintQuantizationLib.UintQuantizationLib__Overflow.selector, uint256(256), uint256(256))
         );
         harness.encodeLosslessChecked(1 << 8, 8, 256);
-    }
-
-    function test_encodeCeilChecked_encodePassesCeilFails_reverts() public {
-        uint256 value = (uint256(type(uint8).max) << 8) + 1;
-        assertEq(harness.encodeChecked(value, 8, 8), type(uint8).max);
-        vm.expectRevert(
-            abi.encodeWithSelector(UintQuantizationLib.UintQuantizationLib__Overflow.selector, uint256(256), uint256(8))
-        );
-        harness.encodeCeilChecked(value, 8, 8);
     }
 
     function test_encodeChecked_shiftGte256_returnsZeroLikeEncode() public view {
@@ -195,12 +153,10 @@ contract UintQuantizationLibSmokeTest is Test {
         assertLe(decoded, value);
     }
 
-    function testFuzz_decode_ceil_bounds_original_when_shift_valid(uint256 value, uint8 shift) public view {
+    function testFuzz_decode_bounds_original_when_shift_valid(uint256 value, uint8 shift) public view {
         uint256 encoded = harness.encode(value, shift);
-        uint256 lower = harness.decode(encoded, shift);
-        uint256 upper = harness.decodeCeil(encoded, shift);
-        assertLe(lower, value);
-        assertLe(value, upper);
+        uint256 decoded = harness.decode(encoded, shift);
+        assertLe(decoded, value);
     }
 
     function testFuzz_remainder_identity_matches_decode_delta(uint256 value, uint8 shift) public view {
@@ -218,7 +174,7 @@ contract UintQuantizationLibSmokeTest is Test {
         if (!harness.isLossless(value, shift)) {
             return;
         }
-        
+
         uint256 encoded = harness.encode(value, shift);
         uint256 decoded = harness.decode(encoded, shift);
         assertEq(decoded, value, "Lossless round-trip should preserve exact value");
@@ -232,10 +188,10 @@ contract UintQuantizationLibSmokeTest is Test {
         if (value1 > value2) {
             (value1, value2) = (value2, value1);
         }
-        
+
         uint256 encoded1 = harness.encode(value1, shift);
         uint256 encoded2 = harness.encode(value2, shift);
-        
+
         assertLe(encoded1, encoded2, "Encode should preserve value ordering");
     }
 
@@ -245,9 +201,9 @@ contract UintQuantizationLibSmokeTest is Test {
     function testFuzz_encode_checked_overflow_behavior(uint256 value, uint8 shift, uint8 targetBits) public {
         // targetBits must be < 256 for encodeChecked to not revert immediately
         vm.assume(targetBits < 256);
-        
+
         uint256 encoded = value >> shift;
-        
+
         if (encoded >> targetBits != 0) {
             // Value exceeds targetBits capacity, should revert
             vm.expectRevert(

@@ -86,26 +86,6 @@ library UintQuantizationLib {
         }
     }
 
-    /// @notice Right-shifts `value` by `shift`, rounding up (ceiling quantization) if any bits
-    ///         were discarded. Use when the stored value must never under-represent the original.
-    /// @param value  Original value.
-    /// @param shift  Number of least-significant bits to discard. Must be < 256.
-    /// @return Compressed representation, rounded up toward the next integer.
-    function encodeCeil(uint256 value, uint256 shift) internal pure returns (uint256) {
-        _requireValidShift(shift);
-        uint256 rem = _remainderUnchecked(value, shift);
-        uint256 roundUp;
-        assembly ("memory-safe") {
-            // iszero(iszero(x)) converts any nonzero value to 1 and zero to 0 without a JUMPI.
-            roundUp := iszero(iszero(rem))
-        }
-        // The addition cannot overflow: when shift >= 1, value >> shift <= max/2.
-        // When shift == 0, rem == 0 so roundUp == 0.
-        unchecked {
-            return (value >> shift) + roundUp;
-        }
-    }
-
     /// @notice Left-shifts `compressed` by `shift`, restoring discarded bits as zeros.
     ///         Gives the minimum possible original value (lower bound).
     /// @dev    For shift >= 256 the EVM returns 0 consistently; no revert is issued.
@@ -116,20 +96,6 @@ library UintQuantizationLib {
         unchecked {
             return compressed << shift;
         }
-    }
-
-    /// @notice Left-shifts `compressed` by `shift` and fills discarded bit positions with ones.
-    ///         Gives the maximum possible original value that encodes to `compressed`.
-    ///         Satisfies: decode(encode(v, shift), shift) <= v <= decodeCeil(encode(v, shift), shift).
-    /// @dev    Mirrors EVM shift semantics: if `compressed << shift` exceeds 256 bits, high bits
-    ///         are truncated. Callers that require arithmetic (non-wrapping) bounds must ensure
-    ///         the shifted value fits in uint256.
-    /// @param compressed  Previously encoded value.
-    /// @param shift       Number of bits that were discarded during encoding. Must be < 256.
-    /// @return Upper bound on the original value.
-    function decodeCeil(uint256 compressed, uint256 shift) internal pure returns (uint256) {
-        _requireValidShift(shift);
-        return (compressed << shift) | ((uint256(1) << shift) - 1);
     }
 
     // -------------------------------------------------------------------------
@@ -185,19 +151,6 @@ library UintQuantizationLib {
             revert UintQuantizationLib__Overflow(targetBits, 256);
         }
         uint256 compressed = value >> shift;
-        if (compressed >> targetBits != 0) {
-            revert UintQuantizationLib__Overflow(compressed, targetBits);
-        }
-        return compressed;
-    }
-
-    /// @notice Like `encodeCeil` but reverts if the ceiling-rounded result does not fit in
-    ///         `targetBits`. Reverts when `targetBits >= 256`.
-    function encodeCeilChecked(uint256 value, uint256 shift, uint256 targetBits) internal pure returns (uint256) {
-        if (targetBits >= 256) {
-            revert UintQuantizationLib__Overflow(targetBits, 256);
-        }
-        uint256 compressed = encodeCeil(value, shift);
         if (compressed >> targetBits != 0) {
             revert UintQuantizationLib__Overflow(compressed, targetBits);
         }
