@@ -11,23 +11,18 @@ KONTROL_REINIT="${KONTROL_REINIT:-1}"
 KONTROL_PROVE_RETRIES="${KONTROL_PROVE_RETRIES:-3}"
 
 SOLIDITY_ESSENTIAL_REGEX="${KONTROL_SOLIDITY_ESSENTIAL_REGEX:-ProofUintQuantizationSolidity.prove_.*target_bits_256_reverts.*}"
-VYPER_ESSENTIAL_REGEX="${KONTROL_VYPER_ESSENTIAL_REGEX:-ProofUintQuantizationVyper.prove_parity_encode_checked.*}"
 SOLIDITY_FULL_REGEX="${KONTROL_SOLIDITY_FULL_REGEX:-ProofUintQuantizationSolidity.prove_*}"
-VYPER_FULL_REGEX="${KONTROL_VYPER_FULL_REGEX:-ProofUintQuantizationVyper.prove_*}"
 
 usage() {
   cat <<'EOF'
 Usage: ./script/kontrol.sh <command>
 
 Commands:
-  prove-core    Build and prove essential Solidity Kontrol specs (native host Kontrol).
-  prove-core-hi Build and prove Solidity-focused specs with the local-hi profile.
+  prove-core      Build and prove essential Solidity Kontrol specs (native host Kontrol).
+  prove-core-hi   Build and prove Solidity-focused specs with the local-hi profile.
   prove-core-full Build and prove full Solidity Kontrol spec set.
-  prove-parity  Build and prove essential Solidity + Vyper parity specs (native host Kontrol).
-  prove-parity-hi Build and prove Solidity + Vyper parity specs with local-hi profile.
-  prove-parity-full Build and prove full Solidity + Vyper parity spec sets.
-  list          List discovered Kontrol tests/specs (native host Kontrol).
-  clean         Remove local Kontrol artifacts (.kontrol/).
+  list            List discovered Kontrol tests/specs (native host Kontrol).
+  clean           Remove local Kontrol artifacts (.kontrol/).
 EOF
 }
 
@@ -72,10 +67,6 @@ EOF
     exit 1
   fi
 
-  if ! command -v vyper >/dev/null 2>&1; then
-    echo "Vyper is required but not installed. Install vyper==0.4.3 for this repo." >&2
-    exit 1
-  fi
 }
 
 write_toolchain_metadata() {
@@ -84,7 +75,6 @@ write_toolchain_metadata() {
     printf 'timestamp=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     printf 'kontrol_bin=%s\n' "$(command -v "${KONTROL_BIN}")"
     printf 'kontrol_version=%s\n' "$("${KONTROL_BIN}" version | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g' | sed 's/[[:space:]]$//')"
-    printf 'vyper_version=%s\n' "$(vyper --version)"
     printf 'forge_version=%s\n' "$(forge --version | head -n 1)"
   } > "${ARTIFACT_DIR}/local-toolchain.txt"
 }
@@ -126,24 +116,6 @@ case "${1:-}" in
     prove_matches \
       "${CONFIG_PROFILE}" \
       "${SOLIDITY_FULL_REGEX}"
-    ;;
-  prove-parity)
-    prove_matches \
-      "${CONFIG_PROFILE}" \
-      "${SOLIDITY_ESSENTIAL_REGEX}" \
-      "${VYPER_ESSENTIAL_REGEX}"
-    ;;
-  prove-parity-hi)
-    prove_matches \
-      "${LOCAL_HI_PROFILE}" \
-      "${SOLIDITY_ESSENTIAL_REGEX}" \
-      "${VYPER_ESSENTIAL_REGEX}"
-    ;;
-  prove-parity-full)
-    prove_matches \
-      "${CONFIG_PROFILE}" \
-      "${SOLIDITY_FULL_REGEX}" \
-      "${VYPER_FULL_REGEX}"
     ;;
   list)
     cd "${ROOT_DIR}"

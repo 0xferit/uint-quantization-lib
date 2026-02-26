@@ -10,7 +10,6 @@ Kontrol is used for proofs over all symbolic inputs/states for selected properti
 Proof specs live in:
 
 - `test/kontrol/ProofUintQuantizationSolidity.sol`
-- `test/kontrol/ProofUintQuantizationVyper.sol`
 
 They cover:
 
@@ -18,7 +17,6 @@ They cover:
 - Lossless strict-mode properties (`isLossless`, `encodeLossless`).
 - Checked-width safety (`targetBits >= 256` revert behavior).
 - `maxRepresentable` overflow/boundary behavior.
-- Solidity/Vyper parity on return values and revert status.
 
 ## Prerequisites
 
@@ -32,9 +30,6 @@ Docker daemon running locally (`docker info`).
 
 # Prove Solidity-focused specs
 ./script/kontrol.sh prove-core
-
-# Prove Solidity + Vyper parity specs
-./script/kontrol.sh prove-parity
 
 # Remove local proof artifacts
 ./script/kontrol.sh clean

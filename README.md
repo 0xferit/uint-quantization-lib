@@ -1,6 +1,6 @@
 # uint-quantization-lib
 
-A pure-function Solidity/Vyper library for shift-based `uint256` compression.
+A pure-function Solidity library for shift-based `uint256` compression.
 
 Right-shift compression is lossy in general, but it becomes lossless when inputs are aligned to
 the step size `2^shift` (for example, with `shift = 40`, any value that is a multiple of
@@ -162,43 +162,14 @@ forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 The suite enforces that quantized write paths save at least:
 - 32% for the real-life showcase.
 - 80% for the extreme showcase.
-These threshold checks run for both Solidity and Vyper zero-to-nonzero writes.
+These threshold checks run for Solidity zero-to-nonzero writes.
 
 Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv`):
 
 | Scenario | Raw write gas | Quantized floor write gas | Savings |
 |---|---:|---:|---:|
 | Solidity real-life staking | 65,921 | 43,920 | 33.37% |
-| Vyper real-life staking | 65,670 | 43,733 | 33.41% |
 | Solidity extreme (12 slots -> 1 slot) | 290,061 | 49,231 | 83.03% |
-| Vyper extreme (12 slots -> 1 slot) | 289,836 | 48,676 | 83.21% |
-
-## Vyper
-
-Module: `src/UintQuantizationLib.vy`.
-
-### Prerequisites
-
-```bash
-python3 --version   # requires Python >= 3.10 for Vyper 0.4.x
-pip install "vyper>=0.4.0,<0.5"
-vyper --version     # confirm 0.4.x
-```
-
-### Import
-
-```vyper
-from uint-quantization-lib-1.0.0.src import UintQuantizationLib as lib
-
-SHIFT: constant(uint256) = 40
-
-stored: uint56 = uint56(lib.encode_lossless_checked(value, SHIFT, 56))
-restored: uint256 = lib.decode(convert(stored, uint256), SHIFT)
-```
-
-Vyper names are snake_case equivalents:
-`step_size`, `max_representable`, `is_lossless`,
-`encode_lossless`, `encode_lossless_checked`.
 
 ## Formal verification (Kontrol)
 
@@ -210,20 +181,16 @@ For local Apple Silicon runs, use native Kontrol (no Docker), starting with the
 ```bash
 # one-time local install
 APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231
-pip install "vyper==0.4.3"
 
 # local proving
 ./script/kontrol.sh list
 ./script/kontrol.sh prove-core
-./script/kontrol.sh prove-parity
 
-# high-utilization profile commands (essential subset)
+# high-utilization profile command (essential subset)
 ./script/kontrol.sh prove-core-hi
-./script/kontrol.sh prove-parity-hi
 
-# full suites (re-enable broader coverage later)
+# full suite (re-enable broader coverage later)
 ./script/kontrol.sh prove-core-full
-./script/kontrol.sh prove-parity-full
 ```
 
 Each local run writes `.kontrol/local-toolchain.txt` with the detected local
@@ -236,7 +203,6 @@ Profiles:
 
 ```bash
 kontrol prove --config-file kontrol.toml --config-profile local --reinit --match-test "ProofUintQuantizationSolidity.prove_.*target_bits_256_reverts.*"
-kontrol prove --config-file kontrol.toml --config-profile local --reinit --match-test "ProofUintQuantizationVyper.prove_parity_encode_checked.*"
 ```
 
 Benchmark and enforce CPU threshold on local runs:
@@ -258,8 +224,7 @@ When the core workflow is stable again, expand to `prove-core-full` and
 `prove-parity-full`.
 
 The default essential profile is intentionally minimal for fast local/CI iteration:
-target-bit guard proofs and one Solidity/Vyper parity check. Use `prove-core-full` and
-`prove-parity-full` to restore the full semantic property set.
+target-bit guard proofs. Use `prove-core-full` to restore the full semantic property set.
 On high-core machines, this essential profile typically saturates only a few cores, so
 total CPU percentages in the ~7-25% range are expected.
 
