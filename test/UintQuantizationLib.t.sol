@@ -209,4 +209,59 @@ contract UintQuantizationLibSmokeTest is Test {
         uint256 rem = harness.remainder(value, shift);
         assertEq(rem, value - decoded);
     }
+
+    /// @notice Fuzz test for lossless round-trip property:
+    ///         if isLossless(v, s) then decode(encode(v, s), s) == v
+    ///         Mirrors Kontrol proof: prove_encode_lossless_exact_round_trip
+    function testFuzz_lossless_round_trip_is_exact(uint256 value, uint8 shift) public view {
+        // Only test when value is lossless (step-aligned)
+        if (!harness.isLossless(value, shift)) {
+            return;
+        }
+        
+        uint256 encoded = harness.encode(value, shift);
+        uint256 decoded = harness.decode(encoded, shift);
+        assertEq(decoded, value, "Lossless round-trip should preserve exact value");
+    }
+
+    /// @notice Fuzz test for encode monotonicity:
+    ///         v1 <= v2 implies encode(v1, s) <= encode(v2, s)
+    ///         This ensures the encoding preserves ordering of values
+    function testFuzz_encode_monotonicity(uint256 value1, uint256 value2, uint8 shift) public view {
+        // Ensure value1 <= value2 for the test
+        if (value1 > value2) {
+            (value1, value2) = (value2, value1);
+        }
+        
+        uint256 encoded1 = harness.encode(value1, shift);
+        uint256 encoded2 = harness.encode(value2, shift);
+        
+        assertLe(encoded1, encoded2, "Encode should preserve value ordering");
+    }
+
+    /// @notice Fuzz test for encodeChecked overflow safety:
+    ///         When value fits in targetBits after shift, encodeChecked succeeds
+    ///         When value exceeds targetBits capacity, encodeChecked reverts
+    function testFuzz_encode_checked_overflow_behavior(uint256 value, uint8 shift, uint8 targetBits) public {
+        // targetBits must be < 256 for encodeChecked to not revert immediately
+        vm.assume(targetBits < 256);
+        
+        uint256 encoded = value >> shift;
+        
+        if (encoded >> targetBits != 0) {
+            // Value exceeds targetBits capacity, should revert
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    UintQuantizationLib.UintQuantizationLib__Overflow.selector,
+                    encoded,
+                    targetBits
+                )
+            );
+            harness.encodeChecked(value, shift, targetBits);
+        } else {
+            // Value fits in targetBits, should succeed
+            uint256 result = harness.encodeChecked(value, shift, targetBits);
+            assertEq(result, encoded, "encodeChecked should return correct encoded value");
+        }
+    }
 }
