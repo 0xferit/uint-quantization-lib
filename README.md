@@ -60,6 +60,28 @@ error UintQuantizationLib__InvalidShift(uint256 shift);
 error UintQuantizationLib__InexactInput(uint256 value, uint256 shift, uint256 remainder);
 ```
 
+## Worked example
+
+With `SHIFT = 4` and `WIDTH = 8`:
+
+| Parameter | Calculation | Result |
+|---|---|---|
+| Step size | `2^4` | `16` |
+| Max encodable value | `(2^8 - 1) << 4` = `255 * 16` | `4080` |
+
+Concrete encode → decode round-trip showing floor behavior:
+
+```solidity
+encode(100, 4)     // 100 >> 4 = 6
+decode(6, 4)       // 6 << 4 = 96
+remainder(100, 4)  // 100 % 16 = 4
+```
+
+In this example:
+- The original value `100` is floored to `96` after the round-trip.
+- The discarded precision is `4` (the remainder).
+- All values in the range `96` to `111` encode to the same compressed value `6`.
+
 ## Lossless signaling pattern
 
 Client-side flow for strict precision:
