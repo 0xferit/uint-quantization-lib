@@ -89,6 +89,10 @@ library UintQuantizationLib {
     /// @notice Left-shifts `compressed` by `shift`, restoring discarded bits as zeros.
     ///         Gives the minimum possible original value (lower bound).
     /// @dev    For shift >= 256 the EVM returns 0 consistently; no revert is issued.
+    ///         If `compressed << shift` exceeds 2^256, high bits are silently truncated (standard
+    ///         EVM SHL behavior). Callers who need arithmetic (non-wrapping) bounds should ensure
+    ///         the shifted value fits in uint256 (e.g., via `maxRepresentable` validation during
+    ///         encoding).
     /// @param compressed  Previously encoded value.
     /// @param shift       Number of bits that were discarded during encoding.
     /// @return Lower bound on the original value.
