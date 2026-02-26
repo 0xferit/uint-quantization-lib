@@ -207,9 +207,6 @@ contract UintQuantizationLibSmokeTest is Test {
     ///         if isLossless(v, s) then decode(encode(v, s), s) == v
     ///         Mirrors Kontrol proof: prove_encode_lossless_exact_round_trip
     function testFuzz_lossless_round_trip_is_exact(uint256 value, uint8 shift) public view {
-        // Bound shift to valid range (0-255)
-        vm.assume(shift < 256);
-        
         // Only test when value is lossless (step-aligned)
         if (!harness.isLossless(value, shift)) {
             return;
@@ -265,9 +262,6 @@ contract UintQuantizationLibSmokeTest is Test {
     ///         v1 <= v2 implies encodeCeil(v1, s) <= encodeCeil(v2, s)
     ///         Ceiling encode should also preserve ordering
     function testFuzz_encode_ceil_monotonicity(uint256 value1, uint256 value2, uint8 shift) public view {
-        // Bound shift to valid range for encodeCeil (< 256)
-        vm.assume(shift < 256);
-        
         // Ensure value1 <= value2 for the test
         if (value1 > value2) {
             (value1, value2) = (value2, value1);
