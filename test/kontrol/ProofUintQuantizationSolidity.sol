@@ -63,7 +63,7 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         assertLe(decoded, value);
     }
 
-    function proof_remainder_lt_step_size(uint256 value, uint256 shift) public {
+    function prove_remainder_lt_step_size(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         uint256 rem = harness.remainder(value, shift);
         uint256 step = harness.stepSize(shift);
