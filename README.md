@@ -197,24 +197,66 @@ Vyper names are snake_case equivalents:
 
 ## Formal verification (Kontrol)
 
-Kontrol proof specs are under `test/kontrol/` and run through Docker:
+Kontrol proof specs are under `test/kontrol/`.
+
+For local Apple Silicon runs, use native Kontrol (no Docker), starting with the
+`kup`-installed `aarch64-darwin` release:
 
 ```bash
+# one-time local install
+APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231
+pip install "vyper==0.4.3"
+
+# local proving
 ./script/kontrol.sh list
 ./script/kontrol.sh prove-core
 ./script/kontrol.sh prove-parity
+
+# high-utilization profile commands (essential subset)
+./script/kontrol.sh prove-core-hi
+./script/kontrol.sh prove-parity-hi
+
+# full suites (re-enable broader coverage later)
+./script/kontrol.sh prove-core-full
+./script/kontrol.sh prove-parity-full
 ```
 
-For high-throughput local proving on multi-core machines, use the `local-max` profile and explicit
-performance tuning:
+Each local run writes `.kontrol/local-toolchain.txt` with the detected local
+binary path and tool versions.
+
+Profiles:
+- `local`: stable native defaults
+- `local-hi`: tuned native profile (`workers=8`, `max-frontier-parallel=8`)
+- `ci`: Docker CI defaults (`workers=8`)
 
 ```bash
-kontrol prove --config-file kontrol.ci.toml --config-profile local-max --optimize-performance 12 --match-test "ProofUintQuantizationSolidity.proof_*"
-kontrol prove --config-file kontrol.ci.toml --config-profile local-max --optimize-performance 12 --match-test "ProofUintQuantizationVyper.proof_*"
+kontrol prove --config-file kontrol.toml --config-profile local --reinit --match-test "ProofUintQuantizationSolidity.prove_.*target_bits_256_reverts.*"
+kontrol prove --config-file kontrol.toml --config-profile local --reinit --match-test "ProofUintQuantizationVyper.prove_parity_encode_checked.*"
 ```
 
-Core proofs cover floor/ceil semantics, strict lossless behavior, width checks, and overflow
-boundaries. Parity proofs check Solidity vs Vyper return/revert equivalence.
+Benchmark and enforce CPU threshold on local runs:
+
+```bash
+./script/kontrol-bench-local.sh --command prove-core-hi --require-min-total-cpu 7
+```
+
+Tune single-process local prove flags and pick the best candidate:
+
+```bash
+./script/kontrol-tune-local.sh --min-total-cpu 7
+```
+
+If no `kup` release candidate meets the required local CPU threshold, escalate to
+a source-build toolchain track and repeat benchmarking/tuning.
+
+When the core workflow is stable again, expand to `prove-core-full` and
+`prove-parity-full`.
+
+The default essential profile is intentionally minimal for fast local/CI iteration:
+target-bit guard proofs and one Solidity/Vyper parity check. Use `prove-core-full` and
+`prove-parity-full` to restore the full semantic property set.
+On high-core machines, this essential profile typically saturates only a few cores, so
+total CPU percentages in the ~7-25% range are expected.
 
 ## License
 

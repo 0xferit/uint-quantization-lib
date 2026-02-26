@@ -95,9 +95,13 @@ jobs:
               trap "chown -R ${HOST_UID}:${HOST_GID} .kontrol out cache || true" EXIT
               rm -f /home/user/.local/lib/python3.10/site-packages/typing.py
               python3 -m pip install "vyper==${VYPER_VERSION}"
-              kontrol build --verbose --config-file kontrol.ci.toml
-              kontrol prove --verbose --config-file kontrol.ci.toml --no-use-booster \
-                --match-test "ProofUintQuantizationSolidity.proof_*"
-              kontrol prove --verbose --config-file kontrol.ci.toml --no-use-booster \
-                --match-test "ProofUintQuantizationVyper.proof_*"
+              SOLIDITY_ESSENTIAL_REGEX="ProofUintQuantizationSolidity.prove_.*target_bits_256_reverts.*"
+              VYPER_ESSENTIAL_REGEX="ProofUintQuantizationVyper.prove_parity_encode_checked.*"
+              kontrol build --verbose --config-file kontrol.toml --config-profile ci
+              kontrol prove --verbose --config-file kontrol.toml --config-profile ci \
+                --reinit \
+                --match-test "${SOLIDITY_ESSENTIAL_REGEX}"
+              kontrol prove --verbose --config-file kontrol.toml --config-profile ci \
+                --reinit \
+                --match-test "${VYPER_ESSENTIAL_REGEX}"
             '

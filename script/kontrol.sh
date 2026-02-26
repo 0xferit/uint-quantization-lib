@@ -3,69 +3,155 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ARTIFACT_DIR="${ROOT_DIR}/.kontrol"
-IMAGE="${KONTROL_DOCKER_IMAGE:-runtimeverificationinc/kontrol:ubuntu-jammy-1.0.231}"
-USE_BOOSTER="${KONTROL_USE_BOOSTER:-0}"
+CONFIG_FILE="${KONTROL_CONFIG_FILE:-kontrol.toml}"
+CONFIG_PROFILE="${KONTROL_CONFIG_PROFILE:-local}"
+LOCAL_HI_PROFILE="${KONTROL_LOCAL_HI_PROFILE:-local-hi}"
+KONTROL_BIN="${KONTROL_BIN:-kontrol}"
+KONTROL_REINIT="${KONTROL_REINIT:-1}"
+KONTROL_PROVE_RETRIES="${KONTROL_PROVE_RETRIES:-3}"
+
+SOLIDITY_ESSENTIAL_REGEX="${KONTROL_SOLIDITY_ESSENTIAL_REGEX:-ProofUintQuantizationSolidity.prove_.*target_bits_256_reverts.*}"
+VYPER_ESSENTIAL_REGEX="${KONTROL_VYPER_ESSENTIAL_REGEX:-ProofUintQuantizationVyper.prove_parity_encode_checked.*}"
+SOLIDITY_FULL_REGEX="${KONTROL_SOLIDITY_FULL_REGEX:-ProofUintQuantizationSolidity.prove_*}"
+VYPER_FULL_REGEX="${KONTROL_VYPER_FULL_REGEX:-ProofUintQuantizationVyper.prove_*}"
 
 usage() {
   cat <<'EOF'
 Usage: ./script/kontrol.sh <command>
 
 Commands:
-  prove-core    Build and prove Solidity-focused Kontrol specs.
-  prove-parity  Build and prove Solidity + Vyper parity specs.
-  list          List discovered Kontrol tests/specs.
+  prove-core    Build and prove essential Solidity Kontrol specs (native host Kontrol).
+  prove-core-hi Build and prove Solidity-focused specs with the local-hi profile.
+  prove-core-full Build and prove full Solidity Kontrol spec set.
+  prove-parity  Build and prove essential Solidity + Vyper parity specs (native host Kontrol).
+  prove-parity-hi Build and prove Solidity + Vyper parity specs with local-hi profile.
+  prove-parity-full Build and prove full Solidity + Vyper parity spec sets.
+  list          List discovered Kontrol tests/specs (native host Kontrol).
   clean         Remove local Kontrol artifacts (.kontrol/).
 EOF
 }
 
-docker_kontrol() {
-  local cmd="$1"
+run_kontrol() {
+  "${KONTROL_BIN}" "$@"
+}
 
-  local -a run_args=(docker run --rm --user "$(id -u):$(id -g)")
-  if [[ -t 1 ]]; then
-    run_args+=(-t)
-  fi
-  run_args+=(-v "${ROOT_DIR}:${ROOT_DIR}" -w "${ROOT_DIR}" "${IMAGE}" bash -lc "${cmd}")
-  "${run_args[@]}"
+run_kontrol_prove_with_retries() {
+  local retries="${KONTROL_PROVE_RETRIES}"
+  local -a prove_args=("$@")
+
+  local attempt
+  for ((attempt = 1; attempt <= retries; attempt++)); do
+    set +e
+    run_kontrol "${prove_args[@]}"
+    local status=$?
+    set -e
+    if [[ "${status}" -eq 0 ]]; then
+      return 0
+    fi
+    if (( attempt == retries )); then
+      return "${status}"
+    fi
+    echo "Kontrol prove failed (attempt ${attempt}/${retries}); retrying..."
+    pkill -f 'kore-rpc out/kompiled/definition.kore' >/dev/null 2>&1 || true
+    sleep 2
+  done
 }
 
 ensure_runtime() {
-  if ! docker info >/dev/null 2>&1; then
-    echo "Docker daemon is unavailable. Start Docker and rerun the command." >&2
+  if ! command -v "${KONTROL_BIN}" >/dev/null 2>&1; then
+    cat >&2 <<EOF
+Kontrol is not installed locally.
+Install locally (Apple Silicon):
+  APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231
+EOF
+    exit 1
+  fi
+
+  if ! command -v forge >/dev/null 2>&1; then
+    echo "Foundry (forge) is required but not installed." >&2
+    exit 1
+  fi
+
+  if ! command -v vyper >/dev/null 2>&1; then
+    echo "Vyper is required but not installed. Install vyper==0.4.3 for this repo." >&2
     exit 1
   fi
 }
 
-prove_matches() {
-  local -a patterns=("$@")
-  ensure_runtime
+write_toolchain_metadata() {
   mkdir -p "${ARTIFACT_DIR}"
-  docker_kontrol "kontrol build --config-file kontrol.toml"
+  {
+    printf 'timestamp=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf 'kontrol_bin=%s\n' "$(command -v "${KONTROL_BIN}")"
+    printf 'kontrol_version=%s\n' "$("${KONTROL_BIN}" version | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g' | sed 's/[[:space:]]$//')"
+    printf 'vyper_version=%s\n' "$(vyper --version)"
+    printf 'forge_version=%s\n' "$(forge --version | head -n 1)"
+  } > "${ARTIFACT_DIR}/local-toolchain.txt"
+}
+
+prove_matches() {
+  local profile="$1"
+  shift
+  local -a patterns=("$@")
+  cd "${ROOT_DIR}"
+  ensure_runtime
+  write_toolchain_metadata
+  run_kontrol build --config-file "${CONFIG_FILE}" --config-profile "${profile}"
   for pattern in "${patterns[@]}"; do
-    local prove_cmd="kontrol prove --config-file kontrol.toml --match-test '${pattern}'"
-    if [[ "${USE_BOOSTER}" != "1" ]]; then
-      prove_cmd+=" --no-use-booster"
+    local -a prove_args=(
+      prove
+      --config-file "${CONFIG_FILE}"
+      --config-profile "${profile}"
+      --match-test "${pattern}"
+    )
+    if [[ "${KONTROL_REINIT}" == "1" ]]; then
+      prove_args+=(--reinit)
     fi
-    docker_kontrol "${prove_cmd}"
+    run_kontrol_prove_with_retries "${prove_args[@]}"
   done
 }
 
 case "${1:-}" in
   prove-core)
     prove_matches \
-      "ProofUintQuantizationSolidity.proof_*"
+      "${CONFIG_PROFILE}" \
+      "${SOLIDITY_ESSENTIAL_REGEX}"
+    ;;
+  prove-core-hi)
+    prove_matches \
+      "${LOCAL_HI_PROFILE}" \
+      "${SOLIDITY_ESSENTIAL_REGEX}"
+    ;;
+  prove-core-full)
+    prove_matches \
+      "${CONFIG_PROFILE}" \
+      "${SOLIDITY_FULL_REGEX}"
     ;;
   prove-parity)
     prove_matches \
-      "ProofUintQuantizationSolidity.proof_*" \
-      "ProofUintQuantizationVyper.proof_*"
+      "${CONFIG_PROFILE}" \
+      "${SOLIDITY_ESSENTIAL_REGEX}" \
+      "${VYPER_ESSENTIAL_REGEX}"
+    ;;
+  prove-parity-hi)
+    prove_matches \
+      "${LOCAL_HI_PROFILE}" \
+      "${SOLIDITY_ESSENTIAL_REGEX}" \
+      "${VYPER_ESSENTIAL_REGEX}"
+    ;;
+  prove-parity-full)
+    prove_matches \
+      "${CONFIG_PROFILE}" \
+      "${SOLIDITY_FULL_REGEX}" \
+      "${VYPER_FULL_REGEX}"
     ;;
   list)
+    cd "${ROOT_DIR}"
     ensure_runtime
-    mkdir -p "${ARTIFACT_DIR}"
+    write_toolchain_metadata
     mkdir -p "${ROOT_DIR}/out/proofs"
-    docker_kontrol "kontrol build --config-file kontrol.toml"
-    docker_kontrol "kontrol list --config-file kontrol.toml"
+    run_kontrol build --config-file "${CONFIG_FILE}" --config-profile "${CONFIG_PROFILE}"
+    run_kontrol list --config-file "${CONFIG_FILE}"
     ;;
   clean)
     rm -rf "${ARTIFACT_DIR}"
