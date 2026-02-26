@@ -115,7 +115,6 @@ contract QuantizedETHStakingShowcase {
         return UintQuantizationLib.maxRepresentable(SHIFT, AMOUNT_BITS);
     }
 
-
     function stakeRemainder(uint256 amount) external pure returns (uint256) {
         return amount.remainder(SHIFT);
     }
@@ -180,6 +179,4 @@ contract QuantizedExtremePackingShowcase {
             values[i] = ((p >> (i * WIDTH)) & LANE_MASK).decode(SHIFT);
         }
     }
-
-
 }

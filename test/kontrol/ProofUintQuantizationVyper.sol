@@ -23,11 +23,9 @@ contract UintQuantizationSolidityMirrorProof {
         return value.encode(shift);
     }
 
-
     function decode(uint256 compressed, uint256 shift) external pure returns (uint256) {
         return compressed.decode(shift);
     }
-
 
     function step_size(uint256 shift) external pure returns (uint256) {
         return UintQuantizationLib.stepSize(shift);
@@ -48,7 +46,6 @@ contract UintQuantizationSolidityMirrorProof {
     function encode_checked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256) {
         return value.encodeChecked(shift, targetBits);
     }
-
 
     function encode_lossless(uint256 value, uint256 shift) external pure returns (uint256) {
         return value.encodeLossless(shift);
@@ -72,11 +69,9 @@ contract ProofUintQuantizationVyper is ProofAssumptions {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode.selector, value, shift));
     }
 
-
     function proof_parity_decode(uint256 compressed, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.decode.selector, compressed, shift));
     }
-
 
     function proof_parity_step_size(uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.step_size.selector, shift));
@@ -99,7 +94,6 @@ contract ProofUintQuantizationVyper is ProofAssumptions {
             abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_checked.selector, value, shift, targetBits)
         );
     }
-
 
     function proof_parity_encode_lossless(uint256 value, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_lossless.selector, value, shift));

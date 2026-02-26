@@ -36,7 +36,6 @@ def encode(input_value: uint256, shift_bits: uint256) -> uint256:
         return 0
     return input_value >> shift_bits
 
-
 @internal
 @pure
 def decode(compressed: uint256, shift_bits: uint256) -> uint256:
@@ -47,7 +46,6 @@ def decode(compressed: uint256, shift_bits: uint256) -> uint256:
     if shift_bits >= 256:
         return 0
     return compressed << shift_bits
-
 
 # ---------------------------------------------------------------------------
 # Introspection helpers
@@ -106,7 +104,6 @@ def encode_checked(input_value: uint256, shift_bits: uint256, target_bits: uint2
         compressed = input_value >> shift_bits
     assert compressed >> target_bits == 0, "UintQuantizationLib__Overflow"
     return compressed
-
 
 @internal
 @pure

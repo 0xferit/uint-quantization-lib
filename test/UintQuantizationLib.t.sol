@@ -13,11 +13,9 @@ contract UintQuantizationHarness {
         return value.encode(shift);
     }
 
-
     function decode(uint256 compressed, uint256 shift) external pure returns (uint256) {
         return compressed.decode(shift);
     }
-
 
     function stepSize(uint256 shift) external pure returns (uint256) {
         return UintQuantizationLib.stepSize(shift);
@@ -38,7 +36,6 @@ contract UintQuantizationHarness {
     function encodeChecked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256) {
         return value.encodeChecked(shift, targetBits);
     }
-
 
     function encodeLossless(uint256 value, uint256 shift) external pure returns (uint256) {
         return value.encodeLossless(shift);
@@ -65,7 +62,6 @@ contract UintQuantizationLibSmokeTest is Test {
         uint256 restored = harness.decode(compressed, SHIFT_32);
         assertEq(restored, value & ~uint256(type(uint32).max));
     }
-
 
     function test_isLossless_true_whenStepAligned() public view {
         uint256 value = uint256(123) << SHIFT_32;
@@ -94,7 +90,6 @@ contract UintQuantizationLibSmokeTest is Test {
         );
         harness.encodeLossless(value, SHIFT_32);
     }
-
 
     function test_stepSize_shiftTooLarge_reverts() public {
         vm.expectRevert(
@@ -133,14 +128,12 @@ contract UintQuantizationLibSmokeTest is Test {
         harness.encodeChecked(1, 0, 256);
     }
 
-
     function test_encodeLosslessChecked_targetBits256_reverts() public {
         vm.expectRevert(
             abi.encodeWithSelector(UintQuantizationLib.UintQuantizationLib__Overflow.selector, uint256(256), uint256(256))
         );
         harness.encodeLosslessChecked(1 << 8, 8, 256);
     }
-
 
     function test_encodeChecked_shiftGte256_returnsZeroLikeEncode() public view {
         assertEq(harness.encode(123_456, 300), 0);

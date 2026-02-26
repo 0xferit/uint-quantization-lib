@@ -84,8 +84,6 @@ library UintQuantizationLib {
         }
     }
 
-
-
     /// @notice Left-shifts `compressed` by `shift`, restoring discarded bits as zeros.
     ///         Gives the minimum possible original value (lower bound).
     /// @dev    For shift >= 256 the EVM returns 0 consistently; no revert is issued.
@@ -97,8 +95,6 @@ library UintQuantizationLib {
             return compressed << shift;
         }
     }
-
-
 
     // -------------------------------------------------------------------------
     // Introspection helpers
@@ -155,8 +151,6 @@ library UintQuantizationLib {
         }
         return compressed;
     }
-
-
 
     /// @notice Strict encoding mode: succeeds only if floor encoding is lossless
     ///         (`value` is step-aligned), otherwise reverts with `UintQuantizationLib__InexactInput`.
