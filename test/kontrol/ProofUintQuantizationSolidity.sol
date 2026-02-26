@@ -70,7 +70,7 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         assertLt(rem, step);
     }
 
-    function proof_remainder_identity(uint256 value, uint256 shift) public {
+    function prove_remainder_identity(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         _assumeNoDecodeOverflow(value, shift);
         if (shift == 0) {
@@ -83,12 +83,12 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         assertEq(rem, value - decoded);
     }
 
-    function proof_is_lossless_iff_remainder_zero(uint256 value, uint256 shift) public {
+    function prove_is_lossless_iff_remainder_zero(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         assertEq(harness.isLossless(value, shift), harness.remainder(value, shift) == 0);
     }
 
-    function proof_encode_lossless_exact_round_trip(uint256 value, uint256 shift) public {
+    function prove_encode_lossless_exact_round_trip(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         vm.assume(harness.isLossless(value, shift));
         uint256 encoded = harness.encodeLossless(value, shift);
@@ -96,13 +96,13 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         assertEq(decoded, value);
     }
 
-    function proof_encode_lossless_inexact_reverts(uint256 value, uint256 shift) public {
+    function prove_encode_lossless_inexact_reverts(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         vm.assume(!harness.isLossless(value, shift));
         _assertInexactRevert(abi.encodeWithSelector(harness.encodeLossless.selector, value, shift));
     }
 
-    function proof_encode_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
+    function prove_encode_checked_target_bits_256_reverts(uint256 value, uint256 shift) public view {
         _assertOverflowRevert(abi.encodeWithSelector(harness.encodeChecked.selector, value, shift, 256));
     }
 
@@ -110,17 +110,17 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         _assertOverflowRevert(abi.encodeWithSelector(harness.encodeLosslessChecked.selector, value, shift, 256));
     }
 
-    function proof_max_representable_target_bits_256_reverts(uint256 shift) public view {
+    function prove_max_representable_target_bits_256_reverts(uint256 shift) public view {
         _assertOverflowRevert(abi.encodeWithSelector(harness.maxRepresentable.selector, shift, 256));
     }
 
-    function proof_max_representable_excess_bits_revert(uint256 shift, uint256 targetBits) public {
+    function prove_max_representable_excess_bits_revert(uint256 shift, uint256 targetBits) public {
         _assumeTargetBitsValid(targetBits);
         vm.assume(shift > 256 - targetBits);
         _assertOverflowRevert(abi.encodeWithSelector(harness.maxRepresentable.selector, shift, targetBits));
     }
 
-    function proof_max_representable_boundary_is_tight(uint256 shift, uint256 targetBits) public {
+    function prove_max_representable_boundary_is_tight(uint256 shift, uint256 targetBits) public {
         _assumeTargetBitsValid(targetBits);
         vm.assume(shift <= 256 - targetBits);
 

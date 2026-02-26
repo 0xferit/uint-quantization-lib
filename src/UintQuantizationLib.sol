@@ -66,7 +66,7 @@ library UintQuantizationLib {
     }
 
     function _remainderUnchecked(uint256 value, uint256 shift) private pure returns (uint256) {
-        return value & ((1 << shift) - 1);
+        return value & ((uint256(1) << shift) - 1);
     }
 
     // -------------------------------------------------------------------------
@@ -106,7 +106,7 @@ library UintQuantizationLib {
     ///         step of each other encode to the same stored value.
     function stepSize(uint256 shift) internal pure returns (uint256) {
         _requireValidShift(shift);
-        return 1 << shift;
+        return uint256(1) << shift;
     }
 
     /// @notice Returns the truncation remainder: the bits discarded during floor encoding.
@@ -126,13 +126,13 @@ library UintQuantizationLib {
     /// @notice Returns the maximum original value that can be encoded into `targetBits` bits
     ///         without overflow.
     function maxRepresentable(uint256 shift, uint256 targetBits) internal pure returns (uint256) {
-        // targetBits >= 256 causes (1 << targetBits) to wrap to 0, making the result wrong.
+        // targetBits >= 256 causes (uint256(1) << targetBits) to wrap to 0, making the result wrong.
         // shift + targetBits > 256 causes the final left-shift to silently discard high bits.
         uint256 bitsRequired = _sumOrMax(shift, targetBits);
         if (targetBits >= 256 || bitsRequired > 256) {
             revert UintQuantizationLib__Overflow(bitsRequired, 256);
         }
-        return ((1 << targetBits) - 1) << shift;
+        return ((uint256(1) << targetBits) - 1) << shift;
     }
 
     // -------------------------------------------------------------------------

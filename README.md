@@ -189,20 +189,41 @@ Vyper names are snake_case equivalents:
 
 ## Formal verification (Kontrol)
 
-Kontrol proof specs are under `test/kontrol/` and run through Docker:
+Kontrol proof specs are under `test/kontrol/`.
+
+For local Apple Silicon runs, use native Kontrol (no Docker), starting with the
+`kup`-installed `aarch64-darwin` release:
 
 ```bash
+# one-time local install
+APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231
+pip install "vyper==0.4.3"
+
+# local proving
 ./script/kontrol.sh list
 ./script/kontrol.sh prove-core
 ./script/kontrol.sh prove-parity
+
+# high-utilization profile commands (essential subset)
+./script/kontrol.sh prove-core-hi
+./script/kontrol.sh prove-parity-hi
+
+# full suites (re-enable broader coverage later)
+./script/kontrol.sh prove-core-full
+./script/kontrol.sh prove-parity-full
 ```
 
-For high-throughput local proving on multi-core machines, use the `local-max` profile and explicit
-performance tuning:
+Each local run writes `.kontrol/local-toolchain.txt` with the detected local
+binary path and tool versions.
+
+Profiles:
+- `local`: stable native defaults
+- `local-hi`: tuned native profile (`workers=8`, `max-frontier-parallel=8`)
+- `ci`: Docker CI defaults (`workers=8`)
 
 ```bash
-kontrol prove --config-file kontrol.ci.toml --config-profile local-max --optimize-performance 12 --match-test "ProofUintQuantizationSolidity.proof_*"
-kontrol prove --config-file kontrol.ci.toml --config-profile local-max --optimize-performance 12 --match-test "ProofUintQuantizationVyper.proof_*"
+kontrol prove --config-file kontrol.toml --config-profile local --reinit --match-test "ProofUintQuantizationSolidity.prove_.*target_bits_256_reverts.*"
+kontrol prove --config-file kontrol.toml --config-profile local --reinit --match-test "ProofUintQuantizationVyper.prove_parity_encode_checked.*"
 ```
 
 Benchmark and enforce CPU threshold on local runs:
