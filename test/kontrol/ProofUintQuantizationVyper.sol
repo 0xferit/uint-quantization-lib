@@ -6,15 +6,12 @@ import {ProofAssumptions} from "test/kontrol/ProofAssumptions.sol";
 
 interface IUintQuantizationLibVyperProof {
     function encode(uint256 value, uint256 shift) external pure returns (uint256);
-    function encode_ceil(uint256 value, uint256 shift) external pure returns (uint256);
     function decode(uint256 compressed, uint256 shift) external pure returns (uint256);
-    function decode_ceil(uint256 compressed, uint256 shift) external pure returns (uint256);
     function step_size(uint256 shift) external pure returns (uint256);
     function remainder(uint256 value, uint256 shift) external pure returns (uint256);
     function is_lossless(uint256 value, uint256 shift) external pure returns (bool);
     function max_representable(uint256 shift, uint256 targetBits) external pure returns (uint256);
     function encode_checked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256);
-    function encode_ceil_checked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256);
     function encode_lossless(uint256 value, uint256 shift) external pure returns (uint256);
     function encode_lossless_checked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256);
 }
@@ -26,17 +23,11 @@ contract UintQuantizationSolidityMirrorProof {
         return value.encode(shift);
     }
 
-    function encode_ceil(uint256 value, uint256 shift) external pure returns (uint256) {
-        return value.encodeCeil(shift);
-    }
 
     function decode(uint256 compressed, uint256 shift) external pure returns (uint256) {
         return compressed.decode(shift);
     }
 
-    function decode_ceil(uint256 compressed, uint256 shift) external pure returns (uint256) {
-        return compressed.decodeCeil(shift);
-    }
 
     function step_size(uint256 shift) external pure returns (uint256) {
         return UintQuantizationLib.stepSize(shift);
@@ -58,9 +49,6 @@ contract UintQuantizationSolidityMirrorProof {
         return value.encodeChecked(shift, targetBits);
     }
 
-    function encode_ceil_checked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256) {
-        return value.encodeCeilChecked(shift, targetBits);
-    }
 
     function encode_lossless(uint256 value, uint256 shift) external pure returns (uint256) {
         return value.encodeLossless(shift);
@@ -84,17 +72,11 @@ contract ProofUintQuantizationVyper is ProofAssumptions {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode.selector, value, shift));
     }
 
-    function proof_parity_encode_ceil(uint256 value, uint256 shift) public view {
-        _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_ceil.selector, value, shift));
-    }
 
     function proof_parity_decode(uint256 compressed, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.decode.selector, compressed, shift));
     }
 
-    function proof_parity_decode_ceil(uint256 compressed, uint256 shift) public view {
-        _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.decode_ceil.selector, compressed, shift));
-    }
 
     function proof_parity_step_size(uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.step_size.selector, shift));
@@ -118,11 +100,6 @@ contract ProofUintQuantizationVyper is ProofAssumptions {
         );
     }
 
-    function proof_parity_encode_ceil_checked(uint256 value, uint256 shift, uint256 targetBits) public view {
-        _assertParity(
-            abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_ceil_checked.selector, value, shift, targetBits)
-        );
-    }
 
     function proof_parity_encode_lossless(uint256 value, uint256 shift) public view {
         _assertParity(abi.encodeWithSelector(IUintQuantizationLibVyperProof.encode_lossless.selector, value, shift));
