@@ -28,9 +28,7 @@ Library: `UintQuantizationLib` (`src/UintQuantizationLib.sol`).
 | Function | Description |
 |---|---|
 | `encode(uint256 value, uint256 shift)` | Floor encoding (`value >> shift`). |
-| `encodeCeil(uint256 value, uint256 shift)` | Ceiling encoding (rounds up if discarded bits are non-zero). |
-| `decode(uint256 compressed, uint256 shift)` | Lower-bound decode (`compressed << shift`). |
-| `decodeCeil(uint256 compressed, uint256 shift)` | Upper-bound decode (`(compressed << shift) \| ((1 << shift) - 1)`). |
+| `decode(uint256 compressed, uint256 shift)` | Decode (`compressed << shift`). |
 
 ### Lossless mode
 
@@ -45,7 +43,6 @@ Library: `UintQuantizationLib` (`src/UintQuantizationLib.sol`).
 | Function | Description |
 |---|---|
 | `encodeChecked(uint256 value, uint256 shift, uint256 targetBits)` | Reverts if encoded value does not fit `targetBits`. |
-| `encodeCeilChecked(uint256 value, uint256 shift, uint256 targetBits)` | Same as above for ceiling mode. |
 | `maxRepresentable(uint256 shift, uint256 targetBits)` | Max value that fits after encoding to `targetBits`. |
 
 ### Introspection
@@ -88,15 +85,11 @@ contract FeeAccumulator {
     }
 
     function setFeeBounded(uint256 fee) external {
-        storedFee = uint56(fee.encodeCeilChecked(SHIFT, 56));
+        storedFee = uint56(fee.encodeChecked(SHIFT, 56));
     }
 
-    function getFeeLower() external view returns (uint256) {
+    function getFee() external view returns (uint256) {
         return uint256(storedFee).decode(SHIFT);
-    }
-
-    function getFeeUpper() external view returns (uint256) {
-        return uint256(storedFee).decodeCeil(SHIFT);
     }
 }
 ```
@@ -120,7 +113,6 @@ The staking showcase intentionally exercises the full API surface:
 - `stake()` uses `encodeChecked`.
 - `stakeExact()` uses `encodeLosslessChecked`.
 - `unstake()` uses `decode`.
-- `quoteProtocolFee()` uses `encodeCeil`.
 - `maxDeposit()`, `stakeRemainder()`, and `isStakeLossless()` expose
   `maxRepresentable`, `remainder`, and `isLossless` for frontend UX.
 
@@ -192,7 +184,7 @@ restored: uint256 = lib.decode(convert(stored, uint256), SHIFT)
 ```
 
 Vyper names are snake_case equivalents:
-`encode_ceil`, `decode_ceil`, `step_size`, `max_representable`, `is_lossless`,
+`step_size`, `max_representable`, `is_lossless`,
 `encode_lossless`, `encode_lossless_checked`.
 
 ## Formal verification (Kontrol)
