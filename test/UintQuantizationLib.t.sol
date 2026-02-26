@@ -174,7 +174,7 @@ contract UintQuantizationLibSmokeTest is Test {
         if (!harness.isLossless(value, shift)) {
             return;
         }
-        
+
         uint256 encoded = harness.encode(value, shift);
         uint256 decoded = harness.decode(encoded, shift);
         assertEq(decoded, value, "Lossless round-trip should preserve exact value");
@@ -188,10 +188,10 @@ contract UintQuantizationLibSmokeTest is Test {
         if (value1 > value2) {
             (value1, value2) = (value2, value1);
         }
-        
+
         uint256 encoded1 = harness.encode(value1, shift);
         uint256 encoded2 = harness.encode(value2, shift);
-        
+
         assertLe(encoded1, encoded2, "Encode should preserve value ordering");
     }
 
@@ -201,9 +201,9 @@ contract UintQuantizationLibSmokeTest is Test {
     function testFuzz_encode_checked_overflow_behavior(uint256 value, uint8 shift, uint8 targetBits) public {
         // targetBits must be < 256 for encodeChecked to not revert immediately
         vm.assume(targetBits < 256);
-        
+
         uint256 encoded = value >> shift;
-        
+
         if (encoded >> targetBits != 0) {
             // Value exceeds targetBits capacity, should revert
             vm.expectRevert(
