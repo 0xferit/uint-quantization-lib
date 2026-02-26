@@ -36,16 +36,6 @@ def encode(input_value: uint256, shift_bits: uint256) -> uint256:
         return 0
     return input_value >> shift_bits
 
-@internal
-@pure
-def encode_ceil(input_value: uint256, shift_bits: uint256) -> uint256:
-    """
-    @notice Right-shifts `input_value` by `shift_bits`, rounding up if any bits were discarded.
-    """
-    assert shift_bits < 256, "UintQuantizationLib__InvalidShift"
-    rem: uint256 = input_value & ((1 << shift_bits) - 1)
-    round_up: uint256 = convert(rem != 0, uint256)
-    return (input_value >> shift_bits) + round_up
 
 @internal
 @pure
@@ -58,14 +48,6 @@ def decode(compressed: uint256, shift_bits: uint256) -> uint256:
         return 0
     return compressed << shift_bits
 
-@internal
-@pure
-def decode_ceil(compressed: uint256, shift_bits: uint256) -> uint256:
-    """
-    @notice Left-shifts `compressed` by `shift_bits` and fills discarded bit positions with ones.
-    """
-    assert shift_bits < 256, "UintQuantizationLib__InvalidShift"
-    return (compressed << shift_bits) | ((1 << shift_bits) - 1)
 
 # ---------------------------------------------------------------------------
 # Introspection helpers
@@ -125,19 +107,6 @@ def encode_checked(input_value: uint256, shift_bits: uint256, target_bits: uint2
     assert compressed >> target_bits == 0, "UintQuantizationLib__Overflow"
     return compressed
 
-@internal
-@pure
-def encode_ceil_checked(input_value: uint256, shift_bits: uint256, target_bits: uint256) -> uint256:
-    """
-    @notice Like encode_ceil but reverts if the rounded result does not fit in `target_bits`.
-    """
-    assert shift_bits < 256, "UintQuantizationLib__InvalidShift"
-    assert target_bits < 256, "UintQuantizationLib__Overflow"
-    rem: uint256 = input_value & ((1 << shift_bits) - 1)
-    round_up: uint256 = convert(rem != 0, uint256)
-    compressed: uint256 = (input_value >> shift_bits) + round_up
-    assert compressed >> target_bits == 0, "UintQuantizationLib__Overflow"
-    return compressed
 
 @internal
 @pure
