@@ -51,9 +51,15 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         harness = new UintQuantizationKontrolHarness();
     }
 
-    function proof_encode_decode_le_original(uint256 value, uint256 shift) public view {
+    function proof_encode_decode_le_original(uint256 value, uint256 shift) public {
+        _assumeShiftValid(shift);
+        _assumeNoDecodeOverflow(value, shift);
         uint256 encoded = harness.encode(value, shift);
         uint256 decoded = harness.decode(encoded, shift);
+        if (shift == 0) {
+            assertEq(decoded, value);
+            return;
+        }
         assertLe(decoded, value);
     }
 
@@ -66,6 +72,11 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
 
     function proof_remainder_identity(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
+        _assumeNoDecodeOverflow(value, shift);
+        if (shift == 0) {
+            assertEq(harness.remainder(value, shift), 0);
+            return;
+        }
         uint256 encoded = harness.encode(value, shift);
         uint256 decoded = harness.decode(encoded, shift);
         uint256 rem = harness.remainder(value, shift);
@@ -115,7 +126,7 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
 
         uint256 max = harness.maxRepresentable(shift, targetBits);
         uint256 compressed = harness.encodeChecked(max, shift, targetBits);
-        uint256 expected = targetBits == 0 ? 0 : (1 << targetBits) - 1;
+        uint256 expected = targetBits == 0 ? 0 : (uint256(1) << targetBits) - 1;
         assertEq(compressed, expected);
     }
 

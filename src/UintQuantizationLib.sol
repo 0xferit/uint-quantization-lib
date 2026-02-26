@@ -39,7 +39,9 @@ library UintQuantizationLib {
 
     /// @notice Thrown when `shift` is >= 256, which produces undefined results for uint256
     ///         operands in helper functions.
-    ///         `encode` and `decode` are exempt: the EVM naturally returns 0 for shifts >= 256.
+    ///         `encode`, `decode`, and `encodeChecked` are exempt: the EVM naturally returns 0
+    ///         for shifts >= 256. Strict helpers like `encodeLossless` validate shift to prevent
+    ///         silent data loss.
     error UintQuantizationLib__InvalidShift(uint256 shift);
 
     /// @notice Thrown by strict lossless encode helpers when `value` is not aligned to `2^shift`.
@@ -141,6 +143,9 @@ library UintQuantizationLib {
     ///         Reverts when `targetBits >= 256`.
     /// @dev    Mirrors `encode` semantics for large shifts: for `shift >= 256`, the EVM
     ///         right-shift returns 0 and this function succeeds if `targetBits < 256`.
+    ///         This is intentionally asymmetric with `encodeLossless`: `encodeChecked` only
+    ///         validates overflow (targetBits), not shift validity. Use `encodeLossless` or
+    ///         `encodeLosslessChecked` when strict shift validation is required.
     function encodeChecked(uint256 value, uint256 shift, uint256 targetBits) internal pure returns (uint256) {
         if (targetBits >= 256) {
             revert UintQuantizationLib__Overflow(targetBits, 256);
@@ -154,6 +159,8 @@ library UintQuantizationLib {
 
     /// @notice Strict encoding mode: succeeds only if floor encoding is lossless
     ///         (`value` is step-aligned), otherwise reverts with `UintQuantizationLib__InexactInput`.
+    /// @dev    Unlike `encode` and `encodeChecked`, this function validates `shift < 256` to prevent
+    ///         silent data loss from invalid shifts. Use this when strict validation is required.
     function encodeLossless(uint256 value, uint256 shift) internal pure returns (uint256) {
         _requireValidShift(shift);
         uint256 rem = _remainderUnchecked(value, shift);

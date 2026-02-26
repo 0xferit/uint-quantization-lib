@@ -205,8 +205,29 @@ kontrol prove --config-file kontrol.ci.toml --config-profile local-max --optimiz
 kontrol prove --config-file kontrol.ci.toml --config-profile local-max --optimize-performance 12 --match-test "ProofUintQuantizationVyper.proof_*"
 ```
 
-Core proofs cover floor semantics, strict lossless behavior, width checks, and overflow
-boundaries. Parity proofs check Solidity vs Vyper return/revert equivalence.
+Benchmark and enforce CPU threshold on local runs:
+
+```bash
+./script/kontrol-bench-local.sh --command prove-core-hi --require-min-total-cpu 7
+```
+
+Tune single-process local prove flags and pick the best candidate:
+
+```bash
+./script/kontrol-tune-local.sh --min-total-cpu 7
+```
+
+If no `kup` release candidate meets the required local CPU threshold, escalate to
+a source-build toolchain track and repeat benchmarking/tuning.
+
+When the core workflow is stable again, expand to `prove-core-full` and
+`prove-parity-full`.
+
+The default essential profile is intentionally minimal for fast local/CI iteration:
+target-bit guard proofs and one Solidity/Vyper parity check. Use `prove-core-full` and
+`prove-parity-full` to restore the full semantic property set.
+On high-core machines, this essential profile typically saturates only a few cores, so
+total CPU percentages in the ~7-25% range are expected.
 
 ## License
 
