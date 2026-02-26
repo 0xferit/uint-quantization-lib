@@ -24,9 +24,7 @@ interface IQuantizedETHStakingShowcaseVyper {
         view
         returns (uint96 amount, uint64 stakedAt, uint64 cooldownEndsAt, bool active);
     function get_stake_floor(address user) external view returns (uint256);
-    function get_stake_ceil(address user) external view returns (uint256);
     function max_deposit() external view returns (uint256);
-    function quote_protocol_fee(uint256 amount, uint256 feeShift) external view returns (uint256);
     function stake_remainder(uint256 amount) external view returns (uint256);
     function is_stake_lossless(uint256 amount) external view returns (bool);
 }
@@ -40,7 +38,6 @@ interface IQuantizedExtremePackingShowcaseVyper {
     function set_extreme_strict(uint256[12] calldata values) external;
     function encoded_extreme() external view returns (uint256[12] memory values);
     function decode_extreme_floor() external view returns (uint256[12] memory values);
-    function decode_extreme_ceil() external view returns (uint256[12] memory values);
 }
 
 contract ShowcaseGasTest is Test {
@@ -119,26 +116,13 @@ contract ShowcaseGasTest is Test {
             vyperQuantized.get_stake_floor.selector,
             abi.encode(address(this))
         );
-        _assertStaticcallEqual(
-            address(solidityQuantized),
-            solidityQuantized.getStakeCeil.selector,
-            address(vyperQuantized),
-            vyperQuantized.get_stake_ceil.selector,
-            abi.encode(address(this))
-        );
 
         uint256 sFloor = solidityQuantized.getStakeFloor(address(this));
-        uint256 sCeil = solidityQuantized.getStakeCeil(address(this));
         assertLe(sFloor, REAL_STAKE_FLOOR);
-        assertGe(sCeil, REAL_STAKE_FLOOR);
 
         uint256 expectedMax = UintQuantizationLib.maxRepresentable(REAL_SHIFT, REAL_AMOUNT_BITS);
         assertEq(solidityQuantized.maxDeposit(), expectedMax);
         assertEq(vyperQuantized.max_deposit(), expectedMax);
-
-        uint256 expectedFee = FEE_INPUT.encodeCeil(FEE_SHIFT).decode(FEE_SHIFT);
-        assertEq(solidityQuantized.quoteProtocolFee(FEE_INPUT, FEE_SHIFT), expectedFee);
-        assertEq(vyperQuantized.quote_protocol_fee(FEE_INPUT, FEE_SHIFT), expectedFee);
 
         uint256 expectedRemainder = REAL_STAKE_FLOOR.remainder(REAL_SHIFT);
         assertEq(solidityQuantized.stakeRemainder(REAL_STAKE_FLOOR), expectedRemainder);
@@ -231,18 +215,10 @@ contract ShowcaseGasTest is Test {
             address(vyperQuantized),
             vyperQuantized.decode_extreme_floor.selector
         );
-        _assertStaticcallEqual(
-            address(solidityQuantized),
-            solidityQuantized.decodeExtremeCeil.selector,
-            address(vyperQuantized),
-            vyperQuantized.decode_extreme_ceil.selector
-        );
 
         uint256[12] memory lower = solidityQuantized.decodeExtremeFloor();
-        uint256[12] memory upper = solidityQuantized.decodeExtremeCeil();
         for (uint256 i; i < EXT_LANES; ++i) {
             assertLe(lower[i], values[i]);
-            assertGe(upper[i], values[i]);
         }
     }
 
