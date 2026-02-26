@@ -76,12 +76,6 @@ def get_stake_floor(user: address) -> uint256:
     return lib.decode(packed & AMOUNT_MASK, SHIFT)
 
 @external
-@view
-def get_stake_ceil(user: address) -> uint256:
-    packed: uint256 = self.packed_stake_by_user[user]
-    return lib.decode_ceil(packed & AMOUNT_MASK, SHIFT)
-
-@external
 @pure
 def max_deposit() -> uint256:
     return lib.max_representable(SHIFT, AMOUNT_BITS)

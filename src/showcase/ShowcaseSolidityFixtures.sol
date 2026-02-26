@@ -111,10 +111,6 @@ contract QuantizedETHStakingShowcase {
         return uint256(stakes[user].amount).decode(SHIFT);
     }
 
-    function getStakeCeil(address user) external view returns (uint256) {
-        return uint256(stakes[user].amount).decodeCeil(SHIFT);
-    }
-
     function maxDeposit() external pure returns (uint256) {
         return UintQuantizationLib.maxRepresentable(SHIFT, AMOUNT_BITS);
     }
@@ -185,13 +181,6 @@ contract QuantizedExtremePackingShowcase {
         uint256 p = packedExtreme;
         for (uint256 i; i < LANES; ++i) {
             values[i] = ((p >> (i * WIDTH)) & LANE_MASK).decode(SHIFT);
-        }
-    }
-
-    function decodeExtremeCeil() external view returns (uint256[12] memory values) {
-        uint256 p = packedExtreme;
-        for (uint256 i; i < LANES; ++i) {
-            values[i] = ((p >> (i * WIDTH)) & LANE_MASK).decodeCeil(SHIFT);
         }
     }
 }
