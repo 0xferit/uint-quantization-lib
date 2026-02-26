@@ -11,13 +11,9 @@ contract UintQuantizationKontrolHarness {
         return value.encode(shift);
     }
 
-
-
     function decode(uint256 compressed, uint256 shift) external pure returns (uint256) {
         return compressed.decode(shift);
     }
-
-
 
     function stepSize(uint256 shift) external pure returns (uint256) {
         return UintQuantizationLib.stepSize(shift);
@@ -38,8 +34,6 @@ contract UintQuantizationKontrolHarness {
     function encodeChecked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256) {
         return value.encodeChecked(shift, targetBits);
     }
-
-
 
     function encodeLossless(uint256 value, uint256 shift) external pure returns (uint256) {
         return value.encodeLossless(shift);
@@ -62,14 +56,6 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         uint256 decoded = harness.decode(encoded, shift);
         assertLe(decoded, value);
     }
-
-
-
-
-
-
-
-
 
     function proof_remainder_lt_step_size(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);

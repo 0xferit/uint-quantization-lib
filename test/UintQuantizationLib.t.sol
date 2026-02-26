@@ -13,13 +13,9 @@ contract UintQuantizationHarness {
         return value.encode(shift);
     }
 
-
-
     function decode(uint256 compressed, uint256 shift) external pure returns (uint256) {
         return compressed.decode(shift);
     }
-
-
 
     function stepSize(uint256 shift) external pure returns (uint256) {
         return UintQuantizationLib.stepSize(shift);
@@ -40,8 +36,6 @@ contract UintQuantizationHarness {
     function encodeChecked(uint256 value, uint256 shift, uint256 targetBits) external pure returns (uint256) {
         return value.encodeChecked(shift, targetBits);
     }
-
-
 
     function encodeLossless(uint256 value, uint256 shift) external pure returns (uint256) {
         return value.encodeLossless(shift);
