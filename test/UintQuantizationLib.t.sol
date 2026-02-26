@@ -131,6 +131,13 @@ contract UintQuantizationLibSmokeTest is Test {
         harness.remainder(42, 256);
     }
 
+    function test_encodeLossless_shiftTooLarge_reverts() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(UintQuantizationLib.UintQuantizationLib__InvalidShift.selector, uint256(256))
+        );
+        harness.encodeLossless(1 << 8, 256);
+    }
+
     function test_maxRepresentable_targetBitsTooLarge_reverts() public {
         vm.expectRevert(
             abi.encodeWithSelector(UintQuantizationLib.UintQuantizationLib__Overflow.selector, uint256(256), uint256(256))
