@@ -13,7 +13,7 @@ Proof specs live in:
 
 They cover:
 
-- Core encode/decode, ceil/floor, and remainder properties.
+- Core encode/decode, floor, and remainder properties.
 - Lossless strict-mode properties (`isLossless`, `encodeLossless`).
 - Checked-width safety (`targetBits >= 256` revert behavior).
 - `maxRepresentable` overflow/boundary behavior.

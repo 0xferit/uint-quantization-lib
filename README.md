@@ -220,8 +220,7 @@ Tune single-process local prove flags and pick the best candidate:
 If no `kup` release candidate meets the required local CPU threshold, escalate to
 a source-build toolchain track and repeat benchmarking/tuning.
 
-When the core workflow is stable again, expand to `prove-core-full` and
-`prove-parity-full`.
+When the core workflow is stable again, expand to `prove-core-full`.
 
 The default essential profile is intentionally minimal for fast local/CI iteration:
 target-bit guard proofs. Use `prove-core-full` to restore the full semantic property set.
