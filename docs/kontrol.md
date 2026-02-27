@@ -20,7 +20,11 @@ They cover:
 
 ## Prerequisites
 
-Docker daemon running locally (`docker info`).
+Native Kontrol installed via `kup`. For Apple Silicon:
+
+```bash
+APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231
+```
 
 ## Commands
 
@@ -28,18 +32,37 @@ Docker daemon running locally (`docker info`).
 # Show available proofs/specs
 ./script/kontrol.sh list
 
-# Prove Solidity-focused specs
+# Prove essential Solidity-focused specs
 ./script/kontrol.sh prove-core
+
+# High-utilization profile (essential subset)
+./script/kontrol.sh prove-core-hi
+
+# Full proof set
+./script/kontrol.sh prove-core-full
 
 # Remove local proof artifacts
 ./script/kontrol.sh clean
 ```
 
-Alternative Docker image (override):
+## Profiles
+
+- `local`: stable native defaults
+- `local-hi`: tuned native profile (`workers=8`, `max-frontier-parallel=8`)
+- `ci`: Docker CI defaults (`workers=8`)
+
+## Bench and tune scripts
+
+Benchmark and enforce CPU threshold on local runs:
 
 ```bash
-KONTROL_DOCKER_IMAGE=runtimeverificationinc/kontrol:ubuntu-jammy-1.0.231 \
-  ./script/kontrol.sh prove-core
+./script/kontrol-bench-local.sh --command prove-core-hi --require-min-total-cpu 7
+```
+
+Tune single-process local prove flags and pick the best candidate:
+
+```bash
+./script/kontrol-tune-local.sh --min-total-cpu 7
 ```
 
 ## Artifacts
