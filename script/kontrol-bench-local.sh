@@ -16,7 +16,7 @@ usage() {
 Usage: ./script/kontrol-bench-local.sh [options]
 
 Options:
-  --command <name>                One of: prove-core-hi, prove-parity-hi, prove-core, prove-parity
+  --command <name>                One of: prove-core-hi, prove-core, prove-core-full
   --sample-seconds <n>            Sampling interval in seconds (default: 5)
   --require-min-total-cpu <pct>   Minimum average total CPU percentage required (e.g. 50)
   -h, --help                      Show this help message
@@ -50,10 +50,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "${COMMAND}" in
-  prove-core-hi|prove-parity-hi)
+  prove-core-hi)
     PROFILE="${LOCAL_HI_PROFILE}"
     ;;
-  prove-core|prove-parity)
+  prove-core|prove-core-full)
     PROFILE="${LOCAL_PROFILE}"
     ;;
   *)
