@@ -126,12 +126,6 @@ contract UintQuantizationLibSmokeTest is Test {
         assertLe(decoded, value);
     }
 
-    function testFuzz_decode_bounds_original_when_shift_valid(uint256 value, uint8 shift) public view {
-        uint256 encoded = harness.encode(value, shift);
-        uint256 decoded = harness.decode(encoded, shift);
-        assertLe(decoded, value);
-    }
-
     function testFuzz_remainder_identity_matches_decode_delta(uint256 value, uint8 shift) public view {
         uint256 encoded = harness.encode(value, shift);
         uint256 decoded = harness.decode(encoded, shift);
