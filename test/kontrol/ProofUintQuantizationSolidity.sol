@@ -56,10 +56,6 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
         _assumeNoDecodeOverflow(value, shift);
         uint256 encoded = harness.encode(value, shift);
         uint256 decoded = harness.decode(encoded, shift);
-        if (shift == 0) {
-            assertEq(decoded, value);
-            return;
-        }
         assertLe(decoded, value);
     }
 
