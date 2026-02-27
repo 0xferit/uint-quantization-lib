@@ -30,10 +30,6 @@ contract ProofUintQuantizationSolidity is ProofAssumptions {
     function prove_remainder_identity(uint256 value, uint256 shift) public {
         _assumeShiftValid(shift);
         _assumeNoDecodeOverflow(value, shift);
-        if (shift == 0) {
-            assertEq(harness.remainder(value, shift), 0);
-            return;
-        }
         uint256 encoded = harness.encode(value, shift);
         uint256 decoded = harness.decode(encoded, shift);
         uint256 rem = harness.remainder(value, shift);
