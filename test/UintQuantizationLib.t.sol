@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
-import {Quant, QuantizationLib, Quant__Overflow, Quant__NotAligned, Quant__BadConfig} from "src/UintQuantizationLib.sol";
+import {Quant, QuantizationLib, Overflow, NotAligned, BadConfig} from "src/UintQuantizationLib.sol";
 
 /// @notice Thin harness that exposes library functions via `using-for` so tests call them on
 ///         `Quant` values rather than through the library name directly.
@@ -81,22 +81,22 @@ contract QuantizationLibSmokeTest is Test {
     // -------------------------------------------------------------------------
 
     function test_create_shiftTooLarge_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(Quant__BadConfig.selector, uint256(256), uint256(8)));
+        vm.expectRevert(abi.encodeWithSelector(BadConfig.selector, uint256(256), uint256(8)));
         harness.create(256, 8);
     }
 
     function test_create_targetBitsZero_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(Quant__BadConfig.selector, uint256(8), uint256(0)));
+        vm.expectRevert(abi.encodeWithSelector(BadConfig.selector, uint256(8), uint256(0)));
         harness.create(8, 0);
     }
 
     function test_create_targetBits256_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(Quant__BadConfig.selector, uint256(8), uint256(256)));
+        vm.expectRevert(abi.encodeWithSelector(BadConfig.selector, uint256(8), uint256(256)));
         harness.create(8, 256);
     }
 
     function test_create_shiftPlusTargetBitsExceeds256_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(Quant__BadConfig.selector, uint256(200), uint256(100)));
+        vm.expectRevert(abi.encodeWithSelector(BadConfig.selector, uint256(200), uint256(100)));
         harness.create(200, 100);
     }
 
@@ -107,8 +107,8 @@ contract QuantizationLibSmokeTest is Test {
     function test_encode_overflow_reverts() public {
         Quant q = harness.create(SHIFT_8, BITS_8);
         uint256 m = harness.max(q); // 65280
-        uint256 value = m + 1;      // 65281
-        vm.expectRevert(abi.encodeWithSelector(Quant__Overflow.selector, value, m));
+        uint256 value = m + 1; // 65281
+        vm.expectRevert(abi.encodeWithSelector(Overflow.selector, value, m));
         harness.encode(q, value);
     }
 
@@ -120,15 +120,15 @@ contract QuantizationLibSmokeTest is Test {
         Quant q = harness.create(SHIFT_8, BITS_8);
         uint256 m = harness.max(q);
         uint256 value = m + 1;
-        vm.expectRevert(abi.encodeWithSelector(Quant__Overflow.selector, value, m));
+        vm.expectRevert(abi.encodeWithSelector(Overflow.selector, value, m));
         harness.encodeLossless(q, value);
     }
 
     function test_encodeLossless_notAligned_reverts() public {
         Quant q = harness.create(SHIFT_8, BITS_8);
         uint256 step = harness.stepSize(q); // 256
-        uint256 value = step + 1;           // 257, not aligned
-        vm.expectRevert(abi.encodeWithSelector(Quant__NotAligned.selector, value, step));
+        uint256 value = step + 1; // 257, not aligned
+        vm.expectRevert(abi.encodeWithSelector(NotAligned.selector, value, step));
         harness.encodeLossless(q, value);
     }
 
@@ -269,7 +269,7 @@ contract QuantizationLibSmokeTest is Test {
     function test_minimal_config_overflow_reverts() public {
         Quant q = harness.create(0, 1);
         // 2 should overflow (max is 1)
-        vm.expectRevert(abi.encodeWithSelector(Quant__Overflow.selector, uint256(2), uint256(1)));
+        vm.expectRevert(abi.encodeWithSelector(Overflow.selector, uint256(2), uint256(1)));
         harness.encode(q, 2);
     }
 

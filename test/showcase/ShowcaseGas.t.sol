@@ -8,6 +8,7 @@ import {
     RawETHStakingShowcase,
     RawExtremePackingShowcase
 } from "src/showcase/ShowcaseSolidityFixtures.sol";
+
 contract ShowcaseGasTest is Test {
     uint256 internal constant REAL_SHIFT = 16;
     uint256 internal constant REAL_AMOUNT_BITS = 96;
@@ -181,5 +182,4 @@ contract ShowcaseGasTest is Test {
         quantized.setExtremeStrict(values);
         return uint256(vm.lastCallGas().gasTotalUsed);
     }
-
 }
