@@ -25,9 +25,6 @@ contract ShowcaseGasTest is Test {
     uint256 internal constant REAL_STAKE_STRICT_ALT = uint256(2_750_000) << REAL_SHIFT;
     uint256 internal constant REAL_STAKE_FLOOR = REAL_STAKE_STRICT + 321;
 
-    uint256 internal constant FEE_INPUT = 123_456_789;
-    uint256 internal constant FEE_SHIFT = 12;
-
     uint256 internal constant EXT_E0 = 1_000_000;
     uint256 internal constant EXT_E1 = 970_000;
     uint256 internal constant EXT_E2 = 940_000;
