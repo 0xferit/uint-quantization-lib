@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 /**
- * @title QuantLib
+ * @title QuantizationLib
  * @author [0xferit](https://github.com/0xferit)
  * @custom:security-contact ferit@cryptolab.net
  * @notice Pure-function library for shift-based uint256 compression using a bundled config type.
@@ -18,9 +18,9 @@ pragma solidity ^0.8.25;
  *
  *         Usage:
  *         ```solidity
- *         import {Quant, QuantLib} from "src/UintQuantizationLib.sol";
+ *         import {Quant, QuantizationLib} from "src/UintQuantizationLib.sol";
  *
- *         Quant private constant SCHEME = QuantLib.create(32, 24);
+ *         Quant private constant SCHEME = QuantizationLib.create(32, 24);
  *
  *         stored   = uint24(SCHEME.encode(value));
  *         restored = SCHEME.decode(stored);
@@ -37,7 +37,7 @@ error Quant__NotAligned(uint256 value, uint256 stepSize);
 /// @notice Thrown by `create` when the (shift, targetBits) pair is invalid.
 error Quant__BadConfig(uint256 shift, uint256 targetBits);
 
-library QuantLib {
+library QuantizationLib {
     // -------------------------------------------------------------------------
     // Factory
     // -------------------------------------------------------------------------
@@ -159,4 +159,4 @@ library QuantLib {
     }
 }
 
-using QuantLib for Quant global;
+using QuantizationLib for Quant global;

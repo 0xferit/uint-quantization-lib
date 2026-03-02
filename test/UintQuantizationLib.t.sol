@@ -2,13 +2,13 @@
 pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
-import {Quant, QuantLib, Quant__Overflow, Quant__NotAligned, Quant__BadConfig} from "src/UintQuantizationLib.sol";
+import {Quant, QuantizationLib, Quant__Overflow, Quant__NotAligned, Quant__BadConfig} from "src/UintQuantizationLib.sol";
 
 /// @notice Thin harness that exposes library functions via `using-for` so tests call them on
 ///         `Quant` values rather than through the library name directly.
 contract QuantHarness {
     function create(uint256 shift_, uint256 targetBits_) external pure returns (Quant) {
-        return QuantLib.create(shift_, targetBits_);
+        return QuantizationLib.create(shift_, targetBits_);
     }
 
     function shift(Quant q) external pure returns (uint256) {
@@ -65,7 +65,7 @@ contract QuantHarness {
 }
 
 /// @notice Fast concrete regression checks. Mathematical completeness is handled by Kontrol proofs.
-contract QuantLibSmokeTest is Test {
+contract QuantizationLibSmokeTest is Test {
     QuantHarness harness;
 
     // shift=8, targetBits=8: stepSize=256, max=65280
@@ -199,14 +199,14 @@ contract QuantLibSmokeTest is Test {
 
     function testFuzz_floor_is_lossless(uint8 shift_, uint8 targetBits_, uint256 value) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
-        Quant q = QuantLib.create(uint256(shift_), uint256(targetBits_));
+        Quant q = QuantizationLib.create(uint256(shift_), uint256(targetBits_));
         uint256 floored = harness.floor(q, value);
         assertTrue(harness.isLossless(q, floored));
     }
 
     function testFuzz_lower_bound_round_trip(uint8 shift_, uint8 targetBits_, uint256 value) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
-        Quant q = QuantLib.create(uint256(shift_), uint256(targetBits_));
+        Quant q = QuantizationLib.create(uint256(shift_), uint256(targetBits_));
         // Use bound instead of assume: schemes with small max reject most random uint256 values.
         value = bound(value, 0, harness.max(q));
         uint256 decoded = harness.decode(q, harness.encode(q, value));
@@ -215,31 +215,31 @@ contract QuantLibSmokeTest is Test {
 
     function testFuzz_decodeMax_ge_decode(uint8 shift_, uint8 targetBits_, uint256 encoded) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
-        Quant q = QuantLib.create(uint256(shift_), uint256(targetBits_));
+        Quant q = QuantizationLib.create(uint256(shift_), uint256(targetBits_));
         assertGe(harness.decodeMax(q, encoded), harness.decode(q, encoded));
     }
 
     function testFuzz_remainder_lt_stepSize(uint8 shift_, uint8 targetBits_, uint256 value) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
-        Quant q = QuantLib.create(uint256(shift_), uint256(targetBits_));
+        Quant q = QuantizationLib.create(uint256(shift_), uint256(targetBits_));
         assertLt(harness.remainder(q, value), harness.stepSize(q));
     }
 
     function testFuzz_isLossless_equivalence(uint8 shift_, uint8 targetBits_, uint256 value) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
-        Quant q = QuantLib.create(uint256(shift_), uint256(targetBits_));
+        Quant q = QuantizationLib.create(uint256(shift_), uint256(targetBits_));
         assertEq(harness.isLossless(q, value), harness.remainder(q, value) == 0);
     }
 
     function testFuzz_fits_equivalence(uint8 shift_, uint8 targetBits_, uint256 value) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
-        Quant q = QuantLib.create(uint256(shift_), uint256(targetBits_));
+        Quant q = QuantizationLib.create(uint256(shift_), uint256(targetBits_));
         assertEq(harness.fits(q, value), value <= harness.max(q));
     }
 
     function testFuzz_ceil_ge_value(uint8 shift_, uint8 targetBits_, uint256 value) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
-        Quant q = QuantLib.create(uint256(shift_), uint256(targetBits_));
+        Quant q = QuantizationLib.create(uint256(shift_), uint256(targetBits_));
         uint256 s = uint256(shift_);
         if (s > 0) {
             uint256 mask = (uint256(1) << s) - 1;
@@ -251,7 +251,7 @@ contract QuantLibSmokeTest is Test {
 
     function testFuzz_encode_monotonicity(uint8 shift_, uint8 targetBits_, uint256 v1, uint256 v2) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
-        Quant q = QuantLib.create(uint256(shift_), uint256(targetBits_));
+        Quant q = QuantizationLib.create(uint256(shift_), uint256(targetBits_));
         uint256 m = harness.max(q);
         // Use bound instead of assume: schemes with small max reject most random uint256 values.
         v1 = bound(v1, 0, m);

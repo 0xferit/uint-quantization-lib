@@ -21,13 +21,13 @@ remappings = ["uint-quantization-lib-1.0.0/=dependencies/uint-quantization-lib-1
 
 ## Solidity API
 
-Library: `QuantLib` (`src/UintQuantizationLib.sol`). Import both the type and the library:
+Library: `QuantizationLib` (`src/UintQuantizationLib.sol`). Import both the type and the library:
 
 ```solidity
-import {Quant, QuantLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
+import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
 ```
 
-Because the source file declares `using QuantLib for Quant global`, importers get method-call
+Because the source file declares `using QuantizationLib for Quant global`, importers get method-call
 syntax automatically without a local `using` statement.
 
 ### Type layout
@@ -43,7 +43,7 @@ The `Quant` value type is a `uint16` with the following bit layout:
 
 | Function | Description |
 |---|---|
-| `QuantLib.create(shift, targetBits)` | Creates a `Quant` scheme. Reverts with `Quant__BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
+| `QuantizationLib.create(shift, targetBits)` | Creates a `Quant` scheme. Reverts with `Quant__BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
 | `q.encode(value)` | Floor-encodes `value`. Reverts with `Quant__Overflow` when `value > max(q)`. |
 | `q.encodeLossless(value)` | Strict mode: also reverts with `Quant__NotAligned` when `value` is not step-aligned. |
 | `q.decode(encoded)` | Left-shifts `encoded` by shift, restoring discarded bits as zeros (lower bound). |
@@ -67,11 +67,11 @@ error Quant__NotAligned(uint256 value, uint256 stepSize);
 ### Solidity usage
 
 ```solidity
-import {Quant, QuantLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
+import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
 
 contract FeeAccumulator {
     // Scheme: 40-bit shift, 16-bit encoded width (step = 0x10000000000, max = 0xFFFF * step)
-    Quant private constant SCHEME = QuantLib.create(40, 16);
+    Quant private constant SCHEME = QuantizationLib.create(40, 16);
 
     uint16 public storedFee;
 
@@ -104,7 +104,7 @@ rather than silently truncate the value).
 
 ## Showcase and gas savings
 
-Showcase contracts under `src/showcase/` use `QuantLib` and compare:
+Showcase contracts under `src/showcase/` use `QuantizationLib` and compare:
 
 - Real-life example (production-style ETH staking):
   raw path uses realistic packed fields by default (`uint128 amount`, `uint64` timestamps, `bool active`)
@@ -152,7 +152,7 @@ Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t
 
 ## Formal verification (Kontrol)
 
-Kontrol proof specs for `QuantLib` are future work. `test/kontrol/ProofAssumptions.sol` provides
+Kontrol proof specs for `QuantizationLib` are future work. `test/kontrol/ProofAssumptions.sol` provides
 reusable `vm.assume` helpers for when those proofs are written.
 
 For local Apple Silicon setup:
