@@ -100,6 +100,11 @@ contract FeeAccumulator {
 }
 ```
 
+> `encode()` and `encodeLossless()` return `uint256` due to Solidity type constraints. The encoded
+> result is guaranteed to fit in `2^targetBits - 1`, so store it using the matching `uintN` for
+> your scheme (for example, `uint16` for `targetBits=16`, `uint24` for `targetBits=24`). Using a
+> smaller type will silently truncate.
+
 ## Which encode function should I use?
 
 > - `encode` — Floor encoding with overflow check. Reverts when the value exceeds `max(q)`.
