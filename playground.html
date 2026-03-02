@@ -4,373 +4,153 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Playground | uint-quantization-lib</title>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Overpass+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #070a10;
-      --bg-panel: #0c1018;
-      --bg-input: #080c14;
-      --border: #1a2333;
-      --border-lit: #243044;
-      --green: #00ff88;
-      --green-dim: #00b35f;
-      --green-glow: rgba(0,255,136,0.15);
-      --green-ghost: rgba(0,255,136,0.03);
-      --amber: #ffb700;
-      --red: #ff3366;
-      --red-glow: rgba(255,51,102,0.15);
-      --fg: #c8d6e5;
-      --fg-dim: #5a6a7e;
-      --fg-bright: #e8f0f8;
+      --bg-0: #08090b; --bg-1: #0f1114; --bg-2: #17191d; --bg-3: #1f2127;
+      --border: #26282e; --border-focus: #3a3d44;
+      --fg-0: #ecedef; --fg-1: #9fa1a8; --fg-2: #5f6168;
+      --accent: #22d3ee; --accent-hover: #06b6d4; --accent-dim: #0e7490;
+      --accent-ghost: rgba(34,211,238,0.06);
+      --green: #34d399; --green-dim: #059669; --green-ghost: rgba(52,211,153,0.06);
+      --red: #fb7185; --red-ghost: rgba(251,113,133,0.06);
+      --amber: #fbbf24;
+      --code-bg: #0b0c0e; --radius: 8px; --radius-lg: 12px;
     }
-
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
-      font-family: 'Chakra Petch', sans-serif;
-      background:
-        linear-gradient(rgba(0,255,136,0.012) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,136,0.012) 1px, transparent 1px),
-        var(--bg);
-      background-size: 32px 32px;
-      color: var(--fg);
-      line-height: 1.5;
-      min-height: 100vh;
+      font-family: 'Sora', sans-serif; background: var(--bg-0); color: var(--fg-1);
+      line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100vh;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 24px 24px;
     }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); text-decoration: none; }
 
-    /* scanlines */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 10000;
-      background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
-    }
+    /* ── Ambient ── */
+    .bg-glow { position: fixed; border-radius: 50%; pointer-events: none; z-index: -1; }
+    .bg-glow-1 { top: -200px; right: -100px; width: 700px; height: 700px; background: radial-gradient(circle, rgba(34,211,238,0.04) 0%, transparent 70%); filter: blur(100px); }
+    .bg-glow-2 { bottom: -300px; left: -200px; width: 800px; height: 800px; background: radial-gradient(circle, rgba(52,211,153,0.03) 0%, transparent 70%); filter: blur(120px); }
 
-    a { color: var(--green-dim); text-decoration: none; }
-    a:hover { color: var(--green); }
-
-    /* ── Nav ── */
-    .nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(7,10,16,0.9);
-      backdrop-filter: blur(8px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .nav-back {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--fg-dim);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .nav-back:hover { color: var(--green); }
-    .nav-back svg { width: 16px; height: 16px; }
-    .nav-title {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--green-dim);
-    }
+    /* ── Nav (shared) ── */
+    .nav { position: sticky; top: 0; z-index: 100; background: rgba(8,9,11,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+    .nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-family: 'Azeret Mono', monospace; font-size: 0.85rem; font-weight: 600; color: var(--fg-0); text-decoration: none; letter-spacing: -0.02em; }
+    .nav-logo:hover { color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 24px; }
+    .nav-links a { font-size: 0.85rem; font-weight: 500; color: var(--fg-2); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--fg-0); }
+    .nav-links a.active { color: var(--accent); }
 
     /* ── Layout ── */
-    .playground {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-      padding: 20px;
-      max-width: 1280px;
-      margin: 0 auto;
-    }
-    @media (min-width: 860px) {
-      .playground { grid-template-columns: 320px 1fr; }
-    }
+    .playground { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 20px; max-width: 1280px; margin: 0 auto; }
+    @media (min-width: 860px) { .playground { grid-template-columns: 320px 1fr; } }
 
     /* ── Panels ── */
-    .panel {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-    }
+    .panel { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
     .panel-section + .panel-section { border-top: 1px solid var(--border); }
-    .panel-header {
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--green-dim);
-      padding: 10px 16px;
-      background: var(--green-ghost);
-    }
-    .panel-body { padding: 16px; }
+    .panel-header { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-2); padding: 11px 20px; background: rgba(255,255,255,0.015); }
+    .panel-body { padding: 20px; }
 
-    /* ── Param inputs ── */
-    .param-row {
-      display: grid;
-      grid-template-columns: 78px 1fr 56px;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-    .param-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--fg-dim);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-    input[type="range"] {
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      width: 100%;
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      outline: none;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px rgba(0,255,136,0.4);
-      cursor: pointer; border: none;
-    }
-    input[type="range"]::-moz-range-thumb {
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px rgba(0,255,136,0.4);
-      cursor: pointer; border: none;
-    }
+    /* ── Inputs ── */
+    .param-row { display: grid; grid-template-columns: 78px 1fr 56px; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .param-label { font-size: 0.72rem; font-weight: 600; color: var(--fg-2); letter-spacing: 0.06em; text-transform: uppercase; }
+    input[type="range"] { -webkit-appearance: none; -moz-appearance: none; width: 100%; height: 4px; background: var(--border); border-radius: 2px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(34,211,238,0.15); cursor: pointer; border: none; }
+    input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(34,211,238,0.15); cursor: pointer; border: none; }
     input[type="number"], input[type="text"] {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      color: var(--green);
-      font-family: 'Overpass Mono', monospace;
-      font-size: 0.85rem;
-      padding: 6px 8px;
-      border-radius: 4px;
-      width: 100%;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--bg-0); border: 1px solid var(--border); color: var(--fg-0);
+      font-family: 'Azeret Mono', monospace; font-size: 0.82rem; padding: 7px 10px;
+      border-radius: 6px; width: 100%; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
     }
-    input:focus {
-      border-color: var(--green-dim);
-      box-shadow: 0 0 12px rgba(0,255,136,0.12);
-    }
+    input:focus { border-color: var(--accent-dim); box-shadow: 0 0 0 3px rgba(34,211,238,0.08); }
     input[type="number"] { -moz-appearance: textfield; }
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-
-    .value-input {
-      font-family: 'Overpass Mono', monospace;
-      font-size: 0.8rem;
-      padding: 8px 10px;
-    }
-    .input-hint { font-size: 0.6rem; color: var(--fg-dim); margin-top: 4px; }
-    .quant-hex {
-      font-family: 'Overpass Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--fg-dim);
-      margin-top: 8px;
-      padding: 6px 10px;
-      background: var(--bg-input);
-      border-radius: 3px;
-      border: 1px solid var(--border);
-    }
-    .quant-hex span { color: var(--green-dim); }
+    input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .value-input { font-size: 0.8rem; padding: 9px 12px; }
+    .input-hint { font-size: 0.6rem; color: var(--fg-2); margin-top: 5px; }
+    .quant-hex { font-family: 'Azeret Mono', monospace; font-size: 0.75rem; color: var(--fg-2); margin-top: 10px; padding: 7px 12px; background: var(--bg-0); border-radius: 6px; border: 1px solid var(--border); }
+    .quant-hex span { color: var(--accent); }
 
     /* ── Presets ── */
     .presets { display: flex; flex-direction: column; gap: 6px; }
     .preset-btn {
-      display: block; width: 100%; padding: 8px 12px;
-      background: rgba(0,255,136,0.03);
-      border: 1px solid var(--border); border-radius: 4px;
-      color: var(--fg); font-family: 'Chakra Petch', sans-serif;
-      font-size: 0.8rem; font-weight: 600; text-align: left;
-      cursor: pointer; transition: all 0.2s;
+      display: block; width: 100%; padding: 9px 14px;
+      background: transparent; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--fg-1); font-family: 'Sora', sans-serif; font-size: 0.8rem; font-weight: 600;
+      text-align: left; cursor: pointer; transition: all 0.2s;
     }
-    .preset-btn:hover {
-      background: rgba(0,255,136,0.07);
-      border-color: var(--green-dim);
-      color: var(--green);
-    }
-    .preset-desc {
-      display: block; font-size: 0.6rem; color: var(--fg-dim);
-      font-weight: 400; margin-top: 1px;
-    }
+    .preset-btn:hover { background: var(--accent-ghost); border-color: var(--accent-dim); color: var(--accent); }
+    .preset-desc { display: block; font-size: 0.6rem; color: var(--fg-2); font-weight: 400; margin-top: 1px; }
 
-    /* ── Scheme info ── */
-    .info-row {
-      display: flex; justify-content: space-between; align-items: baseline;
-      padding: 5px 0; font-size: 0.78rem;
-    }
-    .info-key { color: var(--fg-dim); }
-    .info-val {
-      font-family: 'Overpass Mono', monospace;
-      color: var(--fg); font-weight: 600;
-      word-break: break-all; text-align: right; max-width: 60%;
-    }
+    /* ── Info rows ── */
+    .info-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; font-size: 0.78rem; }
+    .info-key { color: var(--fg-2); }
+    .info-val { font-family: 'Azeret Mono', monospace; color: var(--fg-1); font-weight: 600; word-break: break-all; text-align: right; max-width: 60%; }
 
     /* ── Bit visualization ── */
-    .bit-bar {
-      display: flex; height: 52px; border-radius: 4px;
-      overflow: hidden; border: 1px solid var(--border);
-    }
+    .bit-bar { display: flex; height: 52px; border-radius: 6px; overflow: hidden; background: var(--bg-0); border: 1px solid var(--border); }
     .bit-seg {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; min-width: 0;
-      transition: flex 0.4s cubic-bezier(0.4,0,0.2,1);
-      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-width: 0; transition: flex 0.4s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden;
     }
-    .bit-seg-label {
-      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
-      text-transform: uppercase; opacity: 0.8;
-    }
-    .bit-seg-count {
-      font-family: 'Overpass Mono', monospace;
-      font-size: 0.75rem; font-weight: 700;
-    }
-    .seg-unused {
-      background: rgba(255,255,255,0.02);
-      color: var(--fg-dim);
-    }
-    .seg-target {
-      background: linear-gradient(135deg, rgba(0,204,106,0.3), rgba(0,255,136,0.12));
-      border-left: 1px solid rgba(0,255,136,0.2);
-      border-right: 1px solid rgba(0,255,136,0.2);
-      box-shadow: inset 0 0 24px rgba(0,255,136,0.06);
-      color: var(--green);
-    }
-    .seg-target.overflow {
-      background: linear-gradient(135deg, rgba(255,51,102,0.3), rgba(255,51,102,0.12));
-      border-color: rgba(255,51,102,0.2);
-      box-shadow: inset 0 0 24px rgba(255,51,102,0.06);
-      color: var(--red);
-    }
-    .seg-shift {
-      background: rgba(255,51,102,0.08);
-      color: #ff6688;
-    }
-    .bit-axis {
-      display: flex; justify-content: space-between;
-      font-size: 0.55rem; color: var(--fg-dim); margin-top: 4px;
-      font-family: 'Overpass Mono', monospace;
-    }
+    .bit-seg-label { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
+    .bit-seg-count { font-family: 'Azeret Mono', monospace; font-size: 0.75rem; font-weight: 700; }
+    .seg-unused { background: rgba(255,255,255,0.02); color: var(--fg-2); }
+    .seg-target { background: linear-gradient(135deg, rgba(52,211,153,0.2), rgba(52,211,153,0.08)); border-left: 1px solid rgba(52,211,153,0.15); border-right: 1px solid rgba(52,211,153,0.15); color: var(--green); }
+    .seg-target.overflow { background: linear-gradient(135deg, rgba(251,113,133,0.2), rgba(251,113,133,0.08)); border-color: rgba(251,113,133,0.15); color: var(--red); }
+    .seg-shift { background: rgba(251,113,133,0.06); color: var(--red); }
+    .bit-axis { display: flex; justify-content: space-between; font-size: 0.55rem; color: var(--fg-2); margin-top: 5px; font-family: 'Azeret Mono', monospace; }
 
     /* ── Results ── */
     .result-grid { display: flex; flex-direction: column; }
-    .result-row {
-      display: flex; justify-content: space-between; align-items: baseline;
-      padding: 7px 0;
-      border-bottom: 1px solid rgba(26,35,51,0.5);
-    }
+    .result-row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid rgba(38,40,46,0.4); }
     .result-row:last-child { border-bottom: none; }
-    .result-key {
-      font-family: 'Overpass Mono', monospace;
-      font-size: 0.78rem; color: var(--fg-dim); white-space: nowrap;
-      min-width: 110px;
-    }
-    .result-val {
-      font-family: 'Overpass Mono', monospace;
-      font-size: 0.78rem; color: var(--fg-bright); font-weight: 600;
-      text-align: right; word-break: break-all; max-width: 65%;
-    }
-    .result-hex {
-      font-size: 0.65rem; color: var(--fg-dim); font-weight: 400;
-      margin-top: 1px;
-    }
+    .result-key { font-family: 'Azeret Mono', monospace; font-size: 0.78rem; color: var(--fg-2); white-space: nowrap; min-width: 110px; }
+    .result-val { font-family: 'Azeret Mono', monospace; font-size: 0.78rem; color: var(--fg-0); font-weight: 600; text-align: right; word-break: break-all; max-width: 65%; }
+    .result-hex { font-size: 0.65rem; color: var(--fg-2); font-weight: 400; margin-top: 1px; }
     .val-error { color: var(--red); font-weight: 700; }
-    .val-dim { color: var(--fg-dim); }
-    .led {
-      display: inline-block; width: 7px; height: 7px;
-      border-radius: 50%; vertical-align: middle; margin-right: 5px;
-    }
+    .val-dim { color: var(--fg-2); }
+    .led { display: inline-block; width: 7px; height: 7px; border-radius: 50%; vertical-align: middle; margin-right: 5px; }
     .led.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
     .led.off { background: var(--red); box-shadow: 0 0 6px var(--red); }
 
     /* ── Precision ── */
-    .prec-top {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .prec-pct {
-      font-family: 'Overpass Mono', monospace;
-      font-size: 1.1rem; font-weight: 700; color: var(--green);
-    }
-    .prec-badge {
-      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; padding: 3px 10px; border-radius: 3px;
-    }
-    .prec-badge.lossless { background: rgba(0,255,136,0.1); color: var(--green); }
-    .prec-badge.warn { background: rgba(255,183,0,0.1); color: var(--amber); }
-    .prec-badge.bad { background: rgba(255,51,102,0.1); color: var(--red); }
-    .prec-meter {
-      height: 4px; background: rgba(255,255,255,0.04);
-      border-radius: 2px; overflow: hidden; margin-bottom: 10px;
-    }
-    .prec-fill {
-      height: 100%; border-radius: 2px;
-      transition: width 0.4s ease, background 0.4s ease;
-      width: 0; background: var(--green);
-    }
+    .prec-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .prec-pct { font-family: 'Azeret Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--green); }
+    .prec-badge { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 10px; border-radius: 4px; }
+    .prec-badge.lossless { background: var(--green-ghost); color: var(--green); }
+    .prec-badge.warn { background: rgba(251,191,36,0.08); color: var(--amber); }
+    .prec-badge.bad { background: var(--red-ghost); color: var(--red); }
+    .prec-meter { height: 4px; background: rgba(255,255,255,0.03); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+    .prec-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease, background 0.4s ease; width: 0; background: var(--green); }
     .prec-fill.warn { background: var(--amber); }
     .prec-fill.bad { background: var(--red); }
-    .prec-row {
-      display: flex; justify-content: space-between; align-items: baseline;
-      font-size: 0.75rem; padding: 3px 0;
-    }
+    .prec-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75rem; padding: 3px 0; }
     .prec-row .info-key { font-size: 0.72rem; }
     .prec-row .info-val { font-size: 0.72rem; }
 
-    /* ── Solidity code ── */
+    /* ── Code output ── */
     .code-wrap { position: relative; }
     .code-out {
-      font-family: 'Overpass Mono', monospace;
-      font-size: 0.72rem; line-height: 1.6;
-      color: var(--green-dim);
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 14px 16px;
-      overflow-x: auto;
-      white-space: pre;
+      font-family: 'Azeret Mono', monospace; font-size: 0.72rem; line-height: 1.65;
+      color: var(--fg-1); background: var(--bg-0); border: 1px solid var(--border);
+      border-radius: 6px; padding: 14px 16px; overflow-x: auto; white-space: pre; margin: 0;
     }
     .copy-btn {
       position: absolute; top: 8px; right: 8px;
-      background: var(--border); border: none;
-      color: var(--fg-dim); padding: 4px 10px;
-      border-radius: 3px; font-size: 0.6rem;
-      cursor: pointer; font-family: 'Chakra Petch', sans-serif;
-      font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-      transition: all 0.2s;
+      background: var(--bg-3); border: none; color: var(--fg-2);
+      padding: 4px 10px; border-radius: 4px; font-size: 0.58rem;
+      cursor: pointer; font-family: 'Sora', sans-serif; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase; transition: all 0.2s;
     }
-    .copy-btn:hover { background: var(--green-dim); color: var(--bg); }
+    .copy-btn:hover { background: var(--accent); color: var(--bg-0); }
 
     /* ── Error ── */
-    .error-msg {
-      color: var(--red); font-size: 0.75rem;
-      padding: 8px 10px; margin-top: 8px;
-      background: rgba(255,51,102,0.06);
-      border: 1px solid rgba(255,51,102,0.15);
-      border-radius: 4px; display: none;
-    }
+    .error-msg { color: var(--red); font-size: 0.75rem; padding: 8px 10px; margin-top: 8px; background: var(--red-ghost); border: 1px solid rgba(251,113,133,0.12); border-radius: 6px; display: none; }
 
-    /* ── Flash animation ── */
-    .flash-update { animation: flashGreen 0.4s ease; }
-    @keyframes flashGreen {
-      0% { color: var(--green); text-shadow: 0 0 10px var(--green); }
-      100% { color: inherit; text-shadow: none; }
-    }
+    /* ── Flash ── */
+    .flash-update { animation: flashAccent 0.4s ease; }
+    @keyframes flashAccent { 0% { color: var(--accent); text-shadow: 0 0 8px rgba(34,211,238,0.4); } 100% { color: inherit; text-shadow: none; } }
 
     /* ── Responsive ── */
     @media (max-width: 859px) {
@@ -382,16 +162,21 @@
   </style>
 </head>
 <body>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
   <nav class="nav">
-    <a href="index.html" class="nav-back">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      uint-quantization-lib
-    </a>
-    <span class="nav-title">Playground</span>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">uint-quantization-lib</a>
+      <div class="nav-links">
+        <a href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Docs</a>
+        <a href="playground.html" class="active">Playground</a>
+        <a href="https://github.com/0xferit/uint-quantization-lib">GitHub</a>
+      </div>
+    </div>
   </nav>
 
   <main class="playground">
-    <!-- ── Left Panel: Controls ── -->
     <div class="controls-col">
       <div class="panel">
         <div class="panel-section">
@@ -411,123 +196,68 @@
             <div id="schemeError" class="error-msg"></div>
           </div>
         </div>
-
         <div class="panel-section">
           <div class="panel-header">Input Value</div>
           <div class="panel-body">
             <input type="text" id="valueInput" class="value-input" value="32000000000000012345" spellcheck="false" autocomplete="off">
             <div class="input-hint">Decimal or 0x hex. Supports uint256 range.</div>
+            <div id="valueError" class="error-msg"></div>
           </div>
         </div>
-
         <div class="panel-section">
           <div class="panel-header">Presets</div>
-          <div class="panel-body">
-            <div class="presets" id="presets"></div>
-          </div>
+          <div class="panel-body"><div class="presets" id="presets"></div></div>
         </div>
-
         <div class="panel-section">
           <div class="panel-header">Scheme Info</div>
           <div class="panel-body">
-            <div class="info-row">
-              <span class="info-key">stepSize()</span>
-              <span class="info-val" id="infoStep">65,536</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key">max()</span>
-              <span class="info-val" id="infoMax">--</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key">Solidity type</span>
-              <span class="info-val" id="infoType">uint96</span>
-            </div>
+            <div class="info-row"><span class="info-key">stepSize()</span><span class="info-val" id="infoStep">--</span></div>
+            <div class="info-row"><span class="info-key">max()</span><span class="info-val" id="infoMax">--</span></div>
+            <div class="info-row"><span class="info-key">Solidity type</span><span class="info-val" id="infoType">--</span></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ── Right Panel: Visualization & Results ── -->
     <div class="output-col">
       <div class="panel">
         <div class="panel-section">
           <div class="panel-header">Bit Field Layout</div>
           <div class="panel-body">
             <div class="bit-bar">
-              <div class="bit-seg seg-unused" id="segUnused" title="Overflow zone: must be zero for value to fit">
-                <span class="bit-seg-label">unused</span>
-                <span class="bit-seg-count" id="unusedCount">144</span>
-              </div>
-              <div class="bit-seg seg-target" id="segTarget" title="Target zone: encoded value lives here">
-                <span class="bit-seg-label">target</span>
-                <span class="bit-seg-count" id="targetCount">96</span>
-              </div>
-              <div class="bit-seg seg-shift" id="segShift" title="Shift zone: discarded by right-shift">
-                <span class="bit-seg-label">&gt;&gt;</span>
-                <span class="bit-seg-count" id="shiftCount">16</span>
-              </div>
+              <div class="bit-seg seg-unused" id="segUnused" title="Overflow zone: must be zero for value to fit"><span class="bit-seg-label">unused</span><span class="bit-seg-count" id="unusedCount">144</span></div>
+              <div class="bit-seg seg-target" id="segTarget" title="Target zone: encoded value lives here"><span class="bit-seg-label">target</span><span class="bit-seg-count" id="targetCount">96</span></div>
+              <div class="bit-seg seg-shift" id="segShift" title="Shift zone: discarded by right-shift"><span class="bit-seg-label">&gt;&gt;</span><span class="bit-seg-count" id="shiftCount">16</span></div>
             </div>
-            <div class="bit-axis">
-              <span>MSB (255)</span>
-              <span>LSB (0)</span>
-            </div>
+            <div class="bit-axis"><span>MSB (255)</span><span>LSB (0)</span></div>
           </div>
         </div>
-
         <div class="panel-section">
           <div class="panel-header">Computation Results</div>
           <div class="panel-body">
             <div class="result-grid">
-              <div class="result-row">
-                <span class="result-key">encode()</span>
-                <div class="result-val" id="resEncode">--</div>
-              </div>
-              <div class="result-row">
-                <span class="result-key">decode()</span>
-                <div class="result-val" id="resDecode">--</div>
-              </div>
-              <div class="result-row">
-                <span class="result-key">decodeMax()</span>
-                <div class="result-val" id="resDecodeMax">--</div>
-              </div>
-              <div class="result-row">
-                <span class="result-key">fits()</span>
-                <div class="result-val" id="resFits">--</div>
-              </div>
-              <div class="result-row">
-                <span class="result-key">floor()</span>
-                <div class="result-val" id="resFloor">--</div>
-              </div>
-              <div class="result-row">
-                <span class="result-key">ceil()</span>
-                <div class="result-val" id="resCeil">--</div>
-              </div>
+              <div class="result-row"><span class="result-key">encode()</span><div class="result-val" id="resEncode">--</div></div>
+              <div class="result-row"><span class="result-key">decode()</span><div class="result-val" id="resDecode">--</div></div>
+              <div class="result-row"><span class="result-key">decodeMax()</span><div class="result-val" id="resDecodeMax">--</div></div>
+              <div class="result-row"><span class="result-key">fits()</span><div class="result-val" id="resFits">--</div></div>
+              <div class="result-row"><span class="result-key">floor()</span><div class="result-val" id="resFloor">--</div></div>
+              <div class="result-row"><span class="result-key">ceil()</span><div class="result-val" id="resCeil">--</div></div>
             </div>
             <div id="encodeError" class="error-msg"></div>
           </div>
         </div>
-
         <div class="panel-section">
-          <div class="panel-header">Precision Analysis</div>
+          <div class="panel-header">Quantization Error</div>
           <div class="panel-body">
             <div class="prec-top">
               <span class="prec-pct" id="precPct">0%</span>
               <span class="prec-badge lossless" id="precBadge">LOSSLESS</span>
             </div>
-            <div class="prec-meter">
-              <div class="prec-fill" id="precFill"></div>
-            </div>
-            <div class="prec-row">
-              <span class="info-key">remainder()</span>
-              <span class="info-val" id="precRemainder">0</span>
-            </div>
-            <div class="prec-row">
-              <span class="info-key">Decoded range</span>
-              <span class="info-val" id="precRange">--</span>
-            </div>
+            <div class="prec-meter"><div class="prec-fill" id="precFill"></div></div>
+            <div class="prec-row"><span class="info-key">remainder()</span><span class="info-val" id="precRemainder">0</span></div>
+            <div class="prec-row"><span class="info-key">Decoded range</span><span class="info-val" id="precRange">--</span></div>
           </div>
         </div>
-
         <div class="panel-section">
           <div class="panel-header">Solidity Code</div>
           <div class="panel-body">
@@ -543,283 +273,166 @@
 
   <script>
   (function() {
-    /* ── Presets ── */
     const PRESETS = [
       { name: 'ETH Staking (lossy)', desc: '32 ETH + dust, create(16, 96)', shift: 16, targetBits: 96, value: 32000000000000012345n },
       { name: 'ETH Staking (lossless)', desc: '32 ETH exact, create(16, 96)', shift: 16, targetBits: 96, value: 32000000000000000000n },
-      { name: 'Extreme Packing', desc: '50M units, create(8, 20)', shift: 8, targetBits: 20, value: 50000000n },
+      { name: 'Extreme Packing', desc: '50M units, create(8, 24)', shift: 8, targetBits: 24, value: 50000000n },
     ];
 
-    /* ── State ── */
-    let shift = 16, targetBits = 96;
-    let value = 32000000000000012345n;
-
-    /* ── DOM refs ── */
+    let shift = 16, targetBits = 96, value = 32000000000000012345n;
     const el = id => document.getElementById(id);
-    const shiftSlider  = el('shiftSlider'),  shiftInput  = el('shiftInput');
+    const shiftSlider = el('shiftSlider'), shiftInput = el('shiftInput');
     const targetSlider = el('targetSlider'), targetInput = el('targetInput');
-    const valueInput   = el('valueInput');
+    const valueInput = el('valueInput');
 
-    /* ── Formatting ── */
-    function fmtDec(n) {
-      if (n == null) return '\u2014';
-      return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    }
-    function fmtHex(n) {
-      if (n == null) return '\u2014';
-      const hex = n.toString(16).toUpperCase();
-      const pad = Math.ceil(hex.length / 4) * 4;
-      const padded = hex.padStart(pad, '0');
-      return '0x' + padded.match(/.{4}/g).join(' ');
-    }
-    function fmtShortHex(n) {
-      if (n == null) return '';
-      return '0x' + n.toString(16).toUpperCase();
-    }
+    function fmtDec(n) { if (n == null) return '\u2014'; return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+    function fmtHex(n) { if (n == null) return '\u2014'; const h = n.toString(16).toUpperCase(); const p = Math.ceil(h.length/4)*4; return '0x'+h.padStart(p,'0').match(/.{4}/g).join(' '); }
+    function fmtShortHex(n) { if (n == null) return ''; return '0x'+n.toString(16).toUpperCase(); }
 
-    /* ── Computation (mirrors Solidity library exactly) ── */
     function compute() {
-      const r = {};
-      const s = BigInt(shift);
-      const t = BigInt(targetBits);
-
-      // scheme validation
-      r.valid = true;
-      r.schemeErr = '';
-      if (targetBits < 1)               { r.valid = false; r.schemeErr = 'targetBits must be >= 1'; }
+      const r = {}, s = BigInt(shift), t = BigInt(targetBits);
+      r.valid = true; r.schemeErr = '';
+      if (targetBits < 1) { r.valid = false; r.schemeErr = 'targetBits must be >= 1'; }
       else if (shift + targetBits > 256) { r.valid = false; r.schemeErr = 'shift + targetBits exceeds 256'; }
       if (!r.valid) return r;
-
-      // Quant packed uint16
       r.quant = (BigInt(targetBits) << 8n) | BigInt(shift);
-
-      // scheme info
-      r.step = 1n << s;
-      r.max = ((1n << t) - 1n) << s;
+      r.step = 1n << s; r.max = ((1n << t) - 1n) << s;
       r.solType = solType(targetBits);
-
-      // encode / fits
-      const encoded = value >> s;
-      const maxEncoded = (1n << t) - 1n;
+      const encoded = value >> s, maxEncoded = (1n << t) - 1n;
       r.fits = encoded <= maxEncoded;
-
       if (r.fits) {
-        r.encoded    = encoded;
-        r.decoded    = encoded << s;
+        r.encoded = encoded; r.decoded = encoded << s;
         r.decodedMax = (encoded << s) | ((1n << s) - 1n);
-        r.remainder  = value & ((1n << s) - 1n);
-        r.lossless   = r.remainder === 0n;
-        r.lossPct    = value > 0n ? Number((value - r.decoded) * 10000000n / value) / 100000 : 0;
-        r.encErr     = '';
+        r.remainder = value & ((1n << s) - 1n);
+        r.lossless = r.remainder === 0n;
+        r.lossPct = value > 0n ? Number((value - r.decoded) * 10000000n / value) / 100000 : 0;
+        r.encErr = '';
       } else {
         r.encoded = encoded;
         r.encErr = 'Overflow: encoded needs ' + encoded.toString(2).length + ' bits, target allows ' + targetBits;
       }
-
-      // floor / ceil always
       r.floor = (value >> s) << s;
-      r.ceil  = r.floor === value ? value : r.floor + r.step;
-
+      r.ceil = r.floor === value ? value : r.floor + r.step;
       return r;
     }
+    function solType(bits) { const r = Math.ceil(bits/8)*8; return r <= 256 ? 'uint'+r : null; }
 
-    function solType(bits) {
-      const rounded = Math.ceil(bits / 8) * 8;
-      return rounded <= 256 ? 'uint' + rounded : null;
-    }
-
-    /* ── Render ── */
     function render() {
       const r = compute();
-
-      // scheme error
       const seEl = el('schemeError');
-      seEl.textContent = r.schemeErr;
-      seEl.style.display = r.valid ? 'none' : 'block';
-
+      seEl.textContent = r.schemeErr; seEl.style.display = r.valid ? 'none' : 'block';
       if (!r.valid) { clearOutput(); return; }
-
-      // quant hex
       el('quantHex').textContent = fmtShortHex(r.quant);
-
-      // bit visualization
       const unused = Math.max(256 - shift - targetBits, 0);
-      el('segUnused').style.flex  = unused || 0.001;
-      el('segTarget').style.flex  = targetBits;
-      el('segShift').style.flex   = shift || 0.001;
-      el('unusedCount').textContent  = unused > 0 ? unused : '';
-      el('targetCount').textContent  = targetBits;
-      el('shiftCount').textContent   = shift > 0 ? shift : '';
-      el('segUnused').style.display  = unused > 0 ? '' : 'none';
-      el('segShift').style.display   = shift > 0 ? '' : 'none';
+      el('segUnused').style.flex = unused || 0.001; el('segTarget').style.flex = targetBits; el('segShift').style.flex = shift || 0.001;
+      el('unusedCount').textContent = unused > 0 ? unused : ''; el('targetCount').textContent = targetBits; el('shiftCount').textContent = shift > 0 ? shift : '';
+      el('segUnused').style.display = unused > 0 ? '' : 'none'; el('segShift').style.display = shift > 0 ? '' : 'none';
       el('segTarget').classList.toggle('overflow', !r.fits);
-
-      // results
       const eeEl = el('encodeError');
       if (r.fits) {
-        setResult('resEncode',    fmtDec(r.encoded),    fmtHex(r.encoded));
-        setResult('resDecode',    fmtDec(r.decoded),    fmtHex(r.decoded));
+        setResult('resEncode', fmtDec(r.encoded), fmtHex(r.encoded));
+        setResult('resDecode', fmtDec(r.decoded), fmtHex(r.decoded));
         setResult('resDecodeMax', fmtDec(r.decodedMax), fmtHex(r.decodedMax));
         eeEl.style.display = 'none';
       } else {
-        el('resEncode').innerHTML    = '<span class="val-error">OVERFLOW</span>';
-        el('resDecode').innerHTML    = '<span class="val-dim">\u2014</span>';
+        el('resEncode').innerHTML = '<span class="val-error">OVERFLOW</span>';
+        el('resDecode').innerHTML = '<span class="val-dim">\u2014</span>';
         el('resDecodeMax').innerHTML = '<span class="val-dim">\u2014</span>';
-        eeEl.textContent = r.encErr;
-        eeEl.style.display = 'block';
+        eeEl.textContent = r.encErr; eeEl.style.display = 'block';
       }
-
-      el('resFits').innerHTML = r.fits
-        ? '<span class="led on"></span> true'
-        : '<span class="led off"></span> false';
-      setResult('resFloor', fmtDec(r.floor));
-      setResult('resCeil',  fmtDec(r.ceil));
-
-      // precision
+      el('resFits').innerHTML = r.fits ? '<span class="led on"></span> true' : '<span class="led off"></span> false';
+      setResult('resFloor', fmtDec(r.floor)); setResult('resCeil', fmtDec(r.ceil));
       if (r.fits) {
         const pct = r.lossPct;
         el('precPct').textContent = r.lossless ? '0%' : pct.toFixed(pct < 0.001 ? 6 : 4) + '%';
         const badge = el('precBadge');
-        if (r.lossless)       { badge.textContent = 'LOSSLESS';    badge.className = 'prec-badge lossless'; }
-        else if (pct < 0.01)  { badge.textContent = 'NEGLIGIBLE';  badge.className = 'prec-badge lossless'; }
-        else if (pct < 1)     { badge.textContent = 'ACCEPTABLE';  badge.className = 'prec-badge warn'; }
-        else                  { badge.textContent = 'SIGNIFICANT'; badge.className = 'prec-badge bad'; }
-
+        if (r.lossless) { badge.textContent = 'LOSSLESS'; badge.className = 'prec-badge lossless'; }
+        else if (pct < 0.01) { badge.textContent = 'NEGLIGIBLE'; badge.className = 'prec-badge lossless'; }
+        else if (pct < 1) { badge.textContent = 'ACCEPTABLE'; badge.className = 'prec-badge warn'; }
+        else { badge.textContent = 'SIGNIFICANT'; badge.className = 'prec-badge bad'; }
         const fill = el('precFill');
         fill.style.width = Math.min(pct * 10, 100) + '%';
         fill.className = 'prec-fill' + (pct >= 1 ? ' bad' : pct >= 0.01 ? ' warn' : '');
-
         el('precRemainder').textContent = fmtDec(r.remainder) + (r.remainder > 0n ? ' (' + fmtShortHex(r.remainder) + ')' : '');
         el('precRange').textContent = fmtDec(r.decoded) + ' \u2013 ' + fmtDec(r.decodedMax);
       } else {
-        el('precPct').textContent = '\u2014';
-        el('precBadge').textContent = 'OVERFLOW';
-        el('precBadge').className = 'prec-badge bad';
-        el('precFill').style.width = '100%';
-        el('precFill').className = 'prec-fill bad';
-        el('precRemainder').textContent = '\u2014';
-        el('precRange').textContent = '\u2014';
+        el('precPct').textContent = '\u2014'; el('precBadge').textContent = 'OVERFLOW'; el('precBadge').className = 'prec-badge bad';
+        el('precFill').style.width = '100%'; el('precFill').className = 'prec-fill bad';
+        el('precRemainder').textContent = '\u2014'; el('precRange').textContent = '\u2014';
       }
-
-      // scheme info
-      el('infoStep').textContent = fmtDec(r.step);
-      el('infoMax').textContent  = fmtDec(r.max);
-      el('infoType').textContent = r.solType || 'N/A';
-
-      // solidity code
+      el('infoStep').textContent = fmtDec(r.step); el('infoMax').textContent = fmtDec(r.max); el('infoType').textContent = r.solType || 'N/A';
       const typ = r.solType || 'uint' + targetBits;
       el('codeOut').textContent =
         'import {Quant, QuantizationLib} from\n  "uint-quantization-lib/src/UintQuantizationLib.sol";\n\n' +
         'Quant private immutable SCHEME =\n  QuantizationLib.create(' + shift + ', ' + targetBits + ');\n\n' +
-        '// Encode\n' +
-        typ + ' encoded = ' + typ + '(SCHEME.encode(value));\n\n' +
-        '// Decode\n' +
-        'uint256 restored = SCHEME.decode(encoded);';
+        '// Encode\n' + typ + ' encoded = ' + typ + '(SCHEME.encode(value));\n\n' +
+        '// Decode\nuint256 restored = SCHEME.decode(encoded);';
     }
 
     function setResult(id, dec, hex) {
       const e = el(id);
       e.innerHTML = '<div>' + dec + '</div>' + (hex ? '<div class="result-hex">' + hex + '</div>' : '');
-      flashEl(e);
+      e.classList.remove('flash-update'); void e.offsetWidth; e.classList.add('flash-update');
     }
-
-    function flashEl(e) {
-      e.classList.remove('flash-update');
-      void e.offsetWidth;
-      e.classList.add('flash-update');
-    }
-
     function clearOutput() {
-      ['resEncode','resDecode','resDecodeMax','resFits','resFloor','resCeil'].forEach(id => {
-        el(id).innerHTML = '<span class="val-dim">\u2014</span>';
-      });
-      el('encodeError').style.display = 'none';
-      el('precPct').textContent = '\u2014';
-      el('precBadge').textContent = '\u2014';
-      el('precBadge').className = 'prec-badge';
-      el('precFill').style.width = '0';
-      el('precRemainder').textContent = '\u2014';
-      el('precRange').textContent = '\u2014';
-      el('infoStep').textContent = '\u2014';
-      el('infoMax').textContent = '\u2014';
-      el('infoType').textContent = '\u2014';
-      el('codeOut').textContent = '';
+      ['resEncode','resDecode','resDecodeMax','resFits','resFloor','resCeil'].forEach(id => { el(id).innerHTML = '<span class="val-dim">\u2014</span>'; });
+      el('encodeError').style.display = 'none'; el('precPct').textContent = '\u2014';
+      el('precBadge').textContent = '\u2014'; el('precBadge').className = 'prec-badge';
+      el('precFill').style.width = '0'; el('precRemainder').textContent = '\u2014'; el('precRange').textContent = '\u2014';
+      el('infoStep').textContent = '\u2014'; el('infoMax').textContent = '\u2014'; el('infoType').textContent = '\u2014'; el('codeOut').textContent = '';
     }
 
-    /* ── Input sync ── */
     function snap8(v) { return Math.round(v / 8) * 8; }
     function syncShift(val) {
       shift = Math.max(0, Math.min(248, snap8(parseInt(val) || 0)));
-      shiftInput.value = shift;
-      shiftSlider.value = shift;
-      if (shift + targetBits > 256) {
-        targetBits = Math.max(8, snap8(256 - shift));
-        targetInput.value = targetBits;
-        targetSlider.value = targetBits;
-      }
+      shiftInput.value = shift; shiftSlider.value = shift;
+      if (shift + targetBits > 256) { targetBits = Math.max(8, snap8(256 - shift)); targetInput.value = targetBits; targetSlider.value = targetBits; }
       render();
     }
     function syncTarget(val) {
       targetBits = Math.max(8, Math.min(256, snap8(parseInt(val) || 8)));
-      targetInput.value = targetBits;
-      targetSlider.value = targetBits;
-      if (shift + targetBits > 256) {
-        shift = Math.max(0, snap8(256 - targetBits));
-        shiftInput.value = shift;
-        shiftSlider.value = shift;
-      }
+      targetInput.value = targetBits; targetSlider.value = targetBits;
+      if (shift + targetBits > 256) { shift = Math.max(0, snap8(256 - targetBits)); shiftInput.value = shift; shiftSlider.value = shift; }
       render();
     }
     function syncValue(str) {
       str = str.trim().replace(/,/g, '');
-      if (!str) { value = 0n; render(); return; }
+      const veEl = el('valueError');
+      if (!str) { value = 0n; veEl.style.display = 'none'; render(); return; }
       try {
-        let v = BigInt(str);
-        if (v < 0n) v = 0n;
-        const max256 = (1n << 256n) - 1n;
-        if (v > max256) v = max256;
-        value = v;
-        render();
-      } catch { /* invalid, ignore */ }
+        const v = BigInt(str);
+        if (v < 0n) { veEl.textContent = 'Value must be non-negative (uint256)'; veEl.style.display = 'block'; return; }
+        const m = (1n << 256n) - 1n;
+        if (v > m) { veEl.textContent = 'Value exceeds uint256 max (2^256 - 1)'; veEl.style.display = 'block'; return; }
+        veEl.style.display = 'none'; value = v; render();
+      } catch { veEl.textContent = 'Invalid number'; veEl.style.display = 'block'; }
     }
 
-    /* ── Events ── */
     shiftSlider.addEventListener('input', () => syncShift(shiftSlider.value));
-    shiftInput.addEventListener('input',  () => syncShift(shiftInput.value));
+    shiftInput.addEventListener('input', () => syncShift(shiftInput.value));
     targetSlider.addEventListener('input', () => syncTarget(targetSlider.value));
-    targetInput.addEventListener('input',  () => syncTarget(targetInput.value));
-    valueInput.addEventListener('input',   () => syncValue(valueInput.value));
+    targetInput.addEventListener('input', () => syncTarget(targetInput.value));
+    valueInput.addEventListener('input', () => syncValue(valueInput.value));
 
     el('copyBtn').addEventListener('click', () => {
-      const text = el('codeOut').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = el('copyBtn');
-        btn.textContent = 'Copied';
-        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      navigator.clipboard.writeText(el('codeOut').textContent).then(() => {
+        const b = el('copyBtn'); b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500);
       });
     });
 
-    /* ── Presets ── */
     const presetsContainer = el('presets');
     PRESETS.forEach(p => {
-      const btn = document.createElement('button');
-      btn.className = 'preset-btn';
+      const btn = document.createElement('button'); btn.className = 'preset-btn';
       btn.innerHTML = p.name + '<span class="preset-desc">' + p.desc + '</span>';
       btn.addEventListener('click', () => {
-        shift = p.shift;
-        targetBits = p.targetBits;
-        value = p.value;
-        shiftInput.value = shift;
-        shiftSlider.value = shift;
-        targetInput.value = targetBits;
-        targetSlider.value = targetBits;
-        valueInput.value = value.toString();
-        render();
+        shift = p.shift; targetBits = p.targetBits; value = p.value;
+        shiftInput.value = shift; shiftSlider.value = shift;
+        targetInput.value = targetBits; targetSlider.value = targetBits;
+        valueInput.value = value.toString(); el('valueError').style.display = 'none'; render();
       });
       presetsContainer.appendChild(btn);
     });
 
-    /* ── Init ── */
     render();
   })();
   </script>

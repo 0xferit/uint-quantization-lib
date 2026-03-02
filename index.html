@@ -4,109 +4,140 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>uint-quantization-lib | Solidity Quantization Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff; --card: #161b22; --border: #30363d; --green: #3fb950; --code-bg: #1c2128; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
-    a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+    :root {
+      --bg-0: #08090b; --bg-1: #0f1114; --bg-2: #17191d; --bg-3: #1f2127;
+      --border: #26282e; --border-focus: #3a3d44;
+      --fg-0: #ecedef; --fg-1: #9fa1a8; --fg-2: #5f6168;
+      --accent: #22d3ee; --accent-hover: #06b6d4; --accent-dim: #0e7490;
+      --green: #34d399; --green-dim: #059669;
+      --red: #fb7185; --amber: #fbbf24; --violet: #c084fc;
+      --code-bg: #0b0c0e; --radius: 8px; --radius-lg: 12px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Sora', sans-serif; background: var(--bg-0); color: var(--fg-1);
+      line-height: 1.6; -webkit-font-smoothing: antialiased;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Ambient ── */
+    .bg-glow { position: fixed; border-radius: 50%; pointer-events: none; z-index: -1; }
+    .bg-glow-1 { top: -200px; right: -100px; width: 700px; height: 700px; background: radial-gradient(circle, rgba(34,211,238,0.04) 0%, transparent 70%); filter: blur(100px); }
+    .bg-glow-2 { bottom: -300px; left: -200px; width: 800px; height: 800px; background: radial-gradient(circle, rgba(52,211,153,0.03) 0%, transparent 70%); filter: blur(120px); }
+
+    /* ── Nav ── */
+    .nav { position: sticky; top: 0; z-index: 100; background: rgba(8,9,11,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+    .nav-inner { max-width: 960px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-family: 'Azeret Mono', monospace; font-size: 0.85rem; font-weight: 600; color: var(--fg-0); text-decoration: none; letter-spacing: -0.02em; }
+    .nav-logo:hover { color: var(--accent); text-decoration: none; }
+    .nav-links { display: flex; align-items: center; gap: 24px; }
+    .nav-links a { font-size: 0.85rem; font-weight: 500; color: var(--fg-2); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--fg-0); text-decoration: none; }
+    .nav-links a.active { color: var(--accent); }
+
     .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
-    header { padding: 48px 0 32px; text-align: center; border-bottom: 1px solid var(--border); }
-    header h1 { font-size: 2.5rem; color: #f0f6fc; margin-bottom: 12px; }
-    header p { font-size: 1.15rem; color: #8b949e; max-width: 640px; margin: 0 auto 24px; }
-    .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
-    .badge { background: var(--card); border: 1px solid var(--border); padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; color: var(--accent); }
-    .cta { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-    .cta a { padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; }
-    .cta .primary { background: var(--accent); color: var(--bg); } .cta .primary:hover { opacity: 0.9; text-decoration: none; }
-    .cta .secondary { border: 1px solid var(--border); color: var(--fg); } .cta .secondary:hover { border-color: var(--accent); text-decoration: none; }
-    section { padding: 48px 0; border-bottom: 1px solid var(--border); }
-    section:last-of-type { border-bottom: none; }
-    h2 { font-size: 1.5rem; color: #f0f6fc; margin-bottom: 16px; }
-    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; overflow-x: auto; font-size: 0.875rem; line-height: 1.5; margin: 16px 0; }
-    code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
-    .card h3 { color: var(--green); font-size: 1rem; margin-bottom: 8px; }
-    .card p { font-size: 0.9rem; color: #8b949e; }
-    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.875rem; }
-    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-    th { color: #f0f6fc; background: var(--card); }
-    td code { color: var(--accent); }
-    footer { padding: 32px 0; text-align: center; color: #8b949e; font-size: 0.85rem; border-top: 1px solid var(--border); }
 
-    /* ── Animation Section ── */
-    .anim-wrap { padding: 48px 0; border-bottom: 1px solid var(--border); }
-    .anim-stage {
-      position: relative; aspect-ratio: 16/9; max-width: 100%; overflow: hidden;
-      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-      cursor: pointer; user-select: none;
-    }
-    .anim-scene {
-      position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; padding: 32px;
-      opacity: 0; transition: opacity 0.6s ease; pointer-events: none;
-    }
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 22px; border-radius: 6px; font-family: 'Sora', sans-serif; font-size: 0.9rem; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; }
+    .btn:hover { text-decoration: none; }
+    .btn-primary { background: var(--accent); color: var(--bg-0); }
+    .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 0 24px rgba(34,211,238,0.25); }
+    .btn-outline { border: 1px solid var(--border); color: var(--fg-0); background: transparent; }
+    .btn-outline:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+    /* ── Hero ── */
+    .hero { position: relative; padding: 96px 0 72px; text-align: center; overflow: hidden; }
+    .hero::after { content: '>>'; position: absolute; right: 5%; top: 50%; transform: translateY(-50%); font-family: 'Azeret Mono', monospace; font-size: clamp(8rem, 20vw, 16rem); font-weight: 900; color: rgba(34,211,238,0.025); pointer-events: none; line-height: 1; }
+    .hero-tag { display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; padding: 4px 14px; border: 1px solid var(--accent-dim); border-radius: 100px; animation: fadeUp 0.5s ease 0.1s both; }
+    .hero h1 { font-size: clamp(2.2rem, 5.5vw, 3.5rem); font-weight: 700; color: var(--fg-0); line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 20px; max-width: 700px; margin-left: auto; margin-right: auto; animation: fadeUp 0.5s ease 0.2s both; }
+    .hero-desc { font-size: clamp(1rem, 2vw, 1.12rem); color: var(--fg-1); max-width: 520px; margin: 0 auto 32px; line-height: 1.7; animation: fadeUp 0.5s ease 0.3s both; }
+    .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; animation: fadeUp 0.5s ease 0.4s both; }
+    .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; animation: fadeUp 0.5s ease 0.5s both; }
+    .badge { font-size: 0.7rem; font-weight: 500; color: var(--fg-2); padding: 3px 10px; border: 1px solid var(--border); border-radius: 100px; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Sections ── */
+    .section { padding: 72px 0; }
+    .section-title { font-size: 1.5rem; font-weight: 700; color: var(--fg-0); margin-bottom: 32px; letter-spacing: -0.02em; }
+
+    /* ── Code blocks ── */
+    .code-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+    .code-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg-2); border-bottom: 1px solid var(--border); }
+    .code-dot { width: 6px; height: 6px; border-radius: 50%; opacity: 0.35; }
+    .code-dot:nth-child(1) { background: var(--red); } .code-dot:nth-child(2) { background: var(--amber); } .code-dot:nth-child(3) { background: var(--green); }
+    .code-label { font-family: 'Azeret Mono', monospace; font-size: 0.68rem; color: var(--fg-2); margin-left: auto; }
+    .code-body { padding: 16px; font-family: 'Azeret Mono', monospace; font-size: 0.82rem; line-height: 1.7; color: var(--fg-1); overflow-x: auto; white-space: pre; }
+
+    /* ── Cards ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .card { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
+    .card:hover { transform: translateY(-2px); border-color: var(--border-focus); box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
+    .card:nth-child(1) { border-top: 2px solid var(--accent); } .card:nth-child(2) { border-top: 2px solid var(--green); } .card:nth-child(3) { border-top: 2px solid var(--amber); }
+    .card h3 { font-size: 1.05rem; font-weight: 600; color: var(--fg-0); margin-bottom: 8px; }
+    .card p { font-size: 0.9rem; color: var(--fg-1); line-height: 1.6; }
+
+    /* ── API list ── */
+    .api-list { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .api-item { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 20px; gap: 20px; }
+    .api-item:not(:last-child) { border-bottom: 1px solid rgba(38,40,46,0.5); }
+    .api-item:hover { background: rgba(34,211,238,0.02); }
+    .api-fn { font-family: 'Azeret Mono', monospace; font-size: 0.82rem; font-weight: 500; color: var(--accent); white-space: nowrap; }
+    .api-desc { font-size: 0.88rem; color: var(--fg-1); text-align: right; }
+
+    /* ── Footer ── */
+    .footer { padding: 48px 0; text-align: center; border-top: 1px solid var(--border); }
+    .footer p { font-size: 0.85rem; color: var(--fg-2); }
+    .footer a { color: var(--fg-2); } .footer a:hover { color: var(--accent); }
+
+    /* ── Animation ── */
+    .anim-stage { position: relative; aspect-ratio: 16/9; max-width: 100%; overflow: hidden; background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); cursor: pointer; user-select: none; box-shadow: 0 4px 32px rgba(0,0,0,0.3); }
+    .anim-scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
     .anim-scene.active { opacity: 1; pointer-events: auto; }
+    .anim-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--accent); width: 0; transition: none; border-radius: 0 0 0 12px; }
+    .anim-pause-hint { position: absolute; top: 12px; right: 16px; font-size: 0.72rem; color: var(--fg-2); opacity: 0.7; }
+    .anim-replay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--accent); color: var(--bg-0); border: none; padding: 12px 28px; border-radius: 6px; font-size: 0.95rem; font-weight: 700; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; font-family: 'Sora', sans-serif; }
+    .anim-replay.visible { opacity: 1; pointer-events: auto; }
+    .anim-replay:hover { background: var(--accent-hover); box-shadow: 0 0 20px rgba(34,211,238,0.25); }
 
-    /* progress bar */
-    .anim-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--accent); width: 0; transition: none; border-radius: 0 0 0 10px; }
-    .anim-pause-hint { position: absolute; top: 12px; right: 16px; font-size: 0.75rem; color: #8b949e; opacity: 0.7; }
-
-    /* Scene 1: Hook */
-    .s1-bar {
-      width: 90%; height: 32px; border-radius: 4px; position: relative; overflow: hidden;
-      background: repeating-linear-gradient(90deg, var(--accent) 0px, var(--accent) 1px, transparent 1px, transparent 3.5px);
-      opacity: 0; transform: scaleX(0.8); transition: opacity 0.8s ease, transform 0.8s ease;
-    }
-    .s1-bar.visible { opacity: 1; transform: scaleX(1); }
-    .s1-bar .excess {
-      position: absolute; right: 0; top: 0; bottom: 0; width: 35%;
-      background: rgba(255,100,100,0.15); animation: nonePulse 2s ease-in-out infinite alternate;
-    }
-    @keyframes nonePulse { from { opacity: 0.3; } to { opacity: 0.8; } }
-    .s1-text {
-      font-size: clamp(1.2rem, 3vw, 2rem); color: #f0f6fc; font-weight: 700; margin-bottom: 24px;
-      min-height: 2.6em; text-align: center; opacity: 0; transition: opacity 0.5s ease;
-    }
+    /* Scene 1 */
+    .s1-text { font-size: clamp(1.2rem, 3vw, 2rem); color: var(--fg-0); font-weight: 700; margin-bottom: 24px; min-height: 2.6em; text-align: center; opacity: 0; transition: opacity 0.5s ease; }
     .s1-text.visible { opacity: 1; }
-    .s1-label { font-size: 0.8rem; color: #8b949e; margin-top: 12px; opacity: 0; transition: opacity 0.5s ease; }
+    .s1-bar { width: 90%; height: 32px; border-radius: 4px; position: relative; overflow: hidden; background: repeating-linear-gradient(90deg, var(--accent) 0px, var(--accent) 1px, transparent 1px, transparent 3.5px); opacity: 0; transform: scaleX(0.8); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .s1-bar.visible { opacity: 1; transform: scaleX(1); }
+    .s1-bar .excess { position: absolute; right: 0; top: 0; bottom: 0; width: 35%; background: rgba(251,113,133,0.12); animation: pulse 2s ease-in-out infinite alternate; }
+    @keyframes pulse { from { opacity: 0.3; } to { opacity: 0.8; } }
+    .s1-label { font-size: 0.8rem; color: var(--fg-2); margin-top: 12px; opacity: 0; transition: opacity 0.5s ease; font-family: 'Azeret Mono', monospace; }
     .s1-label.visible { opacity: 1; }
 
-    /* Scene 2: Bit-shift */
+    /* Scene 2 */
     .s2-bar-wrap { width: 80%; margin-bottom: 20px; }
-    .s2-label { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; font-family: 'SFMono-Regular', Consolas, monospace; }
-    .s2-bar { display: flex; height: 40px; border-radius: 4px; overflow: hidden; transition: width 0.8s ease; width: 100%; }
-    .s2-upper { background: var(--green); flex: 112; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--bg); font-weight: 700; }
-    .s2-lower { background: #f85149; flex: 16; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #fff; font-weight: 600; transition: opacity 0.6s ease, flex 0.6s ease; }
+    .s2-label { font-size: 0.85rem; color: var(--fg-2); margin-bottom: 6px; font-family: 'Azeret Mono', monospace; }
+    .s2-bar { display: flex; height: 40px; border-radius: 6px; overflow: hidden; transition: width 0.8s ease; width: 100%; }
+    .s2-upper { background: var(--green); flex: 112; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--bg-0); font-weight: 700; }
+    .s2-lower { background: var(--red); flex: 16; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #fff; font-weight: 600; transition: opacity 0.6s ease, flex 0.6s ease; }
     .s2-lower.discarded { opacity: 0; flex: 0; }
-    .s2-op {
-      font-size: clamp(1rem, 2.5vw, 1.6rem); color: var(--accent); font-family: 'SFMono-Regular', Consolas, monospace;
-      font-weight: 700; margin: 12px 0; opacity: 0; transition: opacity 0.4s ease;
-    }
+    .s2-op { font-size: clamp(1rem, 2.5vw, 1.6rem); color: var(--accent); font-family: 'Azeret Mono', monospace; font-weight: 700; margin: 12px 0; opacity: 0; transition: opacity 0.4s ease; }
     .s2-op.visible { opacity: 1; }
-    .s2-code {
-      font-size: clamp(0.65rem, 1.3vw, 0.85rem); color: var(--green); font-family: 'SFMono-Regular', Consolas, monospace;
-      background: var(--code-bg); padding: 8px 16px; border-radius: 4px; border: 1px solid var(--border);
-      overflow: hidden; white-space: nowrap; max-width: 90%;
-    }
+    .s2-code { font-size: clamp(0.65rem, 1.3vw, 0.85rem); color: var(--green); font-family: 'Azeret Mono', monospace; background: var(--code-bg); padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); overflow: hidden; white-space: nowrap; max-width: 90%; }
     .s2-code .cursor { display: inline-block; width: 2px; height: 1em; background: var(--accent); vertical-align: text-bottom; animation: blink 0.8s step-end infinite; }
     @keyframes blink { 50% { opacity: 0; } }
 
-    /* Scene 3: Struct packing */
+    /* Scene 3 */
     .s3-group { width: 85%; margin-bottom: 16px; }
-    .s3-title { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .s3-title { font-size: 0.8rem; color: var(--fg-2); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
     .s3-slots { display: flex; flex-direction: column; gap: 4px; }
-    .s3-slot { display: flex; height: 36px; border-radius: 4px; overflow: hidden; }
-    .s3-field {
-      display: flex; align-items: center; justify-content: center; font-size: clamp(0.55rem, 1.1vw, 0.72rem);
-      font-family: 'SFMono-Regular', Consolas, monospace; font-weight: 600; color: var(--bg);
-      padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    .s3-slot { display: flex; height: 36px; border-radius: 6px; overflow: hidden; }
+    .s3-field { display: flex; align-items: center; justify-content: center; font-size: clamp(0.55rem, 1.1vw, 0.72rem); font-family: 'Azeret Mono', monospace; font-weight: 600; color: var(--bg-0); padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .s3-field.amount { background: var(--green); }
     .s3-field.time { background: var(--accent); }
-    .s3-field.flag { background: #d2a8ff; }
-    .s3-field.wasted { background: #30363d; color: #8b949e; }
-    .s3-field.free { background: transparent; border: 1px dashed var(--border); color: #8b949e; }
+    .s3-field.flag { background: var(--violet); }
+    .s3-field.wasted { background: var(--bg-3); color: var(--fg-2); }
+    .s3-field.free { background: transparent; border: 1px dashed var(--border); color: var(--fg-2); }
     .s3-arrow { font-size: 1.5rem; color: var(--accent); text-align: center; margin: 8px 0; opacity: 0; transition: opacity 0.5s ease; }
     .s3-arrow.visible { opacity: 1; }
     .s3-savings { font-size: 0.85rem; color: var(--green); text-align: center; margin-top: 8px; font-weight: 600; opacity: 0; transition: opacity 0.5s ease; }
@@ -114,84 +145,87 @@
     .s3-before, .s3-after { opacity: 0; transition: opacity 0.6s ease; }
     .s3-before.visible, .s3-after.visible { opacity: 1; }
 
-    /* Scene 4: Gas comparison */
+    /* Scene 4 */
     .s4-chart { display: flex; align-items: flex-end; justify-content: center; gap: 48px; height: 55%; width: 80%; }
     .s4-col { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 120px; }
     .s4-bar-outer { width: 100%; height: 200px; position: relative; display: flex; align-items: flex-end; }
-    .s4-bar-inner { width: 100%; border-radius: 4px 4px 0 0; transition: height 1.5s ease-out; }
-    .s4-bar-inner.raw { background: #f85149; }
+    .s4-bar-inner { width: 100%; border-radius: 6px 6px 0 0; transition: height 1.5s ease-out; }
+    .s4-bar-inner.raw { background: var(--red); }
     .s4-bar-inner.quant { background: var(--green); }
-    .s4-num { font-family: 'SFMono-Regular', Consolas, monospace; font-size: clamp(0.9rem, 2vw, 1.2rem); color: #f0f6fc; font-weight: 700; margin-top: 8px; }
-    .s4-lbl { font-size: 0.8rem; color: #8b949e; margin-top: 4px; }
-    .s4-saving {
-      font-size: clamp(1.2rem, 3vw, 2rem); color: var(--green); font-weight: 800; margin-top: 20px;
-      opacity: 0; transform: scale(0.5); transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+    .s4-num { font-family: 'Azeret Mono', monospace; font-size: clamp(0.9rem, 2vw, 1.2rem); color: var(--fg-0); font-weight: 700; margin-top: 8px; }
+    .s4-lbl { font-size: 0.8rem; color: var(--fg-2); margin-top: 4px; }
+    .s4-saving { font-size: clamp(1.2rem, 3vw, 2rem); color: var(--green); font-weight: 800; margin-top: 20px; opacity: 0; transform: scale(0.5); transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }
     .s4-saving.visible { opacity: 1; transform: scale(1); }
-    .s4-caption { font-size: 0.85rem; color: #8b949e; margin-top: 8px; opacity: 0; transition: opacity 0.5s ease; }
+    .s4-caption { font-size: 0.85rem; color: var(--fg-2); margin-top: 8px; opacity: 0; transition: opacity 0.5s ease; }
     .s4-caption.visible { opacity: 1; }
 
-    /* Scene 5: Closing */
-    .s5-title { font-size: clamp(1.5rem, 4vw, 2.5rem); font-family: 'SFMono-Regular', Consolas, monospace; color: #f0f6fc; font-weight: 800; margin-bottom: 16px; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    /* Scene 5 */
+    .s5-title { font-size: clamp(1.5rem, 4vw, 2.5rem); font-family: 'Azeret Mono', monospace; color: var(--fg-0); font-weight: 700; margin-bottom: 16px; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .s5-title.visible { opacity: 1; transform: translateY(0); }
-    .s5-tag { font-size: clamp(0.9rem, 2vw, 1.15rem); color: #8b949e; margin-bottom: 28px; opacity: 0; transition: opacity 0.6s ease 0.3s; }
+    .s5-tag { font-size: clamp(0.9rem, 2vw, 1.12rem); color: var(--fg-1); margin-bottom: 28px; opacity: 0; transition: opacity 0.6s ease 0.3s; }
     .s5-tag.visible { opacity: 1; }
     .s5-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; opacity: 0; transition: opacity 0.6s ease 0.6s; }
     .s5-actions.visible { opacity: 1; }
-    .s5-actions a { padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; }
 
-    /* Replay button */
-    .anim-replay {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      background: var(--accent); color: var(--bg); border: none; padding: 12px 28px;
-      border-radius: 6px; font-size: 1rem; font-weight: 700; cursor: pointer;
-      opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
-      font-family: inherit;
-    }
-    .anim-replay.visible { opacity: 1; pointer-events: auto; }
-    .anim-replay:hover { opacity: 0.9; }
+    /* ── Scroll reveal ── */
+    .sr { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .sr.visible { opacity: 1; transform: translateY(0); }
 
-    @media (max-width: 600px) {
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .hero { padding: 64px 0 48px; }
+      .section { padding: 48px 0; }
+      .api-item { flex-direction: column; gap: 4px; }
+      .api-desc { text-align: left; }
+      .nav-links { gap: 16px; }
       .anim-scene { padding: 16px; }
-      .s4-chart { gap: 24px; }
-      .s4-bar-outer { height: 140px; }
+      .s4-chart { gap: 24px; } .s4-bar-outer { height: 140px; }
       .s3-field { font-size: 0.5rem; }
     }
   </style>
 </head>
 <body>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">uint-quantization-lib</a>
+      <div class="nav-links">
+        <a href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Docs</a>
+        <a href="playground.html">Playground</a>
+        <a href="https://github.com/0xferit/uint-quantization-lib">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
   <div class="container">
-    <header>
-      <h1>uint-quantization-lib</h1>
-      <p>Stop paying for resolution you don't need. A Solidity library that compresses uint256 values into smaller types for tighter struct packing and gas savings.</p>
+    <section class="hero">
+      <span class="hero-tag">Solidity Library</span>
+      <h1>Stop paying for precision you don't need.</h1>
+      <p class="hero-desc">A Solidity library that compresses uint256 values into smaller types for tighter struct packing and lower gas costs.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="https://github.com/0xferit/uint-quantization-lib">View on GitHub</a>
+        <a class="btn btn-outline" href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Documentation</a>
+        <a class="btn btn-outline" href="playground.html">Playground</a>
+      </div>
       <div class="badges">
         <span class="badge">Solidity</span>
         <span class="badge">EVM</span>
         <span class="badge">Gas Optimization</span>
         <span class="badge">MIT License</span>
       </div>
-      <div class="cta">
-        <a class="primary" href="https://github.com/0xferit/uint-quantization-lib">View on GitHub</a>
-        <a class="secondary" href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Documentation</a>
-        <a class="secondary" href="playground.html">Playground</a>
-      </div>
-    </header>
+    </section>
 
-    <!-- ── Animated Explainer ── -->
-    <div class="anim-wrap">
+    <section class="section">
+      <h2 class="section-title sr">How It Works</h2>
       <div class="anim-stage" id="animStage">
         <span class="anim-pause-hint" id="pauseHint">click to pause</span>
-
-        <!-- Scene 1: Hook -->
         <div class="anim-scene" id="scene1">
-          <div class="s1-text" id="s1Text">256 bits of precision.</div>
-          <div class="s1-bar" id="s1Bar">
-            <div class="excess"></div>
-          </div>
+          <div class="s1-text" id="s1Text">256 bits of range.</div>
+          <div class="s1-bar" id="s1Bar"><div class="excess"></div></div>
           <div class="s1-label" id="s1Label">uint256 storage slot</div>
         </div>
-
-        <!-- Scene 2: Bit-shift -->
         <div class="anim-scene" id="scene2">
           <div class="s2-bar-wrap">
             <div class="s2-label" id="s2TypeLabel">uint128 amount</div>
@@ -203,8 +237,6 @@
           <div class="s2-op" id="s2Op">&gt;&gt; 16</div>
           <div class="s2-code" id="s2Code"><span class="cursor"></span></div>
         </div>
-
-        <!-- Scene 3: Struct packing -->
         <div class="anim-scene" id="scene3">
           <div class="s3-before" id="s3Before">
             <div class="s3-group">
@@ -239,317 +271,170 @@
           </div>
           <div class="s3-savings" id="s3Savings">1 SSTORE eliminated</div>
         </div>
-
-        <!-- Scene 4: Gas comparison -->
         <div class="anim-scene" id="scene4">
           <div class="s4-chart">
             <div class="s4-col">
-              <div class="s4-bar-outer">
-                <div class="s4-bar-inner raw" id="s4RawBar" style="height:0"></div>
-              </div>
+              <div class="s4-bar-outer"><div class="s4-bar-inner raw" id="s4RawBar" style="height:0"></div></div>
               <div class="s4-num" id="s4RawNum">0</div>
               <div class="s4-lbl">Raw</div>
             </div>
             <div class="s4-col">
-              <div class="s4-bar-outer">
-                <div class="s4-bar-inner quant" id="s4QuantBar" style="height:0"></div>
-              </div>
+              <div class="s4-bar-outer"><div class="s4-bar-inner quant" id="s4QuantBar" style="height:0"></div></div>
               <div class="s4-num" id="s4QuantNum">0</div>
               <div class="s4-lbl">Quantized</div>
             </div>
           </div>
-          <div class="s4-saving" id="s4Saving">-49% gas</div>
+          <div class="s4-saving" id="s4Saving">-33% gas</div>
           <div class="s4-caption" id="s4Caption">1 SSTORE eliminated</div>
         </div>
-
-        <!-- Scene 5: Closing -->
         <div class="anim-scene" id="scene5">
           <div class="s5-title" id="s5Title">uint-quantization-lib</div>
           <div class="s5-tag" id="s5Tag">Trade excess precision for storage density.</div>
           <div class="s5-actions" id="s5Actions">
-            <a class="primary" href="https://github.com/0xferit/uint-quantization-lib" style="background:var(--accent);color:var(--bg);text-decoration:none;">View on GitHub</a>
-            <a class="secondary" href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md" style="border:1px solid var(--border);color:var(--fg);text-decoration:none;">Documentation</a>
+            <a class="btn btn-primary" href="https://github.com/0xferit/uint-quantization-lib">View on GitHub</a>
+            <a class="btn btn-outline" href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Documentation</a>
           </div>
         </div>
-
         <div class="anim-progress" id="animProgress"></div>
         <button class="anim-replay" id="replayBtn">Replay</button>
       </div>
-    </div>
+    </section>
 
-    <section>
-      <h2>Quick Start</h2>
-      <pre><code>forge soldeer install uint-quantization-lib</code></pre>
-      <pre><code>import {Quant, QuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
+    <section class="section">
+      <h2 class="section-title sr">Quick Start</h2>
+      <div class="code-block sr" style="transition-delay:0.1s">
+        <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">Terminal</span></div>
+        <div class="code-body">forge soldeer install uint-quantization-lib</div>
+      </div>
+      <div class="code-block sr" style="transition-delay:0.2s">
+        <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">MyContract.sol</span></div>
+        <div class="code-body">import {Quant, QuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
 
 Quant private immutable SCHEME = QuantizationLib.create(32, 24);
 
 uint24 stored = uint24(SCHEME.encode(largeValue));   // compress
-uint256 restored = SCHEME.decode(stored);             // decompress</code></pre>
+uint256 restored = SCHEME.decode(stored);             // decompress</div>
+      </div>
     </section>
 
-    <section>
-      <h2>Why Quantization?</h2>
-      <div class="grid">
-        <div class="card">
+    <section class="section">
+      <h2 class="section-title sr">Why Quantization?</h2>
+      <div class="card-grid">
+        <div class="card sr" style="transition-delay:0.1s">
           <h3>Denser Storage Packing</h3>
           <p>Pack more fields per storage slot by compressing values that don't need full uint256 precision.</p>
         </div>
-        <div class="card">
+        <div class="card sr" style="transition-delay:0.2s">
           <h3>Massive Gas Savings</h3>
           <p>Fewer storage writes and reads by fitting more data into each 32-byte slot.</p>
         </div>
-        <div class="card">
+        <div class="card sr" style="transition-delay:0.3s">
           <h3>Safe &amp; Auditable</h3>
           <p>Overflow checks, lossless mode, and clear error messages. MIT licensed.</p>
         </div>
       </div>
     </section>
 
-    <section>
-      <h2>API Overview</h2>
-      <table>
-        <thead><tr><th>Function</th><th>Description</th></tr></thead>
-        <tbody>
-          <tr><td><code>create(shift, targetBits)</code></td><td>Create a quantization scheme</td></tr>
-          <tr><td><code>encode(value)</code></td><td>Floor-encode a value (reverts on overflow)</td></tr>
-          <tr><td><code>encodeLossless(value)</code></td><td>Strict encode (reverts on precision loss)</td></tr>
-          <tr><td><code>decode(encoded)</code></td><td>Restore lower-bound value</td></tr>
-          <tr><td><code>decodeMax(encoded)</code></td><td>Restore upper-bound value</td></tr>
-          <tr><td><code>fits(value)</code></td><td>Check if value is representable</td></tr>
-          <tr><td><code>floor(value) / ceil(value)</code></td><td>Snap to nearest step boundary</td></tr>
-          <tr><td><code>stepSize() / max()</code></td><td>Query scheme parameters</td></tr>
-        </tbody>
-      </table>
+    <section class="section">
+      <h2 class="section-title sr">API</h2>
+      <div class="api-list sr" style="transition-delay:0.1s">
+        <div class="api-item"><code class="api-fn">create(shift, targetBits)</code><span class="api-desc">Create a quantization scheme</span></div>
+        <div class="api-item"><code class="api-fn">encode(value)</code><span class="api-desc">Floor-encode a value (reverts on overflow)</span></div>
+        <div class="api-item"><code class="api-fn">encodeLossless(value)</code><span class="api-desc">Strict encode (reverts if value is not step-aligned)</span></div>
+        <div class="api-item"><code class="api-fn">decode(encoded)</code><span class="api-desc">Restore lower-bound value</span></div>
+        <div class="api-item"><code class="api-fn">decodeMax(encoded)</code><span class="api-desc">Restore upper-bound value</span></div>
+        <div class="api-item"><code class="api-fn">fits(value)</code><span class="api-desc">Check if value is representable</span></div>
+        <div class="api-item"><code class="api-fn">floor(value) / ceil(value)</code><span class="api-desc">Snap to nearest step boundary</span></div>
+        <div class="api-item"><code class="api-fn">stepSize() / max()</code><span class="api-desc">Query scheme parameters</span></div>
+      </div>
     </section>
 
-    <footer>
+    <footer class="footer">
       <p>Built by <a href="https://github.com/0xferit">0xferit</a> &middot; MIT License &middot; <a href="https://github.com/0xferit/uint-quantization-lib">GitHub</a> &middot; <a href="playground.html">Playground</a></p>
     </footer>
   </div>
 
   <script>
   (function() {
-    const TOTAL = 32000;
-    const GAS_RAW = 44857;
-    const GAS_QUANT = 22981;
+    /* ── Scroll Reveal ── */
+    const srObs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.sr').forEach(el => srObs.observe(el));
+
+    /* ── Animation ── */
+    const TOTAL = 32000, GAS_RAW = 65921, GAS_QUANT = 44045;
     const CODE_TEXT = 'uint96 encoded = uint96(SCHEME.encode(amount));';
-
     const $ = id => document.getElementById(id);
-    const stage = $('animStage');
-    const progress = $('animProgress');
-    const replayBtn = $('replayBtn');
-    const pauseHint = $('pauseHint');
+    const stage = $('animStage'), progress = $('animProgress'), replayBtn = $('replayBtn'), pauseHint = $('pauseHint');
     const scenes = [1,2,3,4,5].map(i => $('scene' + i));
+    let startTime = 0, pausedAt = 0, paused = false, running = false, rafId = null, typingInterval = null;
 
-    let startTime = 0;
-    let pausedAt = 0;
-    let paused = false;
-    let running = false;
-    let rafId = null;
-    let typingInterval = null;
-
-    function showScene(n) {
-      scenes.forEach((s, i) => s.classList.toggle('active', i === n));
-    }
-
-    function typeCode(el, text, cb) {
-      let i = 0;
-      el.innerHTML = '<span class="cursor"></span>';
+    function showScene(n) { scenes.forEach((s, i) => s.classList.toggle('active', i === n)); }
+    function typeCode(el, text) {
+      let i = 0; el.innerHTML = '<span class="cursor"></span>';
       typingInterval = setInterval(() => {
-        if (i < text.length) {
-          el.innerHTML = escapeHTML(text.slice(0, i + 1)) + '<span class="cursor"></span>';
-          i++;
-        } else {
-          clearInterval(typingInterval);
-          typingInterval = null;
-          if (cb) cb();
-        }
+        if (i < text.length) { el.innerHTML = text.slice(0,i+1).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '<span class="cursor"></span>'; i++; }
+        else { clearInterval(typingInterval); typingInterval = null; }
       }, 35);
     }
-
-    function escapeHTML(s) {
-      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    function animateCount(el, target, dur) {
+      const s = performance.now();
+      (function tick(now) { const t = Math.min((now-s)/dur,1); el.textContent = Math.round(target*(1-Math.pow(1-t,3))).toLocaleString(); if(t<1) requestAnimationFrame(tick); })(s);
     }
 
-    function animateCount(el, target, duration) {
-      const start = performance.now();
-      function tick(now) {
-        const t = Math.min((now - start) / duration, 1);
-        el.textContent = Math.round(target * easeOut(t)).toLocaleString();
-        if (t < 1) requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-    }
-
-    function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-
-    /* Timeline: [ms, action] */
     const timeline = [
-      /* Scene 1 */
-      [0, () => {
-        resetAll();
-        showScene(0);
-        $('s1Text').textContent = '256 bits of precision.';
-        $('s1Text').classList.add('visible');
-      }],
-      [600, () => {
-        $('s1Bar').classList.add('visible');
-        $('s1Label').classList.add('visible');
-      }],
-      [2800, () => {
-        $('s1Text').classList.remove('visible');
-      }],
-      [3400, () => {
-        $('s1Text').textContent = 'Do you need them all?';
-        $('s1Text').classList.add('visible');
-      }],
-
-      /* Scene 2 */
+      [0, () => { resetAll(); showScene(0); $('s1Text').textContent='256 bits of range.'; $('s1Text').classList.add('visible'); }],
+      [600, () => { $('s1Bar').classList.add('visible'); $('s1Label').classList.add('visible'); }],
+      [2800, () => $('s1Text').classList.remove('visible')],
+      [3400, () => { $('s1Text').textContent='Do you need them all?'; $('s1Text').classList.add('visible'); }],
       [5500, () => showScene(1)],
       [6500, () => $('s2Op').classList.add('visible')],
-      [8000, () => {
-        $('s2Lower').classList.add('discarded');
-        $('s2TypeLabel').textContent = 'uint96 encoded';
-      }],
+      [8000, () => { $('s2Lower').classList.add('discarded'); $('s2TypeLabel').textContent='uint96 encoded'; }],
       [9500, () => typeCode($('s2Code'), CODE_TEXT)],
-
-      /* Scene 3 */
-      [15000, () => {
-        showScene(2);
-        $('s3Before').classList.add('visible');
-      }],
+      [15000, () => { showScene(2); $('s3Before').classList.add('visible'); }],
       [17000, () => $('s3Arrow').classList.add('visible')],
       [18000, () => $('s3After').classList.add('visible')],
       [19500, () => $('s3Savings').classList.add('visible')],
-
-      /* Scene 4 */
-      [22000, () => {
-        showScene(3);
-        setTimeout(() => {
-          $('s4RawBar').style.height = '100%';
-          $('s4QuantBar').style.height = Math.round(GAS_QUANT / GAS_RAW * 100) + '%';
-          animateCount($('s4RawNum'), GAS_RAW, 1500);
-          animateCount($('s4QuantNum'), GAS_QUANT, 1500);
-        }, 300);
-      }],
-      [25000, () => {
-        $('s4Saving').classList.add('visible');
-        $('s4Caption').classList.add('visible');
-      }],
-
-      /* Scene 5 */
-      [28000, () => {
-        showScene(4);
-        $('s5Title').classList.add('visible');
-        $('s5Tag').classList.add('visible');
-        $('s5Actions').classList.add('visible');
-      }],
-      [TOTAL, () => {
-        running = false;
-        replayBtn.classList.add('visible');
-        pauseHint.style.display = 'none';
-      }],
+      [22000, () => { showScene(3); setTimeout(() => { $('s4RawBar').style.height='100%'; $('s4QuantBar').style.height=Math.round(GAS_QUANT/GAS_RAW*100)+'%'; animateCount($('s4RawNum'),GAS_RAW,1500); animateCount($('s4QuantNum'),GAS_QUANT,1500); },300); }],
+      [25000, () => { $('s4Saving').classList.add('visible'); $('s4Caption').classList.add('visible'); }],
+      [28000, () => { showScene(4); $('s5Title').classList.add('visible'); $('s5Tag').classList.add('visible'); $('s5Actions').classList.add('visible'); }],
+      [TOTAL, () => { running=false; replayBtn.classList.add('visible'); pauseHint.style.display='none'; }],
     ];
-
     let fired = [];
 
     function resetAll() {
       fired = new Array(timeline.length).fill(false);
-      if (typingInterval) { clearInterval(typingInterval); typingInterval = null; }
-      replayBtn.classList.remove('visible');
-      pauseHint.style.display = '';
-      pauseHint.textContent = 'click to pause';
-      progress.style.width = '0';
-
-      /* Scene 1 */
-      $('s1Text').classList.remove('visible');
-      $('s1Bar').classList.remove('visible');
-      $('s1Label').classList.remove('visible');
-
-      /* Scene 2 */
-      $('s2Op').classList.remove('visible');
-      $('s2Lower').classList.remove('discarded');
-      $('s2TypeLabel').textContent = 'uint128 amount';
-      $('s2Code').innerHTML = '<span class="cursor"></span>';
-
-      /* Scene 3 */
-      $('s3Before').classList.remove('visible');
-      $('s3Arrow').classList.remove('visible');
-      $('s3After').classList.remove('visible');
-      $('s3Savings').classList.remove('visible');
-
-      /* Scene 4 */
-      $('s4RawBar').style.height = '0';
-      $('s4QuantBar').style.height = '0';
-      $('s4RawNum').textContent = '0';
-      $('s4QuantNum').textContent = '0';
-      $('s4Saving').classList.remove('visible');
-      $('s4Caption').classList.remove('visible');
-
-      /* Scene 5 */
-      $('s5Title').classList.remove('visible');
-      $('s5Tag').classList.remove('visible');
-      $('s5Actions').classList.remove('visible');
+      if (typingInterval) { clearInterval(typingInterval); typingInterval=null; }
+      replayBtn.classList.remove('visible'); pauseHint.style.display=''; pauseHint.textContent='click to pause'; progress.style.width='0';
+      $('s1Text').classList.remove('visible'); $('s1Bar').classList.remove('visible'); $('s1Label').classList.remove('visible');
+      $('s2Op').classList.remove('visible'); $('s2Lower').classList.remove('discarded'); $('s2TypeLabel').textContent='uint128 amount'; $('s2Code').innerHTML='<span class="cursor"></span>';
+      $('s3Before').classList.remove('visible'); $('s3Arrow').classList.remove('visible'); $('s3After').classList.remove('visible'); $('s3Savings').classList.remove('visible');
+      $('s4RawBar').style.height='0'; $('s4QuantBar').style.height='0'; $('s4RawNum').textContent='0'; $('s4QuantNum').textContent='0'; $('s4Saving').classList.remove('visible'); $('s4Caption').classList.remove('visible');
+      $('s5Title').classList.remove('visible'); $('s5Tag').classList.remove('visible'); $('s5Actions').classList.remove('visible');
     }
-
     function tick(now) {
       if (!running) return;
-      if (paused) { rafId = requestAnimationFrame(tick); return; }
-      const elapsed = now - startTime;
-      const pct = Math.min(elapsed / TOTAL * 100, 100);
-      progress.style.width = pct + '%';
-
-      timeline.forEach((entry, i) => {
-        if (!fired[i] && elapsed >= entry[0]) {
-          fired[i] = true;
-          entry[1]();
-        }
-      });
-
-      if (elapsed < TOTAL) {
-        rafId = requestAnimationFrame(tick);
-      }
+      if (paused) { rafId=requestAnimationFrame(tick); return; }
+      const elapsed = now-startTime; progress.style.width = Math.min(elapsed/TOTAL*100,100)+'%';
+      timeline.forEach((e,i) => { if (!fired[i] && elapsed>=e[0]) { fired[i]=true; e[1](); } });
+      if (elapsed < TOTAL) rafId=requestAnimationFrame(tick);
     }
+    function startAnimation() { resetAll(); running=true; paused=false; startTime=performance.now(); rafId=requestAnimationFrame(tick); }
 
-    function startAnimation() {
-      resetAll();
-      running = true;
-      paused = false;
-      startTime = performance.now();
-      rafId = requestAnimationFrame(tick);
-    }
-
-    /* Click to pause/resume */
     stage.addEventListener('click', e => {
-      if (e.target === replayBtn) return;
-      if (!running) return;
-      paused = !paused;
-      if (paused) {
-        pausedAt = performance.now();
-        pauseHint.textContent = 'click to resume';
-      } else {
-        startTime += performance.now() - pausedAt;
-        pauseHint.textContent = 'click to pause';
-      }
+      if (e.target===replayBtn) return; if (!running) return;
+      paused=!paused;
+      if (paused) { pausedAt=performance.now(); pauseHint.textContent='click to resume'; }
+      else { startTime+=performance.now()-pausedAt; pauseHint.textContent='click to pause'; }
     });
+    replayBtn.addEventListener('click', e => { e.stopPropagation(); startAnimation(); });
 
-    replayBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      startAnimation();
-    });
-
-    /* Start on scroll into view */
     let hasPlayed = false;
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && !hasPlayed) {
-          hasPlayed = true;
-          startAnimation();
-        }
-      });
+    const animObs = new IntersectionObserver(entries => {
+      entries.forEach(entry => { if (entry.isIntersecting && !hasPlayed) { hasPlayed=true; startAnimation(); } });
     }, { threshold: 0.3 });
-    observer.observe(stage);
+    animObs.observe(stage);
   })();
   </script>
 </body>
