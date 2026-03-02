@@ -14,7 +14,7 @@ slots touched per write means less gas.
 ```solidity
 import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
 
-Quant private constant SCHEME = Quant.wrap(0x1820); // shift=32, targetBits=24
+Quant private immutable SCHEME = QuantizationLib.create(32, 24);
 
 uint24 stored = uint24(SCHEME.encode(largeValue)); // compress
 uint256 restored = SCHEME.decode(stored); // decompress
@@ -57,7 +57,7 @@ The `Quant` value type is a `uint16` with the following bit layout:
 
 | Function | Description |
 |---|---|
-| `QuantizationLib.create(shift, targetBits)` | Creates a `Quant` scheme. Reverts with `Quant__BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
+| `QuantizationLib.create(shift, targetBits)` | Creates a `Quant` scheme from readable parameters. Reverts with `Quant__BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
 | `q.shift()` | Returns the shift component (bits discarded during encoding). |
 | `q.targetBits()` | Returns the targetBits component (bit-width of the encoded value). |
 | `q.encode(value)` | Floor-encodes `value`. Reverts with `Quant__Overflow` when `value > max(q)`. |
@@ -86,15 +86,13 @@ error Quant__NotAligned(uint256 value, uint256 stepSize);
 import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
 
 contract FeeAccumulator {
-    // Preferred: constant with a literal Quant.wrap for zero-cost inlining.
+    // Recommended: immutable via create() for readability and self-documenting configs.
+    Quant private immutable SCHEME = QuantizationLib.create(40, 16);
+
+    // Optional: literal wrap when you explicitly want that style.
     // Quant layout: bits 0-7 = shift, bits 8-15 = targetBits.
     // shift=40 (0x28), targetBits=16 (0x10) → Quant.wrap(0x1028)
-    Quant private constant SCHEME = Quant.wrap(0x1028);
-
-    // Alternative: immutable via create() when readability is preferred.
-    // Solidity cannot evaluate create() at compile time, so `constant` is not
-    // supported with create(). Each access pays an IMMUTABLE load at runtime.
-    // Quant private immutable SCHEME = QuantizationLib.create(40, 16);
+    // Quant private constant SCHEME = Quant.wrap(0x1028);
 
     uint16 public storedFee;
 
