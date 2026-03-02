@@ -6,6 +6,20 @@ Right-shift compression is lossy in general, but it becomes lossless when inputs
 the step size `2^shift` (for example, with `shift = 40`, any value that is a multiple of
 `0x10000000000` is encoded exactly).
 
+**Why?** Compress `uint256` values into smaller uints for denser storage packing. Fewer storage
+slots touched per write means less gas.
+
+**Quick start:**
+
+```solidity
+import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
+
+Quant private constant SCHEME = Quant.wrap(0x1820); // shift=32, targetBits=24
+
+uint24 stored = uint24(SCHEME.encode(largeValue)); // compress
+uint256 restored = SCHEME.decode(stored); // decompress
+```
+
 ## Installation
 
 ```bash
