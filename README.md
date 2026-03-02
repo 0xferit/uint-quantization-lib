@@ -1,5 +1,8 @@
 # uint-quantization-lib
 
+[![Staking Gas Savings](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/staking-savings.json)](test/showcase/ShowcaseGas.t.sol)
+[![Extreme Gas Savings](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/extreme-savings.json)](test/showcase/ShowcaseGas.t.sol)
+
 A pure-function Solidity library for shift-based `uint256` compression.
 
 Right-shift compression is lossy in general, but it becomes lossless when inputs are aligned to
