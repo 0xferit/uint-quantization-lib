@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>uint-quantization-lib | Solidity Quantization Library</title>
+  <style>
+    :root { --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff; --card: #161b22; --border: #30363d; --green: #3fb950; --code-bg: #1c2128; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
+    a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+    header { padding: 48px 0 32px; text-align: center; border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 2.5rem; color: #f0f6fc; margin-bottom: 12px; }
+    header p { font-size: 1.15rem; color: #8b949e; max-width: 640px; margin: 0 auto 24px; }
+    .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
+    .badge { background: var(--card); border: 1px solid var(--border); padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; color: var(--accent); }
+    .cta { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .cta a { padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; }
+    .cta .primary { background: var(--accent); color: var(--bg); } .cta .primary:hover { opacity: 0.9; text-decoration: none; }
+    .cta .secondary { border: 1px solid var(--border); color: var(--fg); } .cta .secondary:hover { border-color: var(--accent); text-decoration: none; }
+    section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+    section:last-of-type { border-bottom: none; }
+    h2 { font-size: 1.5rem; color: #f0f6fc; margin-bottom: 16px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; overflow-x: auto; font-size: 0.875rem; line-height: 1.5; margin: 16px 0; }
+    code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+    .card h3 { color: var(--green); font-size: 1rem; margin-bottom: 8px; }
+    .card p { font-size: 0.9rem; color: #8b949e; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.875rem; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: #f0f6fc; background: var(--card); }
+    td code { color: var(--accent); }
+    footer { padding: 32px 0; text-align: center; color: #8b949e; font-size: 0.85rem; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>uint-quantization-lib</h1>
+      <p>Stop paying for resolution you don't need. A Solidity library that compresses uint256 values into smaller types for tighter struct packing and gas savings.</p>
+      <div class="badges">
+        <span class="badge">Solidity</span>
+        <span class="badge">EVM</span>
+        <span class="badge">Gas Optimization</span>
+        <span class="badge">MIT License</span>
+      </div>
+      <div class="cta">
+        <a class="primary" href="https://github.com/0xferit/uint-quantization-lib">View on GitHub</a>
+        <a class="secondary" href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Documentation</a>
+      </div>
+    </header>
+
+    <section>
+      <h2>Quick Start</h2>
+      <pre><code>forge soldeer install uint-quantization-lib</code></pre>
+      <pre><code>import {Quant, QuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
+
+Quant private immutable SCHEME = QuantizationLib.create(32, 24);
+
+uint24 stored = uint24(SCHEME.encode(largeValue));   // compress
+uint256 restored = SCHEME.decode(stored);             // decompress</code></pre>
+    </section>
+
+    <section>
+      <h2>Why Quantization?</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Denser Storage Packing</h3>
+          <p>Pack more fields per storage slot by compressing values that don't need full uint256 precision.</p>
+        </div>
+        <div class="card">
+          <h3>Massive Gas Savings</h3>
+          <p>Fewer storage writes and reads by fitting more data into each 32-byte slot.</p>
+        </div>
+        <div class="card">
+          <h3>Safe &amp; Auditable</h3>
+          <p>Overflow checks, lossless mode, and clear error messages. MIT licensed.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>API Overview</h2>
+      <table>
+        <thead><tr><th>Function</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>create(shift, targetBits)</code></td><td>Create a quantization scheme</td></tr>
+          <tr><td><code>encode(value)</code></td><td>Floor-encode a value (reverts on overflow)</td></tr>
+          <tr><td><code>encodeLossless(value)</code></td><td>Strict encode (reverts on precision loss)</td></tr>
+          <tr><td><code>decode(encoded)</code></td><td>Restore lower-bound value</td></tr>
+          <tr><td><code>decodeMax(encoded)</code></td><td>Restore upper-bound value</td></tr>
+          <tr><td><code>fits(value)</code></td><td>Check if value is representable</td></tr>
+          <tr><td><code>floor(value) / ceil(value)</code></td><td>Snap to nearest step boundary</td></tr>
+          <tr><td><code>stepSize() / max()</code></td><td>Query scheme parameters</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      <p>Built by <a href="https://github.com/0xferit">0xferit</a> &middot; MIT License &middot; <a href="https://github.com/0xferit/uint-quantization-lib">GitHub</a></p>
+    </footer>
+  </div>
+</body>
+</html>
