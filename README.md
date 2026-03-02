@@ -3,14 +3,7 @@
 [![Staking Gas Savings](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/staking-savings.json)](test/showcase/ShowcaseGas.t.sol)
 [![Extreme Gas Savings](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/extreme-savings.json)](test/showcase/ShowcaseGas.t.sol)
 
-A pure-function Solidity library for shift-based `uint256` compression.
-
-Right-shift compression is lossy in general, but it becomes lossless when inputs are aligned to
-the step size `2^shift` (for example, with `shift = 40`, any value that is a multiple of
-`0x10000000000` is encoded exactly).
-
-**Why?** Compress `uint256` values into smaller uints for denser storage packing. Fewer storage
-slots touched per write means less gas.
+Ethereum values use 18 decimals of precision: far more than most contracts need. Trade that excess precision for storage density. Quantize uint256 values into fewer bits than their range requires, packing more data per slot and saving gas.
 
 **Quick start:**
 
