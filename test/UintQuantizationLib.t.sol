@@ -268,8 +268,8 @@ contract QuantizationLibSmokeTest is Test {
 
     function test_minimal_config_overflow_reverts() public {
         Quant q = harness.create(0, 1);
-        // 2 should overflow
-        vm.expectRevert();
+        // 2 should overflow (max is 1)
+        vm.expectRevert(abi.encodeWithSelector(Quant__Overflow.selector, uint256(2), uint256(1)));
         harness.encode(q, 2);
     }
 
