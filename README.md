@@ -38,11 +38,8 @@ remappings = ["uint-quantization-lib-1.0.0/=dependencies/uint-quantization-lib-1
 
 ## Solidity API
 
-Library: `QuantizationLib` (`src/UintQuantizationLib.sol`). Import both the type and the library:
-
-```solidity
-import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
-```
+Library: `QuantizationLib` (`src/UintQuantizationLib.sol`). Import both the `Quant` type and the
+library as shown in the [usage example](#solidity-usage) below.
 
 Because the source file declares `using QuantizationLib for Quant global`, importers get method-call
 syntax automatically without a local `using` statement.
@@ -155,29 +152,22 @@ The staking showcase intentionally exercises the full API surface:
 
 Benchmark assertions live in `test/showcase/ShowcaseGas.t.sol`.
 
-Run the showcase suite:
-
-```bash
-forge test --match-path test/showcase/ShowcaseGas.t.sol -vv
-```
-
-Run with gas report:
+Run the showcase suite with gas report:
 
 ```bash
 forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 ```
 
-The suite enforces that quantized write paths save at least:
-- 32% for the real-life showcase.
-- 80% for the extreme showcase.
-These threshold checks run for Solidity zero-to-nonzero writes.
+## Formal verification (Kontrol)
 
-Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv`):
+Kontrol proof specs for `QuantizationLib` are future work. `test/kontrol/ProofAssumptions.sol` provides
+reusable `vm.assume` helpers for when those proofs are written.
 
-| Scenario | Raw write gas | Quantized floor write gas | Savings |
-|---|---:|---:|---:|
-| Solidity real-life staking | 65,921 | 44,045 | 33.19% |
-| Solidity extreme (12 slots -> 1 slot) | 290,061 | 52,147 | 82.02% |
+For local Apple Silicon setup:
+
+```bash
+APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231
+```
 
 ## License
 
