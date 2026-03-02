@@ -159,8 +159,8 @@ Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t
 
 ## Formal verification (Kontrol)
 
-Kontrol proof specs for `QuantizationLib` are future work. `test/kontrol/ProofAssumptions.sol` provides
-reusable `vm.assume` helpers for when those proofs are written.
+Kontrol proof specs for `QuantizationLib` are future work. The proof infrastructure
+(scripts, config, docs) is maintained so proofs can be added incrementally.
 
 For local Apple Silicon setup:
 
