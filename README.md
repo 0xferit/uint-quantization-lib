@@ -8,7 +8,7 @@ Ethereum values use 18 decimals of precision: far more than most contracts need.
 **Quick start:**
 
 ```solidity
-import {Quant, QuantizationLib} from "uint-quantization-lib-X.Y.Z/src/UintQuantizationLib.sol";
+import {Quant, QuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
 
 Quant private immutable SCHEME = QuantizationLib.create(32, 24);
 
@@ -19,14 +19,14 @@ uint256 restored = SCHEME.decode(stored); // decompress
 ## Installation
 
 ```bash
-forge soldeer install uint-quantization-lib~X.Y.Z
+forge soldeer install uint-quantization-lib
 ```
 
 Then add the remapping to `foundry.toml` (Soldeer does this automatically):
 
 ```toml
 [profile.default]
-remappings = ["uint-quantization-lib-X.Y.Z/=dependencies/uint-quantization-lib-X.Y.Z/"]
+remappings = ["uint-quantization-lib/=dependencies/uint-quantization-lib/"]
 ```
 
 ## Solidity API
@@ -76,7 +76,7 @@ error NotAligned(uint256 value, uint256 stepSize);
 ### Solidity usage
 
 ```solidity
-import {Quant, QuantizationLib} from "uint-quantization-lib-X.Y.Z/src/UintQuantizationLib.sol";
+import {Quant, QuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
 
 contract StakingVault {
     Quant private immutable SCHEME = QuantizationLib.create(16, 96);
