@@ -10,7 +10,7 @@ The core implementation is `QuantizationLib` in `src/UintQuantizationLib.sol`, b
 
 - Keep library functions `internal pure` unless there is a strong reason not to.
 - `Quant` layout is fixed: bits 0-7 = `shift`, bits 8-15 = `targetBits`.
-- Keep custom errors file-level and consistent with existing naming (`Quant__...`).
+- Keep custom errors file-level with bare names (`BadConfig`, `Overflow`, `NotAligned`).
 - Keep fuzz constraints consistent with existing tests (`bound()` instead of `vm.assume`).
 - For precision-sensitive flows, prefer `encodeLossless`; for floor truncation use `encode`.
 
