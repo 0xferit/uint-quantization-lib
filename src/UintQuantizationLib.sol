@@ -7,10 +7,10 @@ pragma solidity ^0.8.25;
  * @custom:security-contact ferit@cryptolab.net
  * @notice Pure-function library for shift-based uint256 compression using a bundled config type.
  *
- *         The `Quant` value type packs a `(shift, targetBits)` scheme into a single `uint16`
- *         constant, allowing callers to define the compression config once and invoke methods
- *         on it. When `Quant` is declared as `constant`, the compiler folds the unpacking to
- *         zero-cost encoding at call sites.
+ *         The `Quant` value type packs a `(shift, targetBits)` scheme into a single `uint16`,
+ *         allowing callers to define the compression config once and invoke methods on it.
+ *         Declare `Quant` as `immutable` with `create()` for self-documenting configs,
+ *         or as `constant` with a hex literal when that style is preferred.
  *
  *         Type layout (uint16):
  *           bits 0-7  → shift      (LSBs discarded during encoding)
