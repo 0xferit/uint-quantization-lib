@@ -1,3 +1,13 @@
 cache/
 out/
 dependencies/
+test/
+.github/
+.gitignore
+.soldeerignore
+.kontrol/
+CLAUDE.md
+foundry.toml
+remappings.txt
+soldeer.lock
+*.tar.gz
