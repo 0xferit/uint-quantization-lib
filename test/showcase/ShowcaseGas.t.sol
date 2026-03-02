@@ -8,11 +8,7 @@ import {
     RawETHStakingShowcase,
     RawExtremePackingShowcase
 } from "src/showcase/ShowcaseSolidityFixtures.sol";
-import {UintQuantizationLib} from "src/UintQuantizationLib.sol";
-
 contract ShowcaseGasTest is Test {
-    using UintQuantizationLib for uint256;
-
     uint256 internal constant REAL_SHIFT = 16;
     uint256 internal constant REAL_AMOUNT_BITS = 96;
     uint256 internal constant REAL_AMOUNT_MAX = (uint256(1) << REAL_AMOUNT_BITS) - 1;
