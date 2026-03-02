@@ -47,7 +47,7 @@ jobs:
           cat > .badges/staking-savings.json <<EOF
           {
             "schemaVersion": 1,
-            "label": "staking gas savings",
+            "label": "staking case: gas usage reduction",
             "message": "${staking_pct}%",
             "color": "brightgreen"
           }

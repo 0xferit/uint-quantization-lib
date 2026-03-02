@@ -1,6 +1,6 @@
 # uint-quantization-lib
 
-[![Staking Gas Savings](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/staking-savings.json)](test/showcase/ShowcaseGas.t.sol)
+[![Staking Case: Gas Usage Reduction](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/staking-savings.json)](test/showcase/ShowcaseGas.t.sol)
 [![Extreme Case: Gas Usage Reduction](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/extreme-savings.json)](test/showcase/ShowcaseGas.t.sol)
 
 Ethereum values use 18 decimals of precision: far more than most contracts need. Trade that excess precision for storage density. Quantize uint256 values into fewer bits than their range requires, packing more data per slot and saving gas.
@@ -8,7 +8,7 @@ Ethereum values use 18 decimals of precision: far more than most contracts need.
 **Quick start:**
 
 ```solidity
-import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
+import {Quant, QuantizationLib} from "uint-quantization-lib-X.Y.Z/src/UintQuantizationLib.sol";
 
 Quant private immutable SCHEME = QuantizationLib.create(32, 24);
 
@@ -19,14 +19,14 @@ uint256 restored = SCHEME.decode(stored); // decompress
 ## Installation
 
 ```bash
-forge soldeer install uint-quantization-lib~1.0.0
+forge soldeer install uint-quantization-lib~X.Y.Z
 ```
 
 Then add the remapping to `foundry.toml` (Soldeer does this automatically):
 
 ```toml
 [profile.default]
-remappings = ["uint-quantization-lib-1.0.0/=dependencies/uint-quantization-lib-1.0.0/"]
+remappings = ["uint-quantization-lib-X.Y.Z/=dependencies/uint-quantization-lib-X.Y.Z/"]
 ```
 
 ## Solidity API
@@ -76,7 +76,7 @@ error NotAligned(uint256 value, uint256 stepSize);
 ### Solidity usage
 
 ```solidity
-import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
+import {Quant, QuantizationLib} from "uint-quantization-lib-X.Y.Z/src/UintQuantizationLib.sol";
 
 contract StakingVault {
     Quant private immutable SCHEME = QuantizationLib.create(16, 96);
