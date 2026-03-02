@@ -56,7 +56,7 @@ jobs:
           cat > .badges/extreme-savings.json <<EOF
           {
             "schemaVersion": 1,
-            "label": "extreme gas savings",
+            "label": "extreme case: gas usage reduction",
             "message": "${extreme_pct}%",
             "color": "brightgreen"
           }

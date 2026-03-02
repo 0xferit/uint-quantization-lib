@@ -1,7 +1,7 @@
 # uint-quantization-lib
 
 [![Staking Gas Savings](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/staking-savings.json)](test/showcase/ShowcaseGas.t.sol)
-[![Extreme Gas Savings](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/extreme-savings.json)](test/showcase/ShowcaseGas.t.sol)
+[![Extreme Case: Gas Usage Reduction](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/extreme-savings.json)](test/showcase/ShowcaseGas.t.sol)
 
 Ethereum values use 18 decimals of precision: far more than most contracts need. Trade that excess precision for storage density. Quantize uint256 values into fewer bits than their range requires, packing more data per slot and saving gas.
 
