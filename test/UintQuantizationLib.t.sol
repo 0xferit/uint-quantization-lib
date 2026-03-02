@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
-import {Quant, QuantLib, Quant__Overflow, Quant__NotAligned, Quant__BadConfig} from "src/UintQuantLib.sol";
+import {Quant, QuantLib, Quant__Overflow, Quant__NotAligned, Quant__BadConfig} from "src/UintQuantizationLib.sol";
 
 /// @notice Thin harness that exposes library functions via `using-for` so tests call them on
 ///         `Quant` values rather than through the library name directly.

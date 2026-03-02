@@ -18,7 +18,7 @@ forge build
 forge test
 
 # Run a single test file
-forge test --match-path test/UintQuantLib.t.sol
+forge test --match-path test/UintQuantizationLib.t.sol
 
 # Run a single test function
 forge test --match-test test_encodeLossless_notAligned_reverts
@@ -52,13 +52,13 @@ Requires Kontrol installed locally (Apple Silicon: `APPLE_SILICON=true UV_PYTHON
 
 ### Source: `src/`
 
-- `UintQuantLib.sol`: UDT `Quant` packing `(shift, targetBits)` into `uint16` (bits 0-7 = shift, bits 8-15 = targetBits). All functions are `internal pure`. Errors are file-level (not inside the library) and attached to the type. `using QuantLib for Quant global` at the bottom of the file propagates method-call binding to all importers automatically.
+- `UintQuantizationLib.sol`: UDT `Quant` packing `(shift, targetBits)` into `uint16` (bits 0-7 = shift, bits 8-15 = targetBits). All functions are `internal pure`. Errors are file-level (not inside the library) and attached to the type. `using QuantLib for Quant global` at the bottom of the file propagates method-call binding to all importers automatically.
 
 - `src/showcase/ShowcaseSolidityFixtures.sol`: Production-style showcase contracts demonstrating gas savings. `RawETHStakingShowcase` vs `QuantizedETHStakingShowcase` (real-life staking) and `RawExtremePackingShowcase` vs `QuantizedExtremePackingShowcase` (12 slots -> 1 slot). Used only for benchmarking. Both quantized contracts use `QuantLib`.
 
 ### Tests: `test/`
 
-- `test/UintQuantLib.t.sol`: Foundry test file. Contains `QuantHarness` (exposes method-call syntax) and `QuantLibSmokeTest`. Smoke tests cover `create` validation and all revert paths. Fuzz tests use `uint8` for shift and targetBits and use `bound()` instead of `vm.assume` for value-in-range constraints.
+- `test/UintQuantizationLib.t.sol`: Foundry test file. Contains `QuantHarness` (exposes method-call syntax) and `QuantLibSmokeTest`. Smoke tests cover `create` validation and all revert paths. Fuzz tests use `uint8` for shift and targetBits and use `bound()` instead of `vm.assume` for value-in-range constraints.
 
 - `test/showcase/ShowcaseGas.t.sol`: Benchmark assertions. Enforces quantized paths save >= 32% (real-life) and >= 80% (extreme) gas vs raw paths on zero-to-nonzero writes.
 

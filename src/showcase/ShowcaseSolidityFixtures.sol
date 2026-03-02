@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import {Quant, QuantLib} from "src/UintQuantLib.sol";
+import {Quant, QuantLib} from "src/UintQuantizationLib.sol";
 
 /// @notice Production-style ETH staking baseline with default Solidity struct packing.
 contract RawETHStakingShowcase {

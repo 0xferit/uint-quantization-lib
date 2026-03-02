@@ -21,10 +21,10 @@ remappings = ["uint-quantization-lib-1.0.0/=dependencies/uint-quantization-lib-1
 
 ## Solidity API
 
-Library: `QuantLib` (`src/UintQuantLib.sol`). Import both the type and the library:
+Library: `QuantLib` (`src/UintQuantizationLib.sol`). Import both the type and the library:
 
 ```solidity
-import {Quant, QuantLib} from "uint-quantization-lib-1.0.0/src/UintQuantLib.sol";
+import {Quant, QuantLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
 ```
 
 Because the source file declares `using QuantLib for Quant global`, importers get method-call
@@ -67,7 +67,7 @@ error Quant__NotAligned(uint256 value, uint256 stepSize);
 ### Solidity usage
 
 ```solidity
-import {Quant, QuantLib} from "uint-quantization-lib-1.0.0/src/UintQuantLib.sol";
+import {Quant, QuantLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
 
 contract FeeAccumulator {
     // Scheme: 40-bit shift, 16-bit encoded width (step = 0x10000000000, max = 0xFFFF * step)

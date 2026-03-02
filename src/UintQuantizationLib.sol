@@ -18,7 +18,7 @@ pragma solidity ^0.8.25;
  *
  *         Usage:
  *         ```solidity
- *         import {Quant, QuantLib} from "src/UintQuantLib.sol";
+ *         import {Quant, QuantLib} from "src/UintQuantizationLib.sol";
  *
  *         Quant private constant SCHEME = QuantLib.create(32, 24);
  *
