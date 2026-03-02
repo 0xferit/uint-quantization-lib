@@ -20,13 +20,12 @@ pragma solidity ^0.8.25;
  *         ```solidity
  *         import {Quant, QuantizationLib as QuantLib} from "src/UintQuantizationLib.sol";
  *
- *         // Preferred: constant with a literal wrap for zero-cost inlining.
- *         Quant private constant SCHEME = Quant.wrap(0x1820);  // shift=32, targetBits=24
+ *         // Recommended: immutable via create() for readability and self-documenting configs.
+ *         Quant private immutable SCHEME = QuantLib.create(32, 24);
  *
- *         // Alternative: immutable via create() when readability is preferred.
- *         // Solidity cannot evaluate create() at compile time, so `constant` is not
- *         // supported with create(). Each access pays an IMMUTABLE load at runtime.
- *         Quant private immutable SCHEME2 = QuantLib.create(32, 24);
+ *         // Optional: constant with a literal wrap if you explicitly want that style.
+ *         // Quant layout: bits 0-7 = shift, bits 8-15 = targetBits.
+ *         // Quant private constant SCHEME2 = Quant.wrap(0x1820);  // shift=32, targetBits=24
  *
  *         stored   = uint24(SCHEME.encode(value));
  *         restored = SCHEME.decode(stored);
