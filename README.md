@@ -116,6 +116,95 @@ contract FeeAccumulator {
 }
 ```
 
+## QuantLib
+
+`QuantLib` (`src/UintQuantLib.sol`) bundles `(shift, targetBits)` into a single `Quant` constant,
+enabling zero-cost call-site unpacking when the scheme is declared `constant`. Import both the type
+and the library:
+
+```solidity
+import {Quant, QuantLib} from "uint-quantization-lib-1.0.0/src/UintQuantLib.sol";
+```
+
+Because the source file declares `using QuantLib for Quant global`, importers get method-call
+syntax automatically without a local `using` statement.
+
+### Type layout
+
+The `Quant` value type is a `uint16` with the following bit layout:
+
+| Bits | Field | Notes |
+|---|---|---|
+| 0-7 | `shift` | LSBs discarded during encoding |
+| 8-15 | `targetBits` | Bit-width of the encoded value |
+
+### API
+
+| Function | Description |
+|---|---|
+| `QuantLib.create(shift, targetBits)` | Creates a `Quant` scheme. Reverts with `Quant__BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
+| `q.encode(value)` | Floor-encodes `value`. Reverts with `Quant__Overflow` when `value > max(q)`. |
+| `q.encodeLossless(value)` | Strict mode: also reverts with `Quant__NotAligned` when `value` is not step-aligned. |
+| `q.decode(encoded)` | Left-shifts `encoded` by shift, restoring discarded bits as zeros (lower bound). |
+| `q.decodeMax(encoded)` | Like `decode` but fills discarded bits with ones (upper bound within the step). |
+| `q.fits(value)` | Returns `true` when `value <= max(q)`. |
+| `q.floor(value)` | Rounds `value` down to the nearest step boundary. |
+| `q.ceil(value)` | Rounds `value` up to the nearest step boundary. |
+| `q.remainder(value)` | Returns discarded low bits (`value mod stepSize`). |
+| `q.isLossless(value)` | Returns `true` when `value` is exactly representable (step-aligned). |
+| `q.stepSize()` | Returns `2^shift`. |
+| `q.max()` | Returns the maximum original value representable: `(2^targetBits - 1) << shift`. |
+
+### Errors
+
+```solidity
+error Quant__BadConfig(uint256 shift, uint256 targetBits);
+error Quant__Overflow(uint256 value, uint256 max);
+error Quant__NotAligned(uint256 value, uint256 stepSize);
+```
+
+### Solidity usage
+
+```solidity
+import {Quant, QuantLib} from "uint-quantization-lib-1.0.0/src/UintQuantLib.sol";
+
+contract FeeAccumulator {
+    // Scheme: 40-bit shift, 16-bit encoded width (step = 0x10000000000, max = 0xFFFF * step)
+    Quant private constant SCHEME = QuantLib.create(40, 16);
+
+    uint16 public storedFee;
+
+    function setFeeExact(uint256 fee) external {
+        storedFee = uint16(SCHEME.encodeLossless(fee));
+    }
+
+    function setFeeBounded(uint256 fee) external {
+        storedFee = uint16(SCHEME.encode(fee));
+    }
+
+    function getFee() external view returns (uint256) {
+        return SCHEME.decode(storedFee);
+    }
+
+    function maxDeposit() external view returns (uint256) {
+        return SCHEME.max();
+    }
+}
+```
+
+### Which library should I use?
+
+| Use `UintQuantizationLib` when... | Use `QuantLib` when... |
+|---|---|
+| You call encode/decode at isolated sites with different shift values each time. | You define a compression scheme once as a contract constant and reuse it across multiple call sites. |
+| You want direct `uint256.encode(shift)` method syntax via `using`. | You want `scheme.encode(value)` method syntax on the scheme itself. |
+| You need `maxRepresentable(shift, targetBits)` as a standalone helper. | You want the scheme to carry its own `max()`, `stepSize()`, and width semantics. |
+| Formal verification (Kontrol proofs exist for this library). | You prefer a single import with no local `using` statement needed. |
+
+> Note: `Quant__Overflow` reports `(value, max)` while `UintQuantizationLib__Overflow` reports
+> `(encoded, targetBits)` — the parameter semantics differ intentionally because the two libraries
+> operate at different abstraction levels.
+
 ## Which encode function should I use?
 
 > - `encode` — Fast, unchecked floor encoding. Use when you know the value fits.
