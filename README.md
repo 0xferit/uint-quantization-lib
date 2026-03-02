@@ -89,11 +89,6 @@ contract FeeAccumulator {
     // Recommended: immutable via create() for readability and self-documenting configs.
     Quant private immutable SCHEME = QuantizationLib.create(40, 16);
 
-    // Optional: literal wrap when you explicitly want that style.
-    // Quant layout: bits 0-7 = shift, bits 8-15 = targetBits.
-    // shift=40 (0x28), targetBits=16 (0x10) → Quant.wrap(0x1028)
-    // Quant private constant SCHEME = Quant.wrap(0x1028);
-
     uint16 public storedFee;
 
     function setFeeExact(uint256 fee) external {
@@ -156,17 +151,6 @@ Run the showcase suite with gas report:
 
 ```bash
 forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
-```
-
-## Formal verification (Kontrol)
-
-Kontrol proof specs for `QuantizationLib` are future work. `test/kontrol/ProofAssumptions.sol` provides
-reusable `vm.assume` helpers for when those proofs are written.
-
-For local Apple Silicon setup:
-
-```bash
-APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231
 ```
 
 ## License
