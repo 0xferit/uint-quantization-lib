@@ -85,26 +85,60 @@ error NotAligned(uint256 value, uint256 stepSize);
 ```solidity
 import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
 
-contract FeeAccumulator {
-    // Recommended: immutable via create() for readability and self-documenting configs.
-    Quant private immutable SCHEME = QuantizationLib.create(40, 16);
+contract StakingVault {
+    Quant private immutable SCHEME = QuantizationLib.create(16, 96);
 
-    uint16 public storedFee;
+    mapping(address => uint96) internal stakes;
 
-    function setFeeExact(uint256 fee) external {
-        storedFee = uint16(SCHEME.encodeLossless(fee));
+    /// Floor-encodes msg.value and stores the compressed amount.
+    function stake() external payable {
+        require(SCHEME.fits(msg.value), "amount exceeds scheme max");
+        stakes[msg.sender] = uint96(SCHEME.encode(msg.value));
     }
 
-    function setFeeBounded(uint256 fee) external {
-        storedFee = uint16(SCHEME.encode(fee));
+    /// Strict mode: reverts if msg.value is not step-aligned.
+    function stakeExact() external payable {
+        stakes[msg.sender] = uint96(SCHEME.encodeLossless(msg.value));
     }
 
-    function getFee() external view returns (uint256) {
-        return SCHEME.decode(storedFee);
+    /// Restores the lower-bound value (what was actually stored).
+    function stakeOf(address user) external view returns (uint256) {
+        return SCHEME.decode(stakes[user]);
     }
 
-    function maxDeposit() external view returns (uint256) {
+    /// Upper-bound value: original was at most this much.
+    function stakeMaxOf(address user) external view returns (uint256) {
+        return SCHEME.decodeMax(stakes[user]);
+    }
+
+    /// Largest value the scheme can represent.
+    function maxDeposit() external pure returns (uint256) {
         return SCHEME.max();
+    }
+
+    /// Minimum granularity: values must be multiples of this for lossless encoding.
+    function depositGranularity() external pure returns (uint256) {
+        return SCHEME.stepSize();
+    }
+
+    /// Bits that would be lost if `amount` were floor-encoded.
+    function depositRemainder(uint256 amount) external pure returns (uint256) {
+        return SCHEME.remainder(amount);
+    }
+
+    /// True when `amount` is step-aligned (no precision loss).
+    function isDepositLossless(uint256 amount) external pure returns (bool) {
+        return SCHEME.isLossless(amount);
+    }
+
+    /// Snap `amount` down to the nearest step boundary.
+    function floorDeposit(uint256 amount) external pure returns (uint256) {
+        return SCHEME.floor(amount);
+    }
+
+    /// Snap `amount` up to the nearest step boundary.
+    function ceilDeposit(uint256 amount) external pure returns (uint256) {
+        return SCHEME.ceil(amount);
     }
 }
 ```
