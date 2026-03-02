@@ -60,11 +60,11 @@ The `Quant` value type is a `uint16` with the following bit layout:
 
 | Function | Description |
 |---|---|
-| `QuantizationLib.create(shift, targetBits)` | Creates a `Quant` scheme from readable parameters. Reverts with `Quant__BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
+| `QuantizationLib.create(shift, targetBits)` | Creates a `Quant` scheme from readable parameters. Reverts with `BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
 | `q.shift()` | Returns the shift component (bits discarded during encoding). |
 | `q.targetBits()` | Returns the targetBits component (bit-width of the encoded value). |
-| `q.encode(value)` | Floor-encodes `value`. Reverts with `Quant__Overflow` when `value > max(q)`. |
-| `q.encodeLossless(value)` | Strict mode: also reverts with `Quant__NotAligned` when `value` is not step-aligned. |
+| `q.encode(value)` | Floor-encodes `value`. Reverts with `Overflow` when `value > max(q)`. |
+| `q.encodeLossless(value)` | Strict mode: also reverts with `NotAligned` when `value` is not step-aligned. |
 | `q.decode(encoded)` | Left-shifts `encoded` by shift, restoring discarded bits as zeros (lower bound). |
 | `q.decodeMax(encoded)` | Like `decode` but fills discarded bits with ones (upper bound within the step). |
 | `q.fits(value)` | Returns `true` when `value <= max(q)`. |
@@ -78,9 +78,9 @@ The `Quant` value type is a `uint16` with the following bit layout:
 ### Errors
 
 ```solidity
-error Quant__BadConfig(uint256 shift, uint256 targetBits);
-error Quant__Overflow(uint256 value, uint256 max);
-error Quant__NotAligned(uint256 value, uint256 stepSize);
+error BadConfig(uint256 shift, uint256 targetBits);
+error Overflow(uint256 value, uint256 max);
+error NotAligned(uint256 value, uint256 stepSize);
 ```
 
 ### Solidity usage

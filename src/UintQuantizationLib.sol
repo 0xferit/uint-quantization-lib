@@ -34,13 +34,13 @@ pragma solidity ^0.8.25;
 type Quant is uint16;
 
 /// @notice Thrown when a value exceeds the maximum representable by the scheme.
-error Quant__Overflow(uint256 value, uint256 max);
+error Overflow(uint256 value, uint256 max);
 
 /// @notice Thrown by `encodeLossless` when a value is not aligned to the step size.
-error Quant__NotAligned(uint256 value, uint256 stepSize);
+error NotAligned(uint256 value, uint256 stepSize);
 
 /// @notice Thrown by `create` when the (shift, targetBits) pair is invalid.
-error Quant__BadConfig(uint256 shift, uint256 targetBits);
+error BadConfig(uint256 shift, uint256 targetBits);
 
 library QuantizationLib {
     // -------------------------------------------------------------------------
@@ -53,7 +53,7 @@ library QuantizationLib {
     ///         where the computed max overflows or the step size is undefined.
     function create(uint256 shift_, uint256 targetBits_) internal pure returns (Quant) {
         if (shift_ >= 256 || targetBits_ == 0 || targetBits_ >= 256 || shift_ + targetBits_ > 256) {
-            revert Quant__BadConfig(shift_, targetBits_);
+            revert BadConfig(shift_, targetBits_);
         }
         // casting to uint16 is safe: create guard above ensures shift_ < 256 and targetBits_ < 256,
         // so (targetBits_ << 8) | shift_ <= 0xFF00 | 0xFF = 0xFFFF, which fits in uint16.
@@ -94,17 +94,17 @@ library QuantizationLib {
     /// @notice Floor-encodes `value` by right-shifting. Reverts if value exceeds `max(q)`.
     function encode(Quant q, uint256 value) internal pure returns (uint256) {
         uint256 m = max(q);
-        if (value > m) revert Quant__Overflow(value, m);
+        if (value > m) revert Overflow(value, m);
         return value >> shift(q);
     }
 
     /// @notice Strict mode: reverts if value exceeds max(q) or is not step-aligned.
     function encodeLossless(Quant q, uint256 value) internal pure returns (uint256) {
         uint256 m = max(q);
-        if (value > m) revert Quant__Overflow(value, m);
+        if (value > m) revert Overflow(value, m);
         uint256 s = shift(q);
         uint256 step = uint256(1) << s;
-        if (value & (step - 1) != 0) revert Quant__NotAligned(value, step);
+        if (value & (step - 1) != 0) revert NotAligned(value, step);
         return value >> s;
     }
 
