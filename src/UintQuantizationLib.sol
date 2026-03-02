@@ -44,7 +44,7 @@ library QuantizationLib {
 
     /// @notice Creates a `Quant` scheme from shift and targetBits.
     /// @dev    Reverts when shift >= 256, targetBits == 0, targetBits >= 256, or
-    ///         shift + targetBits > 256. All three conditions would produce a scheme
+    ///         shift + targetBits > 256. Any of these conditions would produce a scheme
     ///         where the computed max overflows or the step size is undefined.
     function create(uint256 shift_, uint256 targetBits_) internal pure returns (Quant) {
         if (shift_ >= 256 || targetBits_ == 0 || targetBits_ >= 256 || shift_ + targetBits_ > 256) {
