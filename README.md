@@ -168,8 +168,8 @@ Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t
 
 | Scenario | Raw write gas | Quantized floor write gas | Savings |
 |---|---:|---:|---:|
-| Solidity real-life staking | 65,921 | 43,920 | 33.37% |
-| Solidity extreme (12 slots -> 1 slot) | 290,061 | 49,231 | 83.03% |
+| Solidity real-life staking | 65,921 | 44,045 | 33.19% |
+| Solidity extreme (12 slots -> 1 slot) | 290,061 | 52,147 | 82.02% |
 
 ## License
 
