@@ -38,11 +38,8 @@ remappings = ["uint-quantization-lib-1.0.0/=dependencies/uint-quantization-lib-1
 
 ## Solidity API
 
-Library: `QuantizationLib` (`src/UintQuantizationLib.sol`). Import both the type and the library:
-
-```solidity
-import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
-```
+Library: `QuantizationLib` (`src/UintQuantizationLib.sol`). Import both the `Quant` type and the
+library as shown in the [usage example](#solidity-usage) below.
 
 Because the source file declares `using QuantizationLib for Quant global`, importers get method-call
 syntax automatically without a local `using` statement.
@@ -91,11 +88,6 @@ import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuanti
 contract FeeAccumulator {
     // Recommended: immutable via create() for readability and self-documenting configs.
     Quant private immutable SCHEME = QuantizationLib.create(40, 16);
-
-    // Optional: literal wrap when you explicitly want that style.
-    // Quant layout: bits 0-7 = shift, bits 8-15 = targetBits.
-    // shift=40 (0x28), targetBits=16 (0x10) → Quant.wrap(0x1028)
-    // Quant private constant SCHEME = Quant.wrap(0x1028);
 
     uint16 public storedFee;
 
@@ -155,29 +147,11 @@ The staking showcase intentionally exercises the full API surface:
 
 Benchmark assertions live in `test/showcase/ShowcaseGas.t.sol`.
 
-Run the showcase suite:
-
-```bash
-forge test --match-path test/showcase/ShowcaseGas.t.sol -vv
-```
-
-Run with gas report:
+Run the showcase suite with gas report:
 
 ```bash
 forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 ```
-
-The suite enforces that quantized write paths save at least:
-- 32% for the real-life showcase.
-- 80% for the extreme showcase.
-These threshold checks run for Solidity zero-to-nonzero writes.
-
-Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv`):
-
-| Scenario | Raw write gas | Quantized floor write gas | Savings |
-|---|---:|---:|---:|
-| Solidity real-life staking | 65,921 | 44,045 | 33.19% |
-| Solidity extreme (12 slots -> 1 slot) | 290,061 | 52,147 | 82.02% |
 
 ## License
 
