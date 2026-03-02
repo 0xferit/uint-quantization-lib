@@ -94,78 +94,50 @@
     .footer p { font-size: 0.85rem; color: var(--fg-2); }
     .footer a { color: var(--fg-2); } .footer a:hover { color: var(--accent); }
 
-    /* ── Animation ── */
-    .anim-stage { position: relative; aspect-ratio: 16/9; max-width: 100%; overflow: hidden; background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); cursor: pointer; user-select: none; box-shadow: 0 4px 32px rgba(0,0,0,0.3); }
-    .anim-scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
-    .anim-scene.active { opacity: 1; pointer-events: auto; }
-    .anim-progress { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--accent); width: 0; transition: none; border-radius: 0 0 0 12px; }
-    .anim-pause-hint { position: absolute; top: 12px; right: 16px; font-size: 0.72rem; color: var(--fg-2); opacity: 0.7; }
-    .anim-replay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--accent); color: var(--bg-0); border: none; padding: 12px 28px; border-radius: 6px; font-size: 0.95rem; font-weight: 700; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; font-family: 'Sora', sans-serif; }
-    .anim-replay.visible { opacity: 1; pointer-events: auto; }
-    .anim-replay:hover { background: var(--accent-hover); box-shadow: 0 0 20px rgba(34,211,238,0.25); }
+    /* ── How It Works: Steps ── */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .step { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 24px; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
+    .step:hover { transform: translateY(-2px); border-color: var(--border-focus); box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
+    .step:nth-child(1) { border-top: 2px solid var(--accent); }
+    .step:nth-child(2) { border-top: 2px solid var(--green); }
+    .step:nth-child(3) { border-top: 2px solid var(--amber); }
+    .step-num { font-family: 'Azeret Mono', monospace; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
+    .step:nth-child(1) .step-num { color: var(--accent); }
+    .step:nth-child(2) .step-num { color: var(--green); }
+    .step:nth-child(3) .step-num { color: var(--amber); }
+    .step-title { font-size: 1.05rem; font-weight: 700; color: var(--fg-0); margin-bottom: 18px; }
+    .step-visual { margin-bottom: 18px; }
+    .step-desc { font-size: 0.85rem; color: var(--fg-1); line-height: 1.6; }
 
-    /* Scene 1 */
-    .s1-text { font-size: clamp(1.2rem, 3vw, 2rem); color: var(--fg-0); font-weight: 700; margin-bottom: 24px; min-height: 2.6em; text-align: center; opacity: 0; transition: opacity 0.5s ease; }
-    .s1-text.visible { opacity: 1; }
-    .s1-bar { width: 90%; height: 32px; border-radius: 4px; position: relative; overflow: hidden; background: repeating-linear-gradient(90deg, var(--accent) 0px, var(--accent) 1px, transparent 1px, transparent 3.5px); opacity: 0; transform: scaleX(0.8); transition: opacity 0.8s ease, transform 0.8s ease; }
-    .s1-bar.visible { opacity: 1; transform: scaleX(1); }
-    .s1-bar .excess { position: absolute; right: 0; top: 0; bottom: 0; width: 35%; background: rgba(251,113,133,0.12); animation: pulse 2s ease-in-out infinite alternate; }
-    @keyframes pulse { from { opacity: 0.3; } to { opacity: 0.8; } }
-    .s1-label { font-size: 0.8rem; color: var(--fg-2); margin-top: 12px; opacity: 0; transition: opacity 0.5s ease; font-family: 'Azeret Mono', monospace; }
-    .s1-label.visible { opacity: 1; }
+    /* Step 1: Bit-shift diagram */
+    .bd-label { font-family: 'Azeret Mono', monospace; font-size: 0.65rem; color: var(--fg-2); margin-bottom: 4px; }
+    .bd-row { display: flex; height: 28px; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
+    .bd-seg { display: flex; align-items: center; justify-content: center; font-family: 'Azeret Mono', monospace; font-size: 0.58rem; font-weight: 600; min-width: 0; }
+    .bd-seg.kept { background: rgba(52,211,153,0.18); color: var(--green); border: 1px solid rgba(52,211,153,0.12); }
+    .bd-seg.disc { background: rgba(251,113,133,0.1); color: var(--red); border: 1px solid rgba(251,113,133,0.1); }
+    .bd-op { font-family: 'Azeret Mono', monospace; font-size: 0.82rem; font-weight: 700; color: var(--accent); text-align: center; margin: 5px 0; }
 
-    /* Scene 2 */
-    .s2-bar-wrap { width: 80%; margin-bottom: 20px; }
-    .s2-label { font-size: 0.85rem; color: var(--fg-2); margin-bottom: 6px; font-family: 'Azeret Mono', monospace; }
-    .s2-bar { display: flex; height: 40px; border-radius: 6px; overflow: hidden; transition: width 0.8s ease; width: 100%; }
-    .s2-upper { background: var(--green); flex: 112; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--bg-0); font-weight: 700; }
-    .s2-lower { background: var(--red); flex: 16; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #fff; font-weight: 600; transition: opacity 0.6s ease, flex 0.6s ease; }
-    .s2-lower.discarded { opacity: 0; flex: 0; }
-    .s2-op { font-size: clamp(1rem, 2.5vw, 1.6rem); color: var(--accent); font-family: 'Azeret Mono', monospace; font-weight: 700; margin: 12px 0; opacity: 0; transition: opacity 0.4s ease; }
-    .s2-op.visible { opacity: 1; }
-    .s2-code { font-size: clamp(0.65rem, 1.3vw, 0.85rem); color: var(--green); font-family: 'Azeret Mono', monospace; background: var(--code-bg); padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); overflow: hidden; white-space: nowrap; max-width: 90%; }
-    .s2-code .cursor { display: inline-block; width: 2px; height: 1em; background: var(--accent); vertical-align: text-bottom; animation: blink 0.8s step-end infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
+    /* Step 2: Struct slots */
+    .sl-label { font-size: 0.62rem; font-weight: 600; color: var(--fg-2); margin-bottom: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .sl-row { display: flex; height: 26px; border-radius: 4px; overflow: hidden; margin-bottom: 3px; }
+    .sl-f { display: flex; align-items: center; justify-content: center; font-family: 'Azeret Mono', monospace; font-size: 0.52rem; font-weight: 600; color: var(--bg-0); min-width: 0; padding: 0 2px; white-space: nowrap; overflow: hidden; }
+    .sl-f.amt { background: var(--green); }
+    .sl-f.tm { background: var(--accent); }
+    .sl-f.fl { background: var(--violet); }
+    .sl-f.wst { background: var(--bg-3); color: var(--fg-2); }
+    .sl-f.free { background: transparent; border: 1px dashed var(--border); color: var(--fg-2); }
+    .sl-arrow { text-align: center; color: var(--green); font-size: 0.8rem; margin: 6px 0; }
 
-    /* Scene 3 */
-    .s3-group { width: 85%; margin-bottom: 16px; }
-    .s3-title { font-size: 0.8rem; color: var(--fg-2); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-    .s3-slots { display: flex; flex-direction: column; gap: 4px; }
-    .s3-slot { display: flex; height: 36px; border-radius: 6px; overflow: hidden; }
-    .s3-field { display: flex; align-items: center; justify-content: center; font-size: clamp(0.55rem, 1.1vw, 0.72rem); font-family: 'Azeret Mono', monospace; font-weight: 600; color: var(--bg-0); padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .s3-field.amount { background: var(--green); }
-    .s3-field.time { background: var(--accent); }
-    .s3-field.flag { background: var(--violet); }
-    .s3-field.wasted { background: var(--bg-3); color: var(--fg-2); }
-    .s3-field.free { background: transparent; border: 1px dashed var(--border); color: var(--fg-2); }
-    .s3-arrow { font-size: 1.5rem; color: var(--accent); text-align: center; margin: 8px 0; opacity: 0; transition: opacity 0.5s ease; }
-    .s3-arrow.visible { opacity: 1; }
-    .s3-savings { font-size: 0.85rem; color: var(--green); text-align: center; margin-top: 8px; font-weight: 600; opacity: 0; transition: opacity 0.5s ease; }
-    .s3-savings.visible { opacity: 1; }
-    .s3-before, .s3-after { opacity: 0; transition: opacity 0.6s ease; }
-    .s3-before.visible, .s3-after.visible { opacity: 1; }
-
-    /* Scene 4 */
-    .s4-chart { display: flex; align-items: flex-end; justify-content: center; gap: 48px; height: 55%; width: 80%; }
-    .s4-col { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 120px; }
-    .s4-bar-outer { width: 100%; height: 200px; position: relative; display: flex; align-items: flex-end; }
-    .s4-bar-inner { width: 100%; border-radius: 6px 6px 0 0; transition: height 1.5s ease-out; }
-    .s4-bar-inner.raw { background: var(--red); }
-    .s4-bar-inner.quant { background: var(--green); }
-    .s4-num { font-family: 'Azeret Mono', monospace; font-size: clamp(0.9rem, 2vw, 1.2rem); color: var(--fg-0); font-weight: 700; margin-top: 8px; }
-    .s4-lbl { font-size: 0.8rem; color: var(--fg-2); margin-top: 4px; }
-    .s4-saving { font-size: clamp(1.2rem, 3vw, 2rem); color: var(--green); font-weight: 800; margin-top: 20px; opacity: 0; transform: scale(0.5); transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-    .s4-saving.visible { opacity: 1; transform: scale(1); }
-    .s4-caption { font-size: 0.85rem; color: var(--fg-2); margin-top: 8px; opacity: 0; transition: opacity 0.5s ease; }
-    .s4-caption.visible { opacity: 1; }
-
-    /* Scene 5 */
-    .s5-title { font-size: clamp(1.5rem, 4vw, 2.5rem); font-family: 'Azeret Mono', monospace; color: var(--fg-0); font-weight: 700; margin-bottom: 16px; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
-    .s5-title.visible { opacity: 1; transform: translateY(0); }
-    .s5-tag { font-size: clamp(0.9rem, 2vw, 1.12rem); color: var(--fg-1); margin-bottom: 28px; opacity: 0; transition: opacity 0.6s ease 0.3s; }
-    .s5-tag.visible { opacity: 1; }
-    .s5-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; opacity: 0; transition: opacity 0.6s ease 0.6s; }
-    .s5-actions.visible { opacity: 1; }
+    /* Step 3: Gas bars */
+    .gb-wrap { display: flex; justify-content: center; gap: 28px; margin-bottom: 8px; }
+    .gb-col { display: flex; flex-direction: column; align-items: center; }
+    .gb-bar-box { width: 48px; height: 96px; display: flex; align-items: flex-end; }
+    .gb-bar { width: 100%; border-radius: 4px 4px 0 0; }
+    .gb-bar.raw { height: 100%; background: linear-gradient(180deg, var(--red) 0%, rgba(251,113,133,0.5) 100%); }
+    .gb-bar.qnt { height: 67%; background: linear-gradient(180deg, var(--green) 0%, rgba(52,211,153,0.5) 100%); }
+    .gb-num { font-family: 'Azeret Mono', monospace; font-size: 0.68rem; font-weight: 700; color: var(--fg-0); margin-top: 6px; }
+    .gb-lbl { font-size: 0.62rem; color: var(--fg-2); margin-top: 2px; }
+    .gb-saving { font-family: 'Azeret Mono', monospace; font-size: 1.5rem; font-weight: 800; color: var(--green); text-align: center; margin-top: 6px; }
 
     /* ── Scroll reveal ── */
     .sr { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
@@ -175,12 +147,10 @@
     @media (max-width: 640px) {
       .hero { padding: 64px 0 48px; }
       .section { padding: 48px 0; }
+      .steps { grid-template-columns: 1fr; }
       .api-item { flex-direction: column; gap: 4px; }
       .api-desc { text-align: left; }
       .nav-links { gap: 16px; }
-      .anim-scene { padding: 16px; }
-      .s4-chart { gap: 24px; } .s4-bar-outer { height: 140px; }
-      .s3-field { font-size: 0.5rem; }
     }
   </style>
 </head>
@@ -219,84 +189,70 @@
 
     <section class="section">
       <h2 class="section-title sr">How It Works</h2>
-      <div class="anim-stage" id="animStage">
-        <span class="anim-pause-hint" id="pauseHint">click to pause</span>
-        <div class="anim-scene" id="scene1">
-          <div class="s1-text" id="s1Text">256 bits of range.</div>
-          <div class="s1-bar" id="s1Bar"><div class="excess"></div></div>
-          <div class="s1-label" id="s1Label">uint256 storage slot</div>
-        </div>
-        <div class="anim-scene" id="scene2">
-          <div class="s2-bar-wrap">
-            <div class="s2-label" id="s2TypeLabel">uint128 amount</div>
-            <div class="s2-bar" id="s2Bar">
-              <div class="s2-upper" id="s2Upper">112 bits (kept)</div>
-              <div class="s2-lower" id="s2Lower">16 bits</div>
+      <div class="steps">
+        <div class="step sr" style="transition-delay:0.1s">
+          <div class="step-num">01 &mdash; Quantize</div>
+          <div class="step-title">Discard Excess Bits</div>
+          <div class="step-visual">
+            <div class="bd-label">uint128 amount</div>
+            <div class="bd-row">
+              <div class="bd-seg kept" style="flex:112">112 bits kept</div>
+              <div class="bd-seg disc" style="flex:16">16</div>
+            </div>
+            <div class="bd-op">&gt;&gt; 16</div>
+            <div class="bd-label">uint96 encoded</div>
+            <div class="bd-row">
+              <div class="bd-seg kept" style="flex:1">96 bits</div>
             </div>
           </div>
-          <div class="s2-op" id="s2Op">&gt;&gt; 16</div>
-          <div class="s2-code" id="s2Code"><span class="cursor"></span></div>
+          <p class="step-desc">Right-shift discards low-order bits that don't materially affect your value. A 32 ETH stake loses sub-wei dust.</p>
         </div>
-        <div class="anim-scene" id="scene3">
-          <div class="s3-before" id="s3Before">
-            <div class="s3-group">
-              <div class="s3-title">Before: 2 storage slots</div>
-              <div class="s3-slots">
-                <div class="s3-slot">
-                  <div class="s3-field amount" style="flex:128">u128 amount</div>
-                  <div class="s3-field time" style="flex:64">u64 stakedAt</div>
-                  <div class="s3-field time" style="flex:64">u64 cooldown</div>
-                </div>
-                <div class="s3-slot">
-                  <div class="s3-field flag" style="flex:8">bool</div>
-                  <div class="s3-field wasted" style="flex:248">248 bits wasted</div>
-                </div>
+        <div class="step sr" style="transition-delay:0.2s">
+          <div class="step-num">02 &mdash; Pack</div>
+          <div class="step-title">Fit More Per Slot</div>
+          <div class="step-visual">
+            <div class="sl-label">Before: 2 storage slots</div>
+            <div class="sl-row">
+              <div class="sl-f amt" style="flex:128">u128</div>
+              <div class="sl-f tm" style="flex:64">u64</div>
+              <div class="sl-f tm" style="flex:64">u64</div>
+            </div>
+            <div class="sl-row">
+              <div class="sl-f fl" style="flex:8">bool</div>
+              <div class="sl-f wst" style="flex:248">248 wasted</div>
+            </div>
+            <div class="sl-arrow">&darr;</div>
+            <div class="sl-label">After: 1 storage slot</div>
+            <div class="sl-row">
+              <div class="sl-f amt" style="flex:96">u96</div>
+              <div class="sl-f tm" style="flex:64">u64</div>
+              <div class="sl-f tm" style="flex:64">u64</div>
+              <div class="sl-f fl" style="flex:8">b</div>
+              <div class="sl-f free" style="flex:24">24</div>
+            </div>
+          </div>
+          <p class="step-desc">Smaller types let the Solidity compiler pack more fields into a single 256-bit storage slot.</p>
+        </div>
+        <div class="step sr" style="transition-delay:0.3s">
+          <div class="step-num">03 &mdash; Save</div>
+          <div class="step-title">Pay Less Gas</div>
+          <div class="step-visual">
+            <div class="gb-wrap">
+              <div class="gb-col">
+                <div class="gb-bar-box"><div class="gb-bar raw"></div></div>
+                <div class="gb-num">65,921</div>
+                <div class="gb-lbl">Raw</div>
+              </div>
+              <div class="gb-col">
+                <div class="gb-bar-box"><div class="gb-bar qnt"></div></div>
+                <div class="gb-num">44,045</div>
+                <div class="gb-lbl">Quantized</div>
               </div>
             </div>
+            <div class="gb-saving">-33% gas</div>
           </div>
-          <div class="s3-arrow" id="s3Arrow">&#8595;</div>
-          <div class="s3-after" id="s3After">
-            <div class="s3-group">
-              <div class="s3-title">After: 1 storage slot</div>
-              <div class="s3-slots">
-                <div class="s3-slot">
-                  <div class="s3-field amount" style="flex:96">u96 amount</div>
-                  <div class="s3-field time" style="flex:64">u64 stakedAt</div>
-                  <div class="s3-field time" style="flex:64">u64 cooldown</div>
-                  <div class="s3-field flag" style="flex:8">bool</div>
-                  <div class="s3-field free" style="flex:24">24 free</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="s3-savings" id="s3Savings">1 SSTORE eliminated</div>
+          <p class="step-desc">Eliminating a storage write (SSTORE) saves thousands of gas per transaction.</p>
         </div>
-        <div class="anim-scene" id="scene4">
-          <div class="s4-chart">
-            <div class="s4-col">
-              <div class="s4-bar-outer"><div class="s4-bar-inner raw" id="s4RawBar" style="height:0"></div></div>
-              <div class="s4-num" id="s4RawNum">0</div>
-              <div class="s4-lbl">Raw</div>
-            </div>
-            <div class="s4-col">
-              <div class="s4-bar-outer"><div class="s4-bar-inner quant" id="s4QuantBar" style="height:0"></div></div>
-              <div class="s4-num" id="s4QuantNum">0</div>
-              <div class="s4-lbl">Quantized</div>
-            </div>
-          </div>
-          <div class="s4-saving" id="s4Saving">-33% gas</div>
-          <div class="s4-caption" id="s4Caption">1 SSTORE eliminated</div>
-        </div>
-        <div class="anim-scene" id="scene5">
-          <div class="s5-title" id="s5Title">uint-quantization-lib</div>
-          <div class="s5-tag" id="s5Tag">Trade excess precision for storage density.</div>
-          <div class="s5-actions" id="s5Actions">
-            <a class="btn btn-primary" href="https://github.com/0xferit/uint-quantization-lib">View on GitHub</a>
-            <a class="btn btn-outline" href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Documentation</a>
-          </div>
-        </div>
-        <div class="anim-progress" id="animProgress"></div>
-        <button class="anim-replay" id="replayBtn">Replay</button>
       </div>
     </section>
 
@@ -361,80 +317,6 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold: 0.1 });
     document.querySelectorAll('.sr').forEach(el => srObs.observe(el));
-
-    /* ── Animation ── */
-    const TOTAL = 32000, GAS_RAW = 65921, GAS_QUANT = 44045;
-    const CODE_TEXT = 'uint96 encoded = uint96(SCHEME.encode(amount));';
-    const $ = id => document.getElementById(id);
-    const stage = $('animStage'), progress = $('animProgress'), replayBtn = $('replayBtn'), pauseHint = $('pauseHint');
-    const scenes = [1,2,3,4,5].map(i => $('scene' + i));
-    let startTime = 0, pausedAt = 0, paused = false, running = false, rafId = null, typingInterval = null;
-
-    function showScene(n) { scenes.forEach((s, i) => s.classList.toggle('active', i === n)); }
-    function typeCode(el, text) {
-      let i = 0; el.innerHTML = '<span class="cursor"></span>';
-      typingInterval = setInterval(() => {
-        if (i < text.length) { el.innerHTML = text.slice(0,i+1).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '<span class="cursor"></span>'; i++; }
-        else { clearInterval(typingInterval); typingInterval = null; }
-      }, 35);
-    }
-    function animateCount(el, target, dur) {
-      const s = performance.now();
-      (function tick(now) { const t = Math.min((now-s)/dur,1); el.textContent = Math.round(target*(1-Math.pow(1-t,3))).toLocaleString(); if(t<1) requestAnimationFrame(tick); })(s);
-    }
-
-    const timeline = [
-      [0, () => { resetAll(); showScene(0); $('s1Text').textContent='256 bits of range.'; $('s1Text').classList.add('visible'); }],
-      [600, () => { $('s1Bar').classList.add('visible'); $('s1Label').classList.add('visible'); }],
-      [2800, () => $('s1Text').classList.remove('visible')],
-      [3400, () => { $('s1Text').textContent='Do you need them all?'; $('s1Text').classList.add('visible'); }],
-      [5500, () => showScene(1)],
-      [6500, () => $('s2Op').classList.add('visible')],
-      [8000, () => { $('s2Lower').classList.add('discarded'); $('s2TypeLabel').textContent='uint96 encoded'; }],
-      [9500, () => typeCode($('s2Code'), CODE_TEXT)],
-      [15000, () => { showScene(2); $('s3Before').classList.add('visible'); }],
-      [17000, () => $('s3Arrow').classList.add('visible')],
-      [18000, () => $('s3After').classList.add('visible')],
-      [19500, () => $('s3Savings').classList.add('visible')],
-      [22000, () => { showScene(3); setTimeout(() => { $('s4RawBar').style.height='100%'; $('s4QuantBar').style.height=Math.round(GAS_QUANT/GAS_RAW*100)+'%'; animateCount($('s4RawNum'),GAS_RAW,1500); animateCount($('s4QuantNum'),GAS_QUANT,1500); },300); }],
-      [25000, () => { $('s4Saving').classList.add('visible'); $('s4Caption').classList.add('visible'); }],
-      [28000, () => { showScene(4); $('s5Title').classList.add('visible'); $('s5Tag').classList.add('visible'); $('s5Actions').classList.add('visible'); }],
-      [TOTAL, () => { running=false; replayBtn.classList.add('visible'); pauseHint.style.display='none'; }],
-    ];
-    let fired = [];
-
-    function resetAll() {
-      fired = new Array(timeline.length).fill(false);
-      if (typingInterval) { clearInterval(typingInterval); typingInterval=null; }
-      replayBtn.classList.remove('visible'); pauseHint.style.display=''; pauseHint.textContent='click to pause'; progress.style.width='0';
-      $('s1Text').classList.remove('visible'); $('s1Bar').classList.remove('visible'); $('s1Label').classList.remove('visible');
-      $('s2Op').classList.remove('visible'); $('s2Lower').classList.remove('discarded'); $('s2TypeLabel').textContent='uint128 amount'; $('s2Code').innerHTML='<span class="cursor"></span>';
-      $('s3Before').classList.remove('visible'); $('s3Arrow').classList.remove('visible'); $('s3After').classList.remove('visible'); $('s3Savings').classList.remove('visible');
-      $('s4RawBar').style.height='0'; $('s4QuantBar').style.height='0'; $('s4RawNum').textContent='0'; $('s4QuantNum').textContent='0'; $('s4Saving').classList.remove('visible'); $('s4Caption').classList.remove('visible');
-      $('s5Title').classList.remove('visible'); $('s5Tag').classList.remove('visible'); $('s5Actions').classList.remove('visible');
-    }
-    function tick(now) {
-      if (!running) return;
-      if (paused) { rafId=requestAnimationFrame(tick); return; }
-      const elapsed = now-startTime; progress.style.width = Math.min(elapsed/TOTAL*100,100)+'%';
-      timeline.forEach((e,i) => { if (!fired[i] && elapsed>=e[0]) { fired[i]=true; e[1](); } });
-      if (elapsed < TOTAL) rafId=requestAnimationFrame(tick);
-    }
-    function startAnimation() { resetAll(); running=true; paused=false; startTime=performance.now(); rafId=requestAnimationFrame(tick); }
-
-    stage.addEventListener('click', e => {
-      if (e.target===replayBtn) return; if (!running) return;
-      paused=!paused;
-      if (paused) { pausedAt=performance.now(); pauseHint.textContent='click to resume'; }
-      else { startTime+=performance.now()-pausedAt; pauseHint.textContent='click to pause'; }
-    });
-    replayBtn.addEventListener('click', e => { e.stopPropagation(); startAnimation(); });
-
-    let hasPlayed = false;
-    const animObs = new IntersectionObserver(entries => {
-      entries.forEach(entry => { if (entry.isIntersecting && !hasPlayed) { hasPlayed=true; startAnimation(); } });
-    }, { threshold: 0.3 });
-    animObs.observe(stage);
   })();
   </script>
 </body>
