@@ -35,8 +35,7 @@ forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 
 ### Formal Verification (Kontrol)
 
-Kontrol proofs for `QuantizationLib` are future work. The `ProofAssumptions.sol` base contract is kept for
-when those proofs are written.
+Kontrol proofs for `QuantizationLib` are future work.
 
 Requires Kontrol installed locally (Apple Silicon: `APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231`).
 
@@ -62,16 +61,12 @@ Requires Kontrol installed locally (Apple Silicon: `APPLE_SILICON=true UV_PYTHON
 
 - `test/showcase/ShowcaseGas.t.sol`: Benchmark assertions. Enforces quantized paths save >= 32% (real-life) and >= 80% (extreme) gas vs raw paths on zero-to-nonzero writes.
 
-- `test/kontrol/ProofAssumptions.sol`: Abstract base with helpers: `_assumeShiftValid` (0 < shift < 256), `_assumeTargetBitsValid`, `_assumeNoDecodeOverflow`. Kept for future QuantizationLib Kontrol proofs.
-
 ### Scripts: `script/`
 
 - `script/kontrol.sh`: Main Kontrol orchestrator. Supports `list`, `clean`. Writes toolchain metadata to `.kontrol/local-toolchain.txt`.
-- `script/kontrol-bench-local.sh`: Benchmarks and enforces minimum CPU utilization threshold.
-- `script/kontrol-tune-local.sh`: Tunes single-process prove flags.
 
 ### Configuration
 
 - `foundry.toml`: `optimizer_runs = 0x10000`, fuzz `runs = 0x10000`, `libs = ["dependencies"]` (Soldeer).
-- `kontrol.toml`: Profiles `default`, `ci` (workers=8, no booster), `local` (workers=8, no booster), `local-hi` (workers=8, max-frontier-parallel=8). All use `max-depth = 25000`, `smt-timeout = 1000`, `no-stack-checks = true`.
+- `kontrol.toml`: Build profiles `default`, `ci`, `local`. Show and view-kcfg profiles for proof inspection.
 - `remappings.txt`: Maps `forge-std/` from `dependencies/`.

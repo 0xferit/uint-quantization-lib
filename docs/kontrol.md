@@ -7,16 +7,23 @@ Kontrol is used for proofs over all symbolic inputs/states for selected properti
 
 ## Scope
 
-Proof specs live in:
+Kontrol proofs for the `QuantLib` UDT API are planned but not yet written.
+The proof infrastructure (scripts, config, docs) is maintained so proofs
+can be added incrementally.
 
-- `test/kontrol/ProofUintQuantizationSolidity.sol`
+### Planned proof coverage
 
-They cover:
-
-- Core encode/decode, floor, and remainder properties.
-- Lossless strict-mode properties (`isLossless`, `encodeLossless`).
-- Checked-width safety (`targetBits >= 256` revert behavior).
-- `maxRepresentable` overflow/boundary behavior.
+- `create` validation: rejects all four invalid parameter combinations
+- encode/decode round-trip: `decode(q, encode(q, v)) <= v` for all valid v
+- `encodeLossless` exact round-trip: `decode(q, encodeLossless(q, v)) == v`
+- `encodeLossless` revert on misalignment
+- `remainder` < `stepSize` for all inputs
+- `isLossless` iff `remainder == 0`
+- `ceil(q, v) >= v` (with overflow guard)
+- `floor` produces lossless values
+- `encode` monotonicity: `v1 <= v2` implies `encode(q, v1) <= encode(q, v2)`
+- `decodeMax(q, e) >= decode(q, e)` for all e
+- `fits(q, v)` iff `v <= max(q)`
 
 ## Prerequisites
 
@@ -32,37 +39,8 @@ APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231
 # Show available proofs/specs
 ./script/kontrol.sh list
 
-# Prove essential Solidity-focused specs
-./script/kontrol.sh prove-core
-
-# High-utilization profile (essential subset)
-./script/kontrol.sh prove-core-hi
-
-# Full proof set
-./script/kontrol.sh prove-core-full
-
 # Remove local proof artifacts
 ./script/kontrol.sh clean
-```
-
-## Profiles
-
-- `local`: stable native defaults
-- `local-hi`: tuned native profile (`workers=8`, `max-frontier-parallel=8`)
-- `ci`: Docker CI defaults (`workers=8`)
-
-## Bench and tune scripts
-
-Benchmark and enforce CPU threshold on local runs:
-
-```bash
-./script/kontrol-bench-local.sh --command prove-core-hi --require-min-total-cpu 7
-```
-
-Tune single-process local prove flags and pick the best candidate:
-
-```bash
-./script/kontrol-tune-local.sh --min-total-cpu 7
 ```
 
 ## Artifacts
