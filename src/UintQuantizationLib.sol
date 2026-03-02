@@ -108,6 +108,9 @@ library QuantizationLib {
     // -------------------------------------------------------------------------
 
     /// @notice Left-shifts `encoded` by shift, restoring discarded bits as zeros (lower bound).
+    /// @dev    The caller must ensure `encoded < 2**targetBits(q)`. Passing a larger value
+    ///         produces a result that may silently wrap or exceed the scheme's representable range.
+    ///         Values returned by `encode` and `encodeLossless` always satisfy this constraint.
     function decode(Quant q, uint256 encoded) internal pure returns (uint256) {
         unchecked {
             return encoded << shift(q);
@@ -115,6 +118,7 @@ library QuantizationLib {
     }
 
     /// @notice Like `decode` but fills the discarded bits with ones (upper bound within the step).
+    /// @dev    Same precondition as `decode`: `encoded` must be less than `2**targetBits(q)`.
     function decodeMax(Quant q, uint256 encoded) internal pure returns (uint256) {
         unchecked {
             uint256 s = shift(q);
