@@ -9,9 +9,6 @@ pragma solidity ^0.8.25;
  *
  *         The `Quant` value type packs a `(shift, targetBits)` scheme into a single `uint16`,
  *         allowing callers to define the compression config once and invoke methods on it.
- *         Declare `Quant` as `immutable` with `create()` for self-documenting configs,
- *         or as `constant` with a hex literal when that style is preferred.
- *
  *         Type layout (uint16):
  *           bits 0-7  → shift      (LSBs discarded during encoding)
  *           bits 8-15 → targetBits (bit-width of the encoded value)
@@ -20,12 +17,7 @@ pragma solidity ^0.8.25;
  *         ```solidity
  *         import {Quant, QuantizationLib as QuantLib} from "src/UintQuantizationLib.sol";
  *
- *         // Recommended: immutable via create() for readability and self-documenting configs.
  *         Quant private immutable SCHEME = QuantLib.create(32, 24);
- *
- *         // Optional: constant with a literal wrap if you explicitly want that style.
- *         // Quant layout: bits 0-7 = shift, bits 8-15 = targetBits.
- *         // Quant private constant SCHEME2 = Quant.wrap(0x1820);  // shift=32, targetBits=24
  *
  *         stored   = uint24(SCHEME.encode(value));
  *         restored = SCHEME.decode(stored);
