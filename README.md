@@ -70,8 +70,15 @@ error Quant__NotAligned(uint256 value, uint256 stepSize);
 import {Quant, QuantizationLib} from "uint-quantization-lib-1.0.0/src/UintQuantizationLib.sol";
 
 contract FeeAccumulator {
-    // Scheme: 40-bit shift, 16-bit encoded width (step = 0x10000000000, max = 0xFFFF * step)
-    Quant private constant SCHEME = QuantizationLib.create(40, 16);
+    // Preferred: constant with a literal Quant.wrap for zero-cost inlining.
+    // Quant layout: bits 0-7 = shift, bits 8-15 = targetBits.
+    // shift=40 (0x28), targetBits=16 (0x10) → Quant.wrap(0x1028)
+    Quant private constant SCHEME = Quant.wrap(0x1028);
+
+    // Alternative: immutable via create() when readability is preferred.
+    // Solidity cannot evaluate create() at compile time, so `constant` is not
+    // supported with create(). Each access pays an IMMUTABLE load at runtime.
+    // Quant private immutable SCHEME = QuantizationLib.create(40, 16);
 
     uint16 public storedFee;
 

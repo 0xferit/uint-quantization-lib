@@ -50,6 +50,9 @@ contract QuantizedETHStakingShowcase {
     error QuantizedETHStakingShowcase__NoStake();
     error QuantizedETHStakingShowcase__TransferFailed();
 
+    /// @dev `immutable` (not `constant`) because Solidity cannot evaluate `QuantizationLib.create`
+    ///      at compile time. Use `constant` with a literal `Quant.wrap(...)` if zero-cost inlining
+    ///      is required.
     Quant private immutable SCHEME;
     uint64 public constant COOLDOWN = 1 days;
 
@@ -140,6 +143,9 @@ contract RawExtremePackingShowcase {
 ///         `setExtremeFloor` intentionally favors throughput over safety and does not
 ///         enforce lane-width bounds (it masks to width). Use strict mode for safety.
 contract QuantizedExtremePackingShowcase {
+    /// @dev `immutable` (not `constant`) because Solidity cannot evaluate `QuantizationLib.create`
+    ///      at compile time. Use `constant` with a literal `Quant.wrap(...)` if zero-cost inlining
+    ///      is required.
     Quant private immutable SCHEME;
 
     uint256 internal constant LANES = 12;
