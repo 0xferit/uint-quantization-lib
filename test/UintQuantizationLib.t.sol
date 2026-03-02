@@ -64,7 +64,7 @@ contract QuantHarness {
     }
 }
 
-/// @notice Fast concrete regression checks. Mathematical completeness is handled by Kontrol proofs.
+/// @notice Fast concrete regression checks. Mathematical completeness is covered by fuzz tests.
 contract QuantizationLibSmokeTest is Test {
     QuantHarness harness;
 

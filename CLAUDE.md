@@ -33,20 +33,6 @@ forge test --match-test testFuzz_
 forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 ```
 
-### Formal Verification (Kontrol)
-
-Kontrol proofs for `QuantizationLib` are future work.
-
-Requires Kontrol installed locally (Apple Silicon: `APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231`).
-
-```bash
-# List discovered proof specs
-./script/kontrol.sh list
-
-# Clean Kontrol artifacts
-./script/kontrol.sh clean
-```
-
 ## Architecture
 
 ### Source: `src/`
@@ -61,12 +47,7 @@ Requires Kontrol installed locally (Apple Silicon: `APPLE_SILICON=true UV_PYTHON
 
 - `test/showcase/ShowcaseGas.t.sol`: Benchmark assertions. Enforces quantized paths save >= 32% (real-life) and >= 80% (extreme) gas vs raw paths on zero-to-nonzero writes.
 
-### Scripts: `script/`
-
-- `script/kontrol.sh`: Main Kontrol orchestrator. Supports `list`, `clean`. Writes toolchain metadata to `.kontrol/local-toolchain.txt`.
-
 ### Configuration
 
 - `foundry.toml`: `optimizer_runs = 0x10000`, fuzz `runs = 0x10000`, `libs = ["dependencies"]` (Soldeer).
-- `kontrol.toml`: Build profiles `default`, `ci`, `local`. Show and view-kcfg profiles for proof inspection.
 - `remappings.txt`: Maps `forge-std/` from `dependencies/`.

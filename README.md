@@ -157,17 +157,6 @@ Current benchmark snapshot (`forge test --match-path test/showcase/ShowcaseGas.t
 | Solidity real-life staking | 65,921 | 43,920 | 33.37% |
 | Solidity extreme (12 slots -> 1 slot) | 290,061 | 49,231 | 83.03% |
 
-## Formal verification (Kontrol)
-
-Kontrol proof specs for `QuantizationLib` are future work. The proof infrastructure
-(scripts, config, docs) is maintained so proofs can be added incrementally.
-
-For local Apple Silicon setup:
-
-```bash
-APPLE_SILICON=true UV_PYTHON=3.10 kup install kontrol --version v1.0.231
-```
-
 ## License
 
 MIT (see SPDX headers in source files).
