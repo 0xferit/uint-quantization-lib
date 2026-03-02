@@ -194,6 +194,86 @@ contract QuantizationLibSmokeTest is Test {
     }
 
     // -------------------------------------------------------------------------
+    // Boundary: shift == 0 (identity / no compression)
+    // -------------------------------------------------------------------------
+
+    function test_shift_zero_identity() public view {
+        // shift=0, targetBits=8: stepSize=1, max=255, encode is identity
+        Quant q = harness.create(0, 8);
+        assertEq(harness.stepSize(q), 1);
+        assertEq(harness.max(q), 255);
+        assertEq(harness.encode(q, 200), 200);
+        assertEq(harness.decode(q, 200), 200);
+        assertTrue(harness.isLossless(q, 200));
+        // ceil and floor are identity when shift=0
+        assertEq(harness.floor(q, 137), 137);
+        assertEq(harness.ceil(q, 137), 137);
+    }
+
+    // -------------------------------------------------------------------------
+    // Boundary: shift + targetBits == 256 (full uint256 range)
+    // -------------------------------------------------------------------------
+
+    function test_full_uint256_range() public view {
+        // shift=128, targetBits=128: uses the full 256-bit space
+        Quant q = harness.create(128, 128);
+        uint256 m = harness.max(q);
+        // max = (2^128 - 1) << 128 = type(uint256).max - (2^128 - 1)
+        assertEq(m, type(uint256).max - ((uint256(1) << 128) - 1));
+        // Encode max value
+        uint256 encoded = harness.encode(q, m);
+        assertEq(encoded, (uint256(1) << 128) - 1);
+        // Round-trip
+        assertEq(harness.decode(q, encoded), m);
+    }
+
+    // -------------------------------------------------------------------------
+    // Boundary: targetBits == 255 (near-max encoded width)
+    // -------------------------------------------------------------------------
+
+    function test_targetBits_255() public view {
+        // shift=1, targetBits=255: max = (2^255 - 1) << 1
+        Quant q = harness.create(1, 255);
+        uint256 m = harness.max(q);
+        assertEq(m, ((uint256(1) << 255) - 1) << 1);
+        assertTrue(harness.fits(q, m));
+        assertFalse(harness.fits(q, type(uint256).max)); // type(uint256).max > m, does not fit
+    }
+
+    // -------------------------------------------------------------------------
+    // Boundary: explicit zero encode/decode
+    // -------------------------------------------------------------------------
+
+    function test_encode_decode_zero() public view {
+        Quant q = harness.create(8, 8);
+        assertEq(harness.encode(q, 0), 0);
+        assertEq(harness.decode(q, 0), 0);
+        assertEq(harness.decodeMax(q, 0), 255); // fills low bits with 1s
+        assertEq(harness.remainder(q, 0), 0);
+        assertTrue(harness.isLossless(q, 0));
+        assertTrue(harness.fits(q, 0));
+    }
+
+    // -------------------------------------------------------------------------
+    // Boundary: shift == 0, targetBits == 1 (minimal config)
+    // -------------------------------------------------------------------------
+
+    function test_minimal_config() public view {
+        // Smallest valid config: 1-bit encoded, no shift
+        Quant q = harness.create(0, 1);
+        assertEq(harness.max(q), 1);
+        assertEq(harness.encode(q, 0), 0);
+        assertEq(harness.encode(q, 1), 1);
+    }
+
+    function test_minimal_config_overflow_reverts() public {
+        Quant q = harness.create(0, 1);
+        // 2 should overflow
+        vm.expectRevert();
+        harness.encode(q, 2);
+    }
+
+    // -------------------------------------------------------------------------
     // Fuzz tests
     // -------------------------------------------------------------------------
 
