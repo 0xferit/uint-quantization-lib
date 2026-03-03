@@ -149,9 +149,9 @@
       </div>
       <div class="code-block sr" style="transition-delay:0.2s">
         <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">MyContract.sol</span></div>
-        <div class="code-body">import {Quant, QuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
+        <div class="code-body">import {Quant, UintQuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
 
-Quant private immutable SCHEME = QuantizationLib.create(32, 24);
+Quant private immutable SCHEME = UintQuantizationLib.create(32, 24);
 
 uint24 stored = uint24(SCHEME.encode(largeValue));   // compress
 uint256 restored = SCHEME.decode(stored);             // decompress</div>

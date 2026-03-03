@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`uint-quantization-lib` is a pure-function Solidity library for shift-based `uint256` lossy compression. The core mechanism is floor quantization via right-shifting via the `QuantizationLib` library. A `Quant` value packs `(shift, targetBits)` into a single `uint16`, making the compression scheme explicit and reusable. The recommended pattern is `immutable` + `create(shift, targetBits)` for readability.
+`uint-quantization-lib` is a pure-function Solidity library for shift-based `uint256` lossy compression. The core mechanism is floor quantization via right-shifting via the `UintQuantizationLib` library. A `Quant` value packs `(shift, targetBits)` into a single `uint16`, making the compression scheme explicit and reusable. The recommended pattern is `immutable` + `create(shift, targetBits)` for readability.
 
 ## Commands
 
@@ -37,13 +37,13 @@ forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 
 ### Source: `src/`
 
-- `UintQuantizationLib.sol`: UDT `Quant` packing `(shift, targetBits)` into `uint16` (bits 0-7 = shift, bits 8-15 = targetBits). All functions are `internal pure`. Errors are file-level (not inside the library) and attached to the type. `using QuantizationLib for Quant global` at the bottom of the file propagates method-call binding to all importers automatically.
+- `UintQuantizationLib.sol`: UDT `Quant` packing `(shift, targetBits)` into `uint16` (bits 0-7 = shift, bits 8-15 = targetBits). All functions are `internal pure`. Errors are file-level (not inside the library) and attached to the type. `using UintQuantizationLib for Quant global` at the bottom of the file propagates method-call binding to all importers automatically.
 
-- `src/showcase/ShowcaseSolidityFixtures.sol`: Production-style showcase contracts demonstrating gas savings. `RawETHStakingShowcase` vs `QuantizedETHStakingShowcase` (real-life staking) and `RawExtremePackingShowcase` vs `QuantizedExtremePackingShowcase` (12 slots -> 1 slot). Used only for benchmarking. Both quantized contracts use `QuantizationLib`.
+- `src/showcase/ShowcaseSolidityFixtures.sol`: Production-style showcase contracts demonstrating gas savings. `RawETHStakingShowcase` vs `QuantizedETHStakingShowcase` (real-life staking) and `RawExtremePackingShowcase` vs `QuantizedExtremePackingShowcase` (12 slots -> 1 slot). Used only for benchmarking. Both quantized contracts use `UintQuantizationLib`.
 
 ### Tests: `test/`
 
-- `test/UintQuantizationLib.t.sol`: Foundry test file. Contains `QuantHarness` (exposes method-call syntax) and `QuantizationLibSmokeTest`. Smoke tests cover `create` validation and all revert paths. Fuzz tests use `uint8` for shift and targetBits and use `bound()` instead of `vm.assume` for value-in-range constraints.
+- `test/UintQuantizationLib.t.sol`: Foundry test file. Contains `QuantHarness` (exposes method-call syntax) and `UintQuantizationLibSmokeTest`. Smoke tests cover `create` validation and all revert paths. Fuzz tests use `uint8` for shift and targetBits and use `bound()` instead of `vm.assume` for value-in-range constraints.
 
 - `test/showcase/ShowcaseGas.t.sol`: Benchmark assertions. Enforces quantized paths save >= 32% (real-life) and >= 80% (extreme) gas vs raw paths on zero-to-nonzero writes.
 

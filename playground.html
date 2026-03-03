@@ -634,7 +634,7 @@
       const escaped = escHtml(code);
       // Tokenize: keywords, types, strings, hex literals, everything else
       return escaped.replace(
-        /\b(import|from|struct|private|immutable|using|for|global)\b|\b(uint\d+|bool|Quant|QuantizationLib)\b|(&quot;[^&]*?&quot;)|\b(0x[0-9A-Fa-f]+)\b/g,
+        /\b(import|from|struct|private|immutable|using|for|global)\b|\b(uint\d+|bool|Quant|UintQuantizationLib)\b|(&quot;[^&]*?&quot;)|\b(0x[0-9A-Fa-f]+)\b/g,
         (match, kw, typ, str, hex) => {
           if (kw) return '<span style="color:var(--accent)">' + kw + '</span>';
           if (typ) return '<span style="color:var(--green)">' + typ + '</span>';
@@ -663,7 +663,7 @@
       let code = '';
 
       if (hasQuantized) {
-        code += 'import {Quant, QuantizationLib} from\n';
+        code += 'import {Quant, UintQuantizationLib} from\n';
         code += '  "uint-quantization-lib/src/UintQuantizationLib.sol";\n\n';
       }
 
@@ -707,7 +707,7 @@
         quantizedFields.forEach(f => {
           const schemeName = f.name.toUpperCase() + '_SCHEME';
           code += 'Quant private immutable ' + schemeName + ' =\n';
-          code += '    QuantizationLib.create(' + f.shift + ', ' + f.targetBits + ');  // ' + quantHex(f) + '\n';
+          code += '    UintQuantizationLib.create(' + f.shift + ', ' + f.targetBits + ');  // ' + quantHex(f) + '\n';
         });
       }
 

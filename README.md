@@ -10,9 +10,9 @@ This library quantizes `uint256` values via right-shift compression, packing mor
 **Quick start:**
 
 ```solidity
-import {Quant, QuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
+import {Quant, UintQuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
 
-Quant private immutable SCHEME = QuantizationLib.create(32, 24);
+Quant private immutable SCHEME = UintQuantizationLib.create(32, 24);
 
 uint24 stored = uint24(SCHEME.encode(largeValue)); // compress
 uint256 restored = SCHEME.decode(stored); // decompress
@@ -26,10 +26,10 @@ forge soldeer install uint-quantization-lib
 
 ## Solidity API
 
-Library: `QuantizationLib` (`src/UintQuantizationLib.sol`). Import both the `Quant` type and the
+Library: `UintQuantizationLib` (`src/UintQuantizationLib.sol`). Import both the `Quant` type and the
 library as shown in the [usage example](#solidity-usage) below.
 
-Because the source file declares `using QuantizationLib for Quant global`, importers get method-call
+Because the source file declares `using UintQuantizationLib for Quant global`, importers get method-call
 syntax automatically without a local `using` statement.
 
 ### Type layout
@@ -45,7 +45,7 @@ The `Quant` value type is a `uint16` with the following bit layout:
 
 | Function | Description |
 |---|---|
-| `QuantizationLib.create(shift, targetBits)` | Creates a `Quant` scheme from readable parameters. Reverts with `BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
+| `UintQuantizationLib.create(shift, targetBits)` | Creates a `Quant` scheme from readable parameters. Reverts with `BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
 | `q.shift()` | Returns the shift component (bits discarded during encoding). |
 | `q.targetBits()` | Returns the targetBits component (bit-width of the encoded value). |
 | `q.encode(value)` | Floor-encodes `value`. Reverts with `Overflow` when `value > max(q)`. |
@@ -71,10 +71,10 @@ error NotAligned(uint256 value, uint256 stepSize);
 ### Solidity usage
 
 ```solidity
-import {Quant, QuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
+import {Quant, UintQuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
 
 contract StakingVault {
-    Quant private immutable SCHEME = QuantizationLib.create(16, 96);
+    Quant private immutable SCHEME = UintQuantizationLib.create(16, 96);
 
     mapping(address => uint96) internal stakes;
 
@@ -147,7 +147,7 @@ rather than silently truncate the value).
 
 ## Showcase and gas savings
 
-Showcase contracts under `src/showcase/` use `QuantizationLib` and compare:
+Showcase contracts under `src/showcase/` use `UintQuantizationLib` and compare:
 
 - Real-life example (production-style ETH staking):
   raw path uses realistic packed fields by default (`uint128 amount`, `uint64` timestamps, `bool active`)

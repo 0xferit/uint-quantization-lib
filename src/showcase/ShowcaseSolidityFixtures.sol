@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import {Quant, QuantizationLib} from "src/UintQuantizationLib.sol";
+import {Quant, UintQuantizationLib} from "src/UintQuantizationLib.sol";
 
 /// @notice Production-style ETH staking baseline with default Solidity struct packing.
 contract RawETHStakingShowcase {
@@ -64,7 +64,7 @@ contract QuantizedETHStakingShowcase {
     mapping(address => UserStake) internal stakes;
 
     constructor() {
-        SCHEME = QuantizationLib.create(16, 96);
+        SCHEME = UintQuantizationLib.create(16, 96);
     }
 
     function stake() external payable {
@@ -150,7 +150,7 @@ contract QuantizedExtremePackingShowcase {
     uint256 public packedExtreme;
 
     constructor() {
-        SCHEME = QuantizationLib.create(8, 20);
+        SCHEME = UintQuantizationLib.create(8, 20);
     }
 
     function setExtremeFloor(uint256[12] calldata values) external {
