@@ -77,7 +77,7 @@
     .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
     .card { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
     .card:hover { transform: translateY(-2px); border-color: var(--border-focus); box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
-    .card:nth-child(1) { border-top: 2px solid var(--accent); } .card:nth-child(2) { border-top: 2px solid var(--green); } .card:nth-child(3) { border-top: 2px solid var(--amber); }
+    .card { border-top: 2px solid var(--accent); }
     .card h3 { font-size: 1.05rem; font-weight: 600; color: var(--fg-0); margin-bottom: 8px; }
     .card p { font-size: 0.9rem; color: var(--fg-1); line-height: 1.6; }
 
@@ -162,16 +162,8 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
       <h2 class="section-title sr">Why Quantization?</h2>
       <div class="card-grid">
         <div class="card sr" style="transition-delay:0.1s">
-          <h3>Denser Storage Packing</h3>
-          <p>Pack more fields per storage slot by compressing values that don't need full uint256 precision.</p>
-        </div>
-        <div class="card sr" style="transition-delay:0.2s">
-          <h3>Massive Gas Savings</h3>
-          <p>Fewer storage writes and reads by fitting more data into each 32-byte slot.</p>
-        </div>
-        <div class="card sr" style="transition-delay:0.3s">
-          <h3>Safe &amp; Auditable</h3>
-          <p>Overflow checks, lossless mode, and clear error messages. MIT licensed.</p>
+          <h3>Gas Savings</h3>
+          <p>Compress values that don't need full uint256 precision so more fields fit per storage slot, cutting SSTORE/SLOAD costs.</p>
         </div>
       </div>
     </section>
