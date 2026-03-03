@@ -94,51 +94,6 @@
     .footer p { font-size: 0.85rem; color: var(--fg-2); }
     .footer a { color: var(--fg-2); } .footer a:hover { color: var(--accent); }
 
-    /* ── How It Works: Steps ── */
-    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .step { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px 24px; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
-    .step:hover { transform: translateY(-2px); border-color: var(--border-focus); box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
-    .step:nth-child(1) { border-top: 2px solid var(--accent); }
-    .step:nth-child(2) { border-top: 2px solid var(--green); }
-    .step:nth-child(3) { border-top: 2px solid var(--amber); }
-    .step-num { font-family: 'Azeret Mono', monospace; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
-    .step:nth-child(1) .step-num { color: var(--accent); }
-    .step:nth-child(2) .step-num { color: var(--green); }
-    .step:nth-child(3) .step-num { color: var(--amber); }
-    .step-title { font-size: 1.05rem; font-weight: 700; color: var(--fg-0); margin-bottom: 18px; }
-    .step-visual { margin-bottom: 18px; }
-    .step-desc { font-size: 0.85rem; color: var(--fg-1); line-height: 1.6; }
-
-    /* Step 1: Bit-shift diagram */
-    .bd-label { font-family: 'Azeret Mono', monospace; font-size: 0.65rem; color: var(--fg-2); margin-bottom: 4px; }
-    .bd-row { display: flex; height: 28px; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
-    .bd-seg { display: flex; align-items: center; justify-content: center; font-family: 'Azeret Mono', monospace; font-size: 0.58rem; font-weight: 600; min-width: 0; }
-    .bd-seg.kept { background: rgba(52,211,153,0.18); color: var(--green); border: 1px solid rgba(52,211,153,0.12); }
-    .bd-seg.disc { background: rgba(251,113,133,0.1); color: var(--red); border: 1px solid rgba(251,113,133,0.1); }
-    .bd-op { font-family: 'Azeret Mono', monospace; font-size: 0.82rem; font-weight: 700; color: var(--accent); text-align: center; margin: 5px 0; }
-
-    /* Step 2: Struct slots */
-    .sl-label { font-size: 0.62rem; font-weight: 600; color: var(--fg-2); margin-bottom: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
-    .sl-row { display: flex; height: 26px; border-radius: 4px; overflow: hidden; margin-bottom: 3px; }
-    .sl-f { display: flex; align-items: center; justify-content: center; font-family: 'Azeret Mono', monospace; font-size: 0.52rem; font-weight: 600; color: var(--bg-0); min-width: 0; padding: 0 2px; white-space: nowrap; overflow: hidden; }
-    .sl-f.amt { background: var(--green); }
-    .sl-f.tm { background: var(--accent); }
-    .sl-f.fl { background: var(--violet); }
-    .sl-f.wst { background: var(--bg-3); color: var(--fg-2); }
-    .sl-f.free { background: transparent; border: 1px dashed var(--border); color: var(--fg-2); }
-    .sl-arrow { text-align: center; color: var(--green); font-size: 0.8rem; margin: 6px 0; }
-
-    /* Step 3: Gas bars */
-    .gb-wrap { display: flex; justify-content: center; gap: 28px; margin-bottom: 8px; }
-    .gb-col { display: flex; flex-direction: column; align-items: center; }
-    .gb-bar-box { width: 48px; height: 96px; display: flex; align-items: flex-end; }
-    .gb-bar { width: 100%; border-radius: 4px 4px 0 0; }
-    .gb-bar.raw { height: 100%; background: linear-gradient(180deg, var(--red) 0%, rgba(251,113,133,0.5) 100%); }
-    .gb-bar.qnt { height: 67%; background: linear-gradient(180deg, var(--green) 0%, rgba(52,211,153,0.5) 100%); }
-    .gb-num { font-family: 'Azeret Mono', monospace; font-size: 0.68rem; font-weight: 700; color: var(--fg-0); margin-top: 6px; }
-    .gb-lbl { font-size: 0.62rem; color: var(--fg-2); margin-top: 2px; }
-    .gb-saving { font-family: 'Azeret Mono', monospace; font-size: 1.5rem; font-weight: 800; color: var(--green); text-align: center; margin-top: 6px; }
-
     /* ── Scroll reveal ── */
     .sr { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .sr.visible { opacity: 1; transform: translateY(0); }
@@ -147,7 +102,6 @@
     @media (max-width: 640px) {
       .hero { padding: 64px 0 48px; }
       .section { padding: 48px 0; }
-      .steps { grid-template-columns: 1fr; }
       .api-item { flex-direction: column; gap: 4px; }
       .api-desc { text-align: left; }
       .nav-links { gap: 16px; }
@@ -184,75 +138,6 @@
         <span class="badge">EVM</span>
         <span class="badge">Gas Optimization</span>
         <span class="badge">MIT License</span>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2 class="section-title sr">How It Works</h2>
-      <div class="steps">
-        <div class="step sr" style="transition-delay:0.1s">
-          <div class="step-num">01 &mdash; Quantize</div>
-          <div class="step-title">Discard Excess Bits</div>
-          <div class="step-visual">
-            <div class="bd-label">uint128 amount</div>
-            <div class="bd-row">
-              <div class="bd-seg kept" style="flex:112">112 bits kept</div>
-              <div class="bd-seg disc" style="flex:16">16</div>
-            </div>
-            <div class="bd-op">&gt;&gt; 16</div>
-            <div class="bd-label">uint96 encoded</div>
-            <div class="bd-row">
-              <div class="bd-seg kept" style="flex:1">96 bits</div>
-            </div>
-          </div>
-          <p class="step-desc">Right-shift discards low-order bits that don't materially affect your value. A 32 ETH stake loses sub-wei dust.</p>
-        </div>
-        <div class="step sr" style="transition-delay:0.2s">
-          <div class="step-num">02 &mdash; Pack</div>
-          <div class="step-title">Fit More Per Slot</div>
-          <div class="step-visual">
-            <div class="sl-label">Before: 2 storage slots</div>
-            <div class="sl-row">
-              <div class="sl-f amt" style="flex:128">u128</div>
-              <div class="sl-f tm" style="flex:64">u64</div>
-              <div class="sl-f tm" style="flex:64">u64</div>
-            </div>
-            <div class="sl-row">
-              <div class="sl-f fl" style="flex:8">bool</div>
-              <div class="sl-f wst" style="flex:248">248 wasted</div>
-            </div>
-            <div class="sl-arrow">&darr;</div>
-            <div class="sl-label">After: 1 storage slot</div>
-            <div class="sl-row">
-              <div class="sl-f amt" style="flex:96">u96</div>
-              <div class="sl-f tm" style="flex:64">u64</div>
-              <div class="sl-f tm" style="flex:64">u64</div>
-              <div class="sl-f fl" style="flex:8">b</div>
-              <div class="sl-f free" style="flex:24">24</div>
-            </div>
-          </div>
-          <p class="step-desc">Smaller types let the Solidity compiler pack more fields into a single 256-bit storage slot.</p>
-        </div>
-        <div class="step sr" style="transition-delay:0.3s">
-          <div class="step-num">03 &mdash; Save</div>
-          <div class="step-title">Pay Less Gas</div>
-          <div class="step-visual">
-            <div class="gb-wrap">
-              <div class="gb-col">
-                <div class="gb-bar-box"><div class="gb-bar raw"></div></div>
-                <div class="gb-num">65,921</div>
-                <div class="gb-lbl">Raw</div>
-              </div>
-              <div class="gb-col">
-                <div class="gb-bar-box"><div class="gb-bar qnt"></div></div>
-                <div class="gb-num">44,045</div>
-                <div class="gb-lbl">Quantized</div>
-              </div>
-            </div>
-            <div class="gb-saving">-33% gas</div>
-          </div>
-          <p class="step-desc">Eliminating a storage write (SSTORE) saves thousands of gas per transaction.</p>
-        </div>
       </div>
     </section>
 
