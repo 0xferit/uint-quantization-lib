@@ -76,7 +76,12 @@
 
     /* ── Field list ── */
     .field-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-    .field-row { background: var(--bg-0); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
+    .field-row {
+      background: var(--bg-0); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+      transition: border-color 0.2s, background 0.15s, box-shadow 0.2s;
+      animation: fadeUp 0.3s ease both;
+    }
+    .field-row:hover { border-color: var(--border-focus); background: var(--bg-1); }
     .field-row.has-error { border-color: rgba(251,113,133,0.3); }
     .field-main { display: flex; align-items: center; gap: 6px; padding: 8px 10px; }
     .field-color { width: 4px; height: 28px; border-radius: 2px; flex-shrink: 0; }
@@ -166,13 +171,15 @@
     .slot-count-good { background: var(--green-ghost); color: var(--green); }
 
     .slot-group { display: flex; flex-direction: column; gap: 10px; }
-    .slot-item { }
+    .slot-item { animation: fadeUp 0.3s ease both; }
     .slot-header { font-family: 'Azeret Mono', monospace; font-size: 0.6rem; color: var(--fg-2); margin-bottom: 4px; }
-    .slot-bar { display: flex; height: 44px; border-radius: 6px; overflow: hidden; background: var(--bg-0); border: 1px solid var(--border); }
+    .slot-bar { display: flex; height: 52px; border-radius: 6px; overflow: hidden; background: var(--bg-0); border: 1px solid var(--border); }
     .slot-seg {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-width: 0; overflow: hidden; position: relative; transition: flex 0.3s ease;
+      min-width: 0; overflow: hidden; position: relative;
+      transition: flex 0.3s ease, filter 0.2s, opacity 0.2s, transform 0.15s;
     }
+    .slot-seg:hover { filter: brightness(1.3); box-shadow: inset 0 0 8px rgba(255,255,255,0.06); }
     .slot-seg-name {
       font-size: 0.56rem; font-weight: 600; letter-spacing: 0.04em; opacity: 0.9;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; padding: 0 4px;
@@ -180,7 +187,7 @@
     .slot-seg-bits { font-family: 'Azeret Mono', monospace; font-size: 0.65rem; font-weight: 700; }
     .slot-seg-quant { font-size: 0.5rem; opacity: 0.6; position: absolute; top: 2px; right: 3px; }
     .slot-waste {
-      background: repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.02) 3px, rgba(255,255,255,0.02) 6px);
+      background: repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.035) 3px, rgba(255,255,255,0.035) 6px);
       color: var(--fg-2);
     }
     .empty-msg { font-size: 0.78rem; color: var(--fg-2); text-align: center; padding: 24px 0; }
@@ -220,6 +227,25 @@
       letter-spacing: 0.06em; text-transform: uppercase; transition: all 0.2s;
     }
     .copy-btn:hover { background: var(--accent); color: var(--bg-0); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Cross-highlighting ── */
+    .field-row.highlight { border-color: var(--border-focus); box-shadow: 0 0 0 1px var(--border-focus); }
+    .slot-seg.highlight { filter: brightness(1.4); box-shadow: inset 0 0 12px rgba(255,255,255,0.08); z-index: 1; }
+    .slot-seg.dimmed { opacity: 0.3; }
+
+    /* ── Delta indicator ── */
+    .viz-delta-indicator {
+      grid-column: 1 / -1; justify-self: center;
+      font-family: 'Azeret Mono', monospace; font-size: 0.72rem; font-weight: 700;
+      color: var(--green); background: var(--green-ghost); border: 1px solid rgba(52,211,153,0.18);
+      padding: 4px 14px; border-radius: 999px; letter-spacing: 0.02em;
+    }
 
     /* ── Responsive ── */
     @media (max-width: 859px) {
@@ -419,6 +445,8 @@
         const err = fieldError(f);
         const row = document.createElement('div');
         row.className = 'field-row' + (err ? ' has-error' : '');
+        row.dataset.fieldId = f.id;
+        row.style.animationDelay = (i * 0.04) + 's';
 
         let html = '<div class="field-main">';
         html += '<div class="field-color" style="background:' + c.text + '"></div>';
@@ -484,7 +512,7 @@
       html += '<div class="slot-group">';
 
       slots.forEach((slot, si) => {
-        html += '<div class="slot-item">';
+        html += '<div class="slot-item" style="animation-delay:' + (si * 0.05) + 's">';
         html += '<div class="slot-header">Slot ' + si + ' (' + slot.used + '/256 bits)</div>';
         html += '<div class="slot-bar">';
 
@@ -492,7 +520,7 @@
           const c = fieldColor(seg.idx);
           const isNarrow = seg.bits < 32;
           const showQuant = isQuantized && seg.field.quantized;
-          html += '<div class="slot-seg" style="flex:' + seg.bits + ';background:' + c.bg + ';border-left:1px solid ' + c.border + ';border-right:1px solid ' + c.border + ';color:' + c.text + '" title="' + escAttr(seg.field.name) + ': ' + seg.bits + ' bits' + (showQuant ? ' (quantized)' : '') + '">';
+          html += '<div class="slot-seg" data-field-id="' + seg.field.id + '" style="flex:' + seg.bits + ';background:' + c.bg + ';border-left:1px solid ' + c.border + ';border-right:1px solid ' + c.border + ';color:' + c.text + '" title="' + escAttr(seg.field.name) + ': ' + seg.bits + ' bits' + (showQuant ? ' (quantized)' : '') + '">';
           if (showQuant) html += '<span class="slot-seg-quant">&gt;&gt;</span>';
           if (!isNarrow) html += '<span class="slot-seg-name">' + escAttr(seg.field.name) + '</span>';
           html += '<span class="slot-seg-bits">' + seg.bits + '</span>';
@@ -523,10 +551,15 @@
       } else if (viewMode === 'quantized') {
         panel.innerHTML = '<div class="viz-container">' + renderSlotDiagram(quantSlots, 'Quantized', true) + '</div>';
       } else {
-        panel.innerHTML = '<div class="viz-side-by-side">' +
+        let sideHtml = '<div class="viz-side-by-side">' +
           renderSlotDiagram(origSlots, 'Original', false) +
-          renderSlotDiagram(quantSlots, 'Quantized', true) +
-          '</div>';
+          renderSlotDiagram(quantSlots, 'Quantized', true);
+        const delta = origSlots.length - quantSlots.length;
+        if (delta > 0 && fields.some(f => f.quantized && !fieldError(f))) {
+          sideHtml += '<div class="viz-delta-indicator">-' + delta + ' slot' + (delta !== 1 ? 's' : '') + '</div>';
+        }
+        sideHtml += '</div>';
+        panel.innerHTML = sideHtml;
       }
     }
 
@@ -567,6 +600,47 @@
       }
 
       panel.innerHTML = html;
+    }
+
+    // ── Syntax highlighting ──
+    function escHtml(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function highlightSolidity(code) {
+      // Process line by line so comments are handled cleanly
+      return code.split('\n').map(line => {
+        // Full-line comments
+        const commentMatch = line.match(/^(\s*)(\/\/.*)$/);
+        if (commentMatch) {
+          return escHtml(commentMatch[1]) + '<span style="color:var(--fg-2)">' + escHtml(commentMatch[2]) + '</span>';
+        }
+        // Lines with trailing comments
+        const trailingMatch = line.match(/^(.*?)(\/\/.*)$/);
+        let codePart = trailingMatch ? trailingMatch[1] : line;
+        let commentPart = trailingMatch ? trailingMatch[2] : '';
+
+        let result = highlightCodePart(codePart);
+        if (commentPart) {
+          result += '<span style="color:var(--fg-2)">' + escHtml(commentPart) + '</span>';
+        }
+        return result;
+      }).join('\n');
+    }
+
+    function highlightCodePart(code) {
+      const escaped = escHtml(code);
+      // Tokenize: keywords, types, strings, hex literals, everything else
+      return escaped.replace(
+        /\b(import|from|struct|private|immutable|using|for|global)\b|\b(uint\d+|bool|Quant|QuantizationLib)\b|(&quot;[^&]*?&quot;)|\b(0x[0-9A-Fa-f]+)\b/g,
+        (match, kw, typ, str, hex) => {
+          if (kw) return '<span style="color:var(--accent)">' + kw + '</span>';
+          if (typ) return '<span style="color:var(--green)">' + typ + '</span>';
+          if (str) return '<span style="color:var(--amber)">' + str + '</span>';
+          if (hex) return '<span style="color:var(--amber)">' + hex + '</span>';
+          return match;
+        }
+      );
     }
 
     // ── Generate Solidity code ──
@@ -635,7 +709,7 @@
         });
       }
 
-      codeEl.textContent = code;
+      codeEl.innerHTML = highlightSolidity(code);
     }
 
     // ── Main render (right panel only) ──
@@ -770,6 +844,39 @@
         targetBits: 128,
       });
     });
+
+    // ── Cross-highlighting ──
+    function clearHighlights() {
+      document.querySelectorAll('.field-row.highlight').forEach(n => n.classList.remove('highlight'));
+      document.querySelectorAll('.slot-seg.highlight, .slot-seg.dimmed').forEach(n => {
+        n.classList.remove('highlight', 'dimmed');
+      });
+    }
+
+    el('fieldList').addEventListener('mouseover', e => {
+      const row = e.target.closest('.field-row[data-field-id]');
+      if (!row) return;
+      clearHighlights();
+      const fid = row.dataset.fieldId;
+      row.classList.add('highlight');
+      document.querySelectorAll('.slot-seg[data-field-id]').forEach(seg => {
+        seg.classList.add(seg.dataset.fieldId === fid ? 'highlight' : 'dimmed');
+      });
+    });
+    el('fieldList').addEventListener('mouseleave', clearHighlights);
+
+    el('vizPanel').addEventListener('mouseover', e => {
+      const seg = e.target.closest('.slot-seg[data-field-id]');
+      if (!seg) return;
+      clearHighlights();
+      const fid = seg.dataset.fieldId;
+      document.querySelectorAll('.slot-seg[data-field-id]').forEach(s => {
+        s.classList.add(s.dataset.fieldId === fid ? 'highlight' : 'dimmed');
+      });
+      const row = document.querySelector('.field-row[data-field-id="' + fid + '"]');
+      if (row) row.classList.add('highlight');
+    });
+    el('vizPanel').addEventListener('mouseleave', clearHighlights);
 
     // ── View tabs ──
     el('viewTabs').addEventListener('click', e => {
