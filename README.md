@@ -24,13 +24,6 @@ uint256 restored = SCHEME.decode(stored); // decompress
 forge soldeer install uint-quantization-lib
 ```
 
-Then add the remapping to `foundry.toml` (Soldeer does this automatically):
-
-```toml
-[profile.default]
-remappings = ["uint-quantization-lib/=dependencies/uint-quantization-lib/"]
-```
-
 ## Solidity API
 
 Library: `QuantizationLib` (`src/UintQuantizationLib.sol`). Import both the `Quant` type and the
