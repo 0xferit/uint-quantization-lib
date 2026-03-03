@@ -3,7 +3,7 @@
 [![Staking Case: Gas Usage Reduction](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/staking-savings.json)](test/showcase/ShowcaseGas.t.sol)
 [![Extreme Case: Gas Usage Reduction](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/extreme-savings.json)](test/showcase/ShowcaseGas.t.sol)
 
-Token amounts carry 18 decimals of precision. Timestamps fit in 40 bits but live in `uint64`. Oracle prices, counters, accumulated fees: most on-chain values use far more resolution than the application needs, and every extra storage slot costs 20,000 gas on a cold write.
+Token amounts carry 18 decimals of resolution. Timestamps fit in 40 bits but live in `uint64`. Oracle prices, counters, accumulated fees: most on-chain values use far more resolution than the application needs, and every extra storage slot costs 20,000 gas on a cold write.
 
 This library quantizes `uint256` values via right-shift compression, packing more fields per storage slot and cutting gas on every write.
 

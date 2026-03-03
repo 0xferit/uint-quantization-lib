@@ -395,6 +395,8 @@
 
     function fieldError(f) {
       if (!f.quantized) return '';
+      if (f.shift < 0) return 'shift must be non-negative';
+      if (f.targetBits < 1) return 'targetBits must be at least 1';
       if (f.shift + f.targetBits > 256) return 'shift + targetBits exceeds 256';
       if (ceilTo8(f.targetBits) >= f.bits) return 'quantized type must be smaller than original';
       return '';
