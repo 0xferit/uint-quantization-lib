@@ -34,6 +34,7 @@ jobs:
           npm install --no-save \
             semantic-release \
             @semantic-release/changelog \
+            @semantic-release/exec \
             @semantic-release/git \
             @semantic-release/github \
             conventional-changelog-conventionalcommits
@@ -43,18 +44,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          OUTPUT=$(npx semantic-release --dry-run 2>&1 | grep 'The next release version is' | sed 's/.*The next release version is //' || true)
+          BEFORE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
           npx semantic-release
-          # Capture the version that was actually released
-          RELEASED_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)
-          echo "new_release_version=$RELEASED_VERSION" >> $GITHUB_OUTPUT
-          # Check if a new tag was created in this run
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
-          PREV_SHA=$(git rev-parse HEAD~1 2>/dev/null || true)
-          if git tag --contains $PREV_SHA | grep -q "$LATEST_TAG"; then
-            echo "new_release_published=false" >> $GITHUB_OUTPUT
-          else
+          git fetch --tags
+          AFTER_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+          if [ "$BEFORE_TAG" != "$AFTER_TAG" ]; then
             echo "new_release_published=true" >> $GITHUB_OUTPUT
+            echo "new_release_version=${AFTER_TAG#v}" >> $GITHUB_OUTPUT
+          else
+            echo "new_release_published=false" >> $GITHUB_OUTPUT
           fi
 
   soldeer-publish:
@@ -63,10 +61,10 @@ jobs:
     if: needs.release.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout tag
+      - name: Checkout release tag
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: v${{ needs.release.outputs.new_release_version }}
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1

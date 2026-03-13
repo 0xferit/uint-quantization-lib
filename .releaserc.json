@@ -23,13 +23,19 @@
       { "changelogFile": "CHANGELOG.md" }
     ],
     [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "sed -i 's/VERSION = \"[^\"]*\"/VERSION = \"${nextRelease.version}\"/' src/UintQuantizationLib.sol"
+      }
+    ],
+    [
       "@semantic-release/github",
       { "successComment": false }
     ],
     [
       "@semantic-release/git",
       {
-        "assets": ["CHANGELOG.md"],
+        "assets": ["CHANGELOG.md", "src/UintQuantizationLib.sol"],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ]
