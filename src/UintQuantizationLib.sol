@@ -138,7 +138,7 @@ library UintQuantizationLib {
     }
 
     /// @notice Returns true when `value` is exactly representable (step-aligned).
-    function isLossless(Quant q, uint256 value) internal pure returns (bool) {
+    function isAligned(Quant q, uint256 value) internal pure returns (bool) {
         return remainder(q, value) == 0;
     }
 

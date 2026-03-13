@@ -121,8 +121,8 @@ contract QuantizedETHStakingShowcase {
         return SCHEME.remainder(amount);
     }
 
-    function isStakeLossless(uint256 amount) external view returns (bool) {
-        return SCHEME.isLossless(amount);
+    function isStakeAligned(uint256 amount) external view returns (bool) {
+        return SCHEME.isAligned(amount);
     }
 }
 

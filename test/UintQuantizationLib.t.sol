@@ -47,8 +47,8 @@ contract QuantHarness {
         return q.remainder(value);
     }
 
-    function isLossless(Quant q, uint256 value) external pure returns (bool) {
-        return q.isLossless(value);
+    function isAligned(Quant q, uint256 value) external pure returns (bool) {
+        return q.isAligned(value);
     }
 
     function fits(Quant q, uint256 value) external pure returns (bool) {
@@ -148,7 +148,7 @@ contract UintQuantizationLibSmokeTest is Test {
         // 511 = 0x1FF; floor clears low 8 bits → 256
         uint256 result = harness.floor(q, 511);
         assertEq(result, 256);
-        assertTrue(harness.isLossless(q, result));
+        assertTrue(harness.isAligned(q, result));
     }
 
     // -------------------------------------------------------------------------
@@ -161,7 +161,7 @@ contract UintQuantizationLibSmokeTest is Test {
         uint256 result = harness.ceil(q, 257);
         assertEq(result, 512);
         assertGe(result, uint256(257));
-        assertTrue(harness.isLossless(q, result));
+        assertTrue(harness.isAligned(q, result));
     }
 
     function test_ceil_aligned_concrete() public view {
@@ -211,7 +211,7 @@ contract UintQuantizationLibSmokeTest is Test {
         assertEq(harness.max(q), 255);
         assertEq(harness.encode(q, 200), 200);
         assertEq(harness.decode(q, 200), 200);
-        assertTrue(harness.isLossless(q, 200));
+        assertTrue(harness.isAligned(q, 200));
         // ceil and floor are identity when shift=0
         assertEq(harness.floor(q, 137), 137);
         assertEq(harness.ceil(q, 137), 137);
@@ -257,7 +257,7 @@ contract UintQuantizationLibSmokeTest is Test {
         assertEq(harness.decode(q, 0), 0);
         assertEq(harness.decodeMax(q, 0), 255); // fills low bits with 1s
         assertEq(harness.remainder(q, 0), 0);
-        assertTrue(harness.isLossless(q, 0));
+        assertTrue(harness.isAligned(q, 0));
         assertTrue(harness.fits(q, 0));
     }
 
@@ -284,11 +284,11 @@ contract UintQuantizationLibSmokeTest is Test {
     // Fuzz tests
     // -------------------------------------------------------------------------
 
-    function testFuzz_floor_is_lossless(uint8 shift_, uint8 targetBits_, uint256 value) public view {
+    function testFuzz_floor_is_aligned(uint8 shift_, uint8 targetBits_, uint256 value) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(shift_), uint256(targetBits_));
         uint256 floored = harness.floor(q, value);
-        assertTrue(harness.isLossless(q, floored));
+        assertTrue(harness.isAligned(q, floored));
     }
 
     function testFuzz_lower_bound_round_trip(uint8 shift_, uint8 targetBits_, uint256 value) public view {
@@ -312,10 +312,10 @@ contract UintQuantizationLibSmokeTest is Test {
         assertLt(harness.remainder(q, value), harness.stepSize(q));
     }
 
-    function testFuzz_isLossless_equivalence(uint8 shift_, uint8 targetBits_, uint256 value) public view {
+    function testFuzz_isAligned_equivalence(uint8 shift_, uint8 targetBits_, uint256 value) public view {
         vm.assume(targetBits_ > 0 && uint256(shift_) + uint256(targetBits_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(shift_), uint256(targetBits_));
-        assertEq(harness.isLossless(q, value), harness.remainder(q, value) == 0);
+        assertEq(harness.isAligned(q, value), harness.remainder(q, value) == 0);
     }
 
     function testFuzz_fits_equivalence(uint8 shift_, uint8 targetBits_, uint256 value) public view {

@@ -56,7 +56,7 @@ The `Quant` value type is a `uint16` with the following bit layout:
 | `q.floor(value)` | Rounds `value` down to the nearest step boundary. |
 | `q.ceil(value)` | Rounds `value` up to the nearest step boundary. |
 | `q.remainder(value)` | Returns discarded low bits (`value mod stepSize`). |
-| `q.isLossless(value)` | Returns `true` when `value` is exactly representable (step-aligned). |
+| `q.isAligned(value)` | Returns `true` when `value` is exactly representable (step-aligned). |
 | `q.stepSize()` | Returns `2^shift`. |
 | `q.max()` | Returns the maximum original value representable: `(2^targetBits - 1) << shift`. |
 
@@ -104,7 +104,7 @@ contract StakingVault {
         return SCHEME.max();
     }
 
-    /// Minimum granularity: values must be multiples of this for lossless encoding.
+    /// Minimum granularity: values must be multiples of this for precise encoding.
     function depositGranularity() external pure returns (uint256) {
         return SCHEME.stepSize();
     }
@@ -115,8 +115,8 @@ contract StakingVault {
     }
 
     /// True when `amount` is step-aligned (no resolution loss).
-    function isDepositLossless(uint256 amount) external pure returns (bool) {
-        return SCHEME.isLossless(amount);
+    function isDepositAligned(uint256 amount) external pure returns (bool) {
+        return SCHEME.isAligned(amount);
     }
 
     /// Snap `amount` down to the nearest step boundary.
@@ -164,8 +164,8 @@ The staking showcase intentionally exercises the full API surface:
 - `stake()` uses `encode`.
 - `stakeExact()` uses `encode(value, true)`.
 - `unstake()` uses `decode`.
-- `maxDeposit()`, `stakeRemainder()`, and `isStakeLossless()` expose
-  `max`, `remainder`, and `isLossless` for frontend UX.
+- `maxDeposit()`, `stakeRemainder()`, and `isStakeAligned()` expose
+  `max`, `remainder`, and `isAligned` for frontend UX.
 
 Benchmark assertions live in `test/showcase/ShowcaseGas.t.sol`.
 
