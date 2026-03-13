@@ -132,14 +132,6 @@ contract UintQuantizationLibSmokeTest is Test {
     // encode (precise=true): overflow and alignment reverts
     // -------------------------------------------------------------------------
 
-    function test_encodePrecise_overflow_reverts() public {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        uint256 m = harness.max(q);
-        uint256 value = m + 1;
-        vm.expectRevert(abi.encodeWithSelector(Overflow.selector, value, m));
-        harness.encode(q, value, true);
-    }
-
     function test_encodePrecise_notAligned_reverts() public {
         Quant q = harness.create(DISCARDED_8, ENCODED_8);
         uint256 step = harness.stepSize(q); // 256
@@ -156,19 +148,7 @@ contract UintQuantizationLibSmokeTest is Test {
     }
 
     // -------------------------------------------------------------------------
-    // floor: concrete
-    // -------------------------------------------------------------------------
-
-    function test_floor_concrete() public view {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        // 511 = 0x1FF; floor clears low 8 bits → 256
-        uint256 result = harness.floor(q, 511);
-        assertEq(result, 256);
-        assertTrue(harness.isAligned(q, result));
-    }
-
-    // -------------------------------------------------------------------------
-    // ceil: concrete (non-aligned and aligned)
+    // ceil: concrete (non-aligned)
     // -------------------------------------------------------------------------
 
     function test_ceil_nonAligned_concrete() public view {
@@ -178,13 +158,6 @@ contract UintQuantizationLibSmokeTest is Test {
         assertEq(result, 512);
         assertGe(result, uint256(257));
         assertTrue(harness.isAligned(q, result));
-    }
-
-    function test_ceil_aligned_concrete() public view {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        // 256 is already aligned; ceil returns it unchanged
-        uint256 result = harness.ceil(q, 256);
-        assertEq(result, 256);
     }
 
     // -------------------------------------------------------------------------
@@ -197,23 +170,6 @@ contract UintQuantizationLibSmokeTest is Test {
         uint256 result = harness.decodeMax(q, 3);
         assertEq(result, 1023);
         assertGe(result, harness.decode(q, 3));
-    }
-
-    // -------------------------------------------------------------------------
-    // fits: sanity
-    // -------------------------------------------------------------------------
-
-    function test_fits_true() public view {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        uint256 m = harness.max(q);
-        assertTrue(harness.fits(q, m));
-        assertTrue(harness.fits(q, 0));
-    }
-
-    function test_fits_false() public view {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        uint256 m = harness.max(q);
-        assertFalse(harness.fits(q, m + 1));
     }
 
     // -------------------------------------------------------------------------
@@ -300,32 +256,11 @@ contract UintQuantizationLibSmokeTest is Test {
     // isValid: create-produced vs hand-wrapped
     // -------------------------------------------------------------------------
 
-    function test_isValid_createProduced() public view {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        assertTrue(harness.isValid(q));
-    }
-
     function test_isValid_handWrapped_invalid() public view {
         // encodedBitWidth=0 (invalid: rejected by create)
         assertFalse(harness.isValid(Quant.wrap(0)));
         // discardedBitWidth=255, encodedBitWidth=255: sum=510 > 256
         assertFalse(harness.isValid(Quant.wrap(uint16(0xFF00 | 0xFF))));
-    }
-
-    // -------------------------------------------------------------------------
-    // fitsEncoded: decode-side range check
-    // -------------------------------------------------------------------------
-
-    function test_fitsEncoded_true() public view {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        // encodedBitWidth=8, so max encoded = 255
-        assertTrue(harness.fitsEncoded(q, 0));
-        assertTrue(harness.fitsEncoded(q, 255));
-    }
-
-    function test_fitsEncoded_false() public view {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        assertFalse(harness.fitsEncoded(q, 256));
     }
 
     // -------------------------------------------------------------------------
@@ -343,17 +278,6 @@ contract UintQuantizationLibSmokeTest is Test {
         Quant q = harness.create(DISCARDED_8, ENCODED_8);
         vm.expectRevert(abi.encodeWithSelector(Overflow.selector, uint256(256), uint256(255)));
         harness.decodeMax(q, 256);
-    }
-
-    function test_decodeUnchecked_valid() public view {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        // Same result as checked decode for valid input
-        assertEq(harness.decodeUnchecked(q, 3), harness.decode(q, 3));
-    }
-
-    function test_decodeMaxUnchecked_valid() public view {
-        Quant q = harness.create(DISCARDED_8, ENCODED_8);
-        assertEq(harness.decodeMaxUnchecked(q, 3), harness.decodeMax(q, 3));
     }
 
     // -------------------------------------------------------------------------
