@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Called by @semantic-release/exec as analyzeCommitsCmd.
+# Asks Claude to determine the semantic version bump from the diff.
+# Falls back to "patch" if the API key is missing or the call fails.
+
+if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+  echo "patch"
+  exit 0
+fi
+
+# Comparison base: last release tag, or the repo root for the first release
+if [ -n "${LAST_RELEASE_GIT_TAG:-}" ]; then
+  BASE="$LAST_RELEASE_GIT_TAG"
+else
+  BASE=$(git rev-list --max-parents=0 HEAD)
+fi
+
+COMMIT_LOG=$(git log "$BASE"..HEAD --pretty=format:"- %s" 2>/dev/null || echo "- initial release")
+DIFF_STAT=$(git diff "$BASE"..HEAD --stat 2>/dev/null | tail -30 || echo "no diff")
+SOL_DIFF=$(git diff "$BASE"..HEAD -- '*.sol' 2>/dev/null | head -200 || echo "no diff")
+
+PROMPT="You are a semantic versioning expert for a Solidity library (uint-quantization-lib).
+
+Rules:
+- major: breaking changes to the consumer-facing API (renamed functions, changed signatures, renamed/removed errors, changed type definitions)
+- minor: new features (new functions, new error types, new capabilities)
+- patch: bug fixes, docs, CI/CD, tests, internal refactoring, performance improvements
+
+Respond with exactly one word: major, minor, or patch.
+
+Commits since v${LAST_RELEASE_VERSION:-0.0.0}:
+${COMMIT_LOG}
+
+Changed files:
+${DIFF_STAT}
+
+Solidity diff (truncated):
+${SOL_DIFF}"
+
+RESPONSE=$(curl -sf --max-time 30 \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "content-type: application/json" \
+  "https://api.anthropic.com/v1/messages" \
+  -d "$(jq -n --arg prompt "$PROMPT" '{
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 10,
+    messages: [{ role: "user", content: $prompt }]
+  }')" 2>/dev/null) || { echo "patch"; exit 0; }
+
+BUMP=$(echo "$RESPONSE" | jq -r '.content[0].text' 2>/dev/null | tr '[:upper:]' '[:lower:]' | grep -oE 'major|minor|patch' | head -1)
+
+echo "${BUMP:-patch}"

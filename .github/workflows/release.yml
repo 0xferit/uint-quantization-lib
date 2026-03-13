@@ -43,6 +43,7 @@ jobs:
         id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           BEFORE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
           npx semantic-release
