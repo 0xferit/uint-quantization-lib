@@ -1,3 +1,5 @@
+## [7.0.1](https://github.com/0xferit/uint-quantization-lib/compare/v7.0.0...v7.0.1) (2026-03-13)
+
 ## [7.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v6.1.1...v7.0.0) (2026-03-13)
 
 ### Features

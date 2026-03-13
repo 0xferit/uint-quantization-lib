@@ -48,7 +48,7 @@ error BadConfig(uint256 discardedBitWidth, uint256 encodedBitWidth);
 error CeilOverflow(uint256 value);
 
 library UintQuantizationLib {
-    string internal constant VERSION = "7.0.0";
+    string internal constant VERSION = "7.0.1";
 
     // -------------------------------------------------------------------------
     // Factory
