@@ -1,3 +1,9 @@
+## [7.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v6.1.1...v7.0.0) (2026-03-13)
+
+### Features
+
+* make decode/decodeMax checked by default, add unchecked variants ([3b82e83](https://github.com/0xferit/uint-quantization-lib/commit/3b82e834ba32b2164b716672c8b76aeee9977543))
+
 ## [6.1.1](https://github.com/0xferit/uint-quantization-lib/compare/v6.1.0...v6.1.1) (2026-03-13)
 
 ## [6.1.0](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.3...v6.1.0) (2026-03-13)
