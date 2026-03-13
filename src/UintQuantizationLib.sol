@@ -35,7 +35,7 @@ error NotAligned(uint256 value, uint256 stepSize);
 error BadConfig(uint256 discardedBitWidth, uint256 encodedBitWidth);
 
 library UintQuantizationLib {
-    string internal constant VERSION = "6.0.0";
+    string internal constant VERSION = "6.0.1";
 
     // -------------------------------------------------------------------------
     // Factory
