@@ -46,8 +46,8 @@ The `Quant` value type is a `uint16` with the following bit layout:
 | Function | Description |
 |---|---|
 | `UintQuantizationLib.create(shift, targetBits)` | Creates a `Quant` scheme from readable parameters. Reverts with `BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
-| `q.shift()` | Returns the shift component (bits discarded during encoding). |
-| `q.targetBits()` | Returns the targetBits component (bit-width of the encoded value). |
+| `q.shift()` | Number of low bits discarded during encoding (set at creation). |
+| `q.targetBits()` | Bit-width of the encoded value (set at creation). |
 | `q.encode(value)` | Floor-encodes `value`. Reverts with `Overflow` when `value > max(q)`. |
 | `q.encode(value, true)` | Strict mode: also reverts with `NotAligned` when `value` is not step-aligned. |
 | `q.decode(encoded)` | Left-shifts `encoded` by shift, restoring discarded bits as zeros (lower bound). |
