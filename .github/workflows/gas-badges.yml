@@ -25,23 +25,23 @@ jobs:
       - name: Run showcase gas benchmark
         run: |
           set -o pipefail
-          forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv | tee gas_report.txt
+          forge test --match-path test/showcase/ShowcaseGas.t.sol -vv | tee gas_output.txt
 
       - name: Generate badge endpoint JSON
         run: |
           set -euo pipefail
-          raw_staking=$(grep -A 20 'RawETHStakingShowcase Contract' gas_report.txt | grep '| stake ' | awk -F'|' '{gsub(/ /,"",$3); print $3}' | head -n 1)
-          quant_staking=$(grep -A 20 'QuantizedETHStakingShowcase Contract' gas_report.txt | grep '| stake ' | awk -F'|' '{gsub(/ /,"",$3); print $3}' | head -n 1)
-          raw_extreme=$(grep -A 20 'RawExtremePackingShowcase Contract' gas_report.txt | grep '| setExtremeRaw ' | awk -F'|' '{gsub(/ /,"",$3); print $3}' | head -n 1)
-          quant_extreme=$(grep -A 20 'QuantizedExtremePackingShowcase Contract' gas_report.txt | grep '| setExtremeFloor ' | awk -F'|' '{gsub(/ /,"",$3); print $3}' | head -n 1)
 
-          for value in "$raw_staking" "$quant_staking" "$raw_extreme" "$quant_extreme"; do
-            [[ "$value" =~ ^[0-9]+$ ]] || { echo "Failed to parse gas report value: '$value'"; exit 1; }
+          extract() { grep "$1" gas_output.txt | awk '{print $NF}'; }
+
+          staking_bps=$(extract "staking strict savings bps")
+          extreme_bps=$(extract "extreme strict savings bps")
+
+          for value in "$staking_bps" "$extreme_bps"; do
+            [[ "$value" =~ ^[0-9]+$ ]] || { echo "Failed to parse: '$value'"; exit 1; }
           done
-          (( raw_staking > 0 && raw_extreme > 0 )) || { echo "Raw gas values must be greater than zero."; exit 1; }
 
-          staking_pct=$(awk -v raw="$raw_staking" -v quant="$quant_staking" 'BEGIN { printf "%.1f", (1 - quant / raw) * 100 }')
-          extreme_pct=$(awk -v raw="$raw_extreme" -v quant="$quant_extreme" 'BEGIN { printf "%.1f", (1 - quant / raw) * 100 }')
+          staking_pct=$(awk -v bps="$staking_bps" 'BEGIN { printf "%.1f", bps / 100 }')
+          extreme_pct=$(awk -v bps="$extreme_bps" 'BEGIN { printf "%.1f", bps / 100 }')
 
           mkdir -p .badges
           cat > .badges/staking-savings.json <<EOF

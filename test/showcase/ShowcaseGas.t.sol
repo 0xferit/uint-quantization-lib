@@ -62,6 +62,10 @@ contract ShowcaseGasTest is Test {
         uint256 floorGas = _measureSolidityRealQuantFloorStake();
         uint256 strictGas = _measureSolidityRealQuantStrictStake();
 
+        emit log_named_uint("staking raw gas", rawGas);
+        emit log_named_uint("staking strict gas", strictGas);
+        emit log_named_uint("staking strict savings bps", _savingsBps(rawGas, strictGas));
+
         assertGt(rawGas, floorGas);
         assertGt(rawGas, strictGas);
         assertGe(_savingsBps(rawGas, floorGas), MIN_REAL_SAVINGS_BPS);
@@ -76,9 +80,7 @@ contract ShowcaseGasTest is Test {
         uint256 strictGas = _measureSolidityExtremeQuantStrict();
 
         emit log_named_uint("extreme raw gas", rawGas);
-        emit log_named_uint("extreme floor gas", floorGas);
         emit log_named_uint("extreme strict gas", strictGas);
-        emit log_named_uint("extreme floor savings bps", _savingsBps(rawGas, floorGas));
         emit log_named_uint("extreme strict savings bps", _savingsBps(rawGas, strictGas));
     }
 
