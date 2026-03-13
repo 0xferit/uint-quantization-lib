@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
-import {Quant, UintQuantizationLib, Overflow, NotAligned, BadConfig} from "src/UintQuantizationLib.sol";
+import {Quant, UintQuantizationLib, Overflow, NotAligned, InvalidConfig} from "src/UintQuantizationLib.sol";
 
 /// @notice Thin harness that exposes library functions via `using-for` so tests call them on
 ///         `Quant` values rather than through the library name directly.
@@ -81,22 +81,22 @@ contract UintQuantizationLibSmokeTest is Test {
     // -------------------------------------------------------------------------
 
     function test_create_shiftTooLarge_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(BadConfig.selector, uint256(256), uint256(8)));
+        vm.expectRevert(abi.encodeWithSelector(InvalidConfig.selector, uint256(256), uint256(8)));
         harness.create(256, 8);
     }
 
     function test_create_targetBitsZero_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(BadConfig.selector, uint256(8), uint256(0)));
+        vm.expectRevert(abi.encodeWithSelector(InvalidConfig.selector, uint256(8), uint256(0)));
         harness.create(8, 0);
     }
 
     function test_create_targetBits256_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(BadConfig.selector, uint256(8), uint256(256)));
+        vm.expectRevert(abi.encodeWithSelector(InvalidConfig.selector, uint256(8), uint256(256)));
         harness.create(8, 256);
     }
 
     function test_create_shiftPlusTargetBitsExceeds256_reverts() public {
-        vm.expectRevert(abi.encodeWithSelector(BadConfig.selector, uint256(200), uint256(100)));
+        vm.expectRevert(abi.encodeWithSelector(InvalidConfig.selector, uint256(200), uint256(100)));
         harness.create(200, 100);
     }
 

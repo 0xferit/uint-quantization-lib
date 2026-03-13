@@ -32,7 +32,7 @@ error Overflow(uint256 value, uint256 max);
 error NotAligned(uint256 value, uint256 stepSize);
 
 /// @notice Thrown by `create` when the (shift, targetBits) pair is invalid.
-error BadConfig(uint256 shift, uint256 targetBits);
+error InvalidConfig(uint256 shift, uint256 targetBits);
 
 library UintQuantizationLib {
     string internal constant VERSION = "1.1.0";
@@ -47,7 +47,7 @@ library UintQuantizationLib {
     ///         where the computed max overflows or the step size is undefined.
     function create(uint256 shift_, uint256 targetBits_) internal pure returns (Quant) {
         if (shift_ >= 256 || targetBits_ == 0 || targetBits_ >= 256 || shift_ + targetBits_ > 256) {
-            revert BadConfig(shift_, targetBits_);
+            revert InvalidConfig(shift_, targetBits_);
         }
         // casting to uint16 is safe: create guard above ensures shift_ < 256 and targetBits_ < 256,
         // so (targetBits_ << 8) | shift_ <= 0xFF00 | 0xFF = 0xFFFF, which fits in uint16.
