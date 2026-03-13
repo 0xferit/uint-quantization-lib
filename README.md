@@ -48,10 +48,12 @@ The `Quant` value type is a `uint16` with the following bit layout:
 | `UintQuantizationLib.create(discardedBitWidth, encodedBitWidth)` | Creates a `Quant` scheme. Reverts with `BadConfig` on invalid parameters. |
 | `q.discardedBitWidth()` | Number of low bits discarded during encoding (set at creation). |
 | `q.encodedBitWidth()` | Bit-width of the encoded value (set at creation). |
-| `q.encode(value)` | Compresses `value` by discarding the low bits (floor). Reverts with `Overflow` if `value > max(q)`. |
+| `q.encode(value)` | Quantizes `value` by discarding the low bits (floor). Reverts with `Overflow` if `value > max(q)`. |
 | `q.encode(value, true)` | Same as `encode(value)`, but also reverts with `NotAligned` if `value` is not step-aligned. |
-| `q.decode(encoded)` | Restores `encoded` back to the original scale. Discarded bits are restored as zeros (lower bound). |
-| `q.decodeMax(encoded)` | Like `decode`, but fills discarded bits with ones (upper bound within the step). |
+| `q.decode(encoded)` | Restores `encoded` back to the original scale (lower bound). Reverts with `Overflow` if `encoded` is out of range. |
+| `q.decodeMax(encoded)` | Like `decode`, but fills discarded bits with ones (upper bound). Reverts with `Overflow` if out of range. |
+| `q.decodeUnchecked(encoded)` | Gas-optimized `decode` without bounds check. Use when `encoded` is known valid (e.g., from `encode`). |
+| `q.decodeMaxUnchecked(encoded)` | Gas-optimized `decodeMax` without bounds check. |
 | `q.isValid()` | True if `q` satisfies the invariants enforced by `create`. Use to validate hand-wrapped `Quant` values. |
 | `q.fits(value)` | True if `value` fits within the scheme's representable range. |
 | `q.fitsEncoded(encoded)` | True if `encoded` is within the valid range for decoding (`encoded < 2^encodedBitWidth`). |
@@ -82,6 +84,8 @@ contract StakingVault {
     mapping(address => uint96) internal stakes;
 
     /// Floor-encodes msg.value and stores the quantized amount.
+    /// Lossy: the remainder (msg.value mod stepSize) is not tracked.
+    /// Use `stakeExact` for lossless deposits.
     function stake() external payable {
         require(SCHEME.fits(msg.value), "amount exceeds scheme max");
         stakes[msg.sender] = uint96(SCHEME.encode(msg.value));

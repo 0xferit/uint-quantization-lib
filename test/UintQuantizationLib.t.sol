@@ -43,6 +43,14 @@ contract QuantHarness {
         return q.decodeMax(encoded);
     }
 
+    function decodeUnchecked(Quant q, uint256 encoded) external pure returns (uint256) {
+        return q.decodeUnchecked(encoded);
+    }
+
+    function decodeMaxUnchecked(Quant q, uint256 encoded) external pure returns (uint256) {
+        return q.decodeMaxUnchecked(encoded);
+    }
+
     function remainder(Quant q, uint256 value) external pure returns (uint256) {
         return q.remainder(value);
     }
@@ -318,6 +326,34 @@ contract UintQuantizationLibSmokeTest is Test {
     function test_fitsEncoded_false() public view {
         Quant q = harness.create(DISCARDED_8, ENCODED_8);
         assertFalse(harness.fitsEncoded(q, 256));
+    }
+
+    // -------------------------------------------------------------------------
+    // decode: checked revert on oversized encoded
+    // -------------------------------------------------------------------------
+
+    function test_decode_oversized_reverts() public {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        // encodedBitWidth=8, so max encoded = 255; 256 is out of range
+        vm.expectRevert(abi.encodeWithSelector(Overflow.selector, uint256(256), uint256(255)));
+        harness.decode(q, 256);
+    }
+
+    function test_decodeMax_oversized_reverts() public {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        vm.expectRevert(abi.encodeWithSelector(Overflow.selector, uint256(256), uint256(255)));
+        harness.decodeMax(q, 256);
+    }
+
+    function test_decodeUnchecked_valid() public view {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        // Same result as checked decode for valid input
+        assertEq(harness.decodeUnchecked(q, 3), harness.decode(q, 3));
+    }
+
+    function test_decodeMaxUnchecked_valid() public view {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        assertEq(harness.decodeMaxUnchecked(q, 3), harness.decodeMax(q, 3));
     }
 
     // -------------------------------------------------------------------------

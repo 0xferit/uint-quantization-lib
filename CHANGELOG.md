@@ -6,23 +6,9 @@
 
 * add isValid, fitsEncoded helpers and fix ceil overflow ([903287c](https://github.com/0xferit/uint-quantization-lib/commit/903287c19bd7b97b4d8f096a1dce5479638805f5))
 
-## [6.0.3](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.2...v6.0.3) (2026-03-13)
+## 1.0.1 through 6.0.3 (2026-03-13)
 
-## [6.0.2](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.1...v6.0.2) (2026-03-13)
-
-## [6.0.1](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.0...v6.0.1) (2026-03-13)
-
-## [6.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v5.0.0...v6.0.0) (2026-03-13)
-
-## [5.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v4.0.0...v5.0.0) (2026-03-13)
-
-## [4.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v3.0.0...v4.0.0) (2026-03-13)
-
-## [3.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v2.0.0...v3.0.0) (2026-03-13)
-
-## [2.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v1.0.1...v2.0.0) (2026-03-13)
-
-## [1.0.1](https://github.com/0xferit/uint-quantization-lib/compare/v1.0.0...v1.0.1) (2026-03-13)
+Versions 1.0.1 through 6.0.3 were created by release pipeline iteration during initial CI setup. The library was renamed from `shift`/`targetBits` to `discardedBitWidth`/`encodedBitWidth` (breaking API change, hence the major bumps). No functional changes between these versions beyond the rename and CI fixes. See [v1.0.0...v6.0.3](https://github.com/0xferit/uint-quantization-lib/compare/v1.0.0...v6.0.3) for the full diff.
 
 ## 1.0.0 (2026-03-13)
 

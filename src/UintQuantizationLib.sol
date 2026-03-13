@@ -22,6 +22,10 @@ pragma solidity ^0.8.25;
  *         stored   = uint24(SCHEME.encode(value));
  *         restored = SCHEME.decode(stored);
  *         ```
+ *
+ *         **Important:** Always construct `Quant` values via `create()`. Using `Quant.wrap()`
+ *         directly bypasses validation and produces undefined behavior in all library functions.
+ *         Use `isValid()` to check a `Quant` of unknown origin.
  */
 type Quant is uint16;
 
@@ -116,18 +120,36 @@ library UintQuantizationLib {
     // -------------------------------------------------------------------------
 
     /// @notice Left-shifts `encoded` by discardedBitWidth, restoring discarded bits as zeros (lower bound).
-    /// @dev    The caller must ensure `encoded < 2**encodedBitWidth(q)`. Passing a larger value
-    ///         produces a result that may silently wrap or exceed the scheme's representable range.
-    ///         Values returned by `encode` always satisfy this constraint.
+    ///         Reverts with `Overflow` when `encoded >= 2**encodedBitWidth(q)`.
     function decode(Quant q, uint256 encoded) internal pure returns (uint256) {
+        uint256 e = encodedBitWidth(q);
+        if (encoded >= (uint256(1) << e)) revert Overflow(encoded, (uint256(1) << e) - 1);
         unchecked {
             return encoded << discardedBitWidth(q);
         }
     }
 
     /// @notice Like `decode` but fills the discarded bits with ones (upper bound within the step).
-    /// @dev    Same precondition as `decode`: `encoded` must be less than `2**encodedBitWidth(q)`.
+    ///         Reverts with `Overflow` when `encoded >= 2**encodedBitWidth(q)`.
     function decodeMax(Quant q, uint256 encoded) internal pure returns (uint256) {
+        uint256 e = encodedBitWidth(q);
+        if (encoded >= (uint256(1) << e)) revert Overflow(encoded, (uint256(1) << e) - 1);
+        unchecked {
+            uint256 s = discardedBitWidth(q);
+            return (encoded << s) | ((uint256(1) << s) - 1);
+        }
+    }
+
+    /// @notice Unchecked `decode`: no bounds check on `encoded`. Use when `encoded` is known to be
+    ///         valid (e.g., returned by `encode`). Passing an out-of-range value wraps silently.
+    function decodeUnchecked(Quant q, uint256 encoded) internal pure returns (uint256) {
+        unchecked {
+            return encoded << discardedBitWidth(q);
+        }
+    }
+
+    /// @notice Unchecked `decodeMax`: no bounds check on `encoded`. Same precondition as `decodeUnchecked`.
+    function decodeMaxUnchecked(Quant q, uint256 encoded) internal pure returns (uint256) {
         unchecked {
             uint256 s = discardedBitWidth(q);
             return (encoded << s) | ((uint256(1) << s) - 1);

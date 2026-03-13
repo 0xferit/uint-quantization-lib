@@ -95,7 +95,7 @@ contract QuantizedETHStakingShowcase {
         UserStake memory s = stakes[msg.sender];
         if (!s.active) revert QuantizedETHStakingShowcase__NoStake();
 
-        uint256 amount = SCHEME.decode(s.amount);
+        uint256 amount = SCHEME.decodeUnchecked(s.amount);
         delete stakes[msg.sender];
 
         (bool ok,) = msg.sender.call{value: amount}("");
@@ -112,7 +112,7 @@ contract QuantizedETHStakingShowcase {
     }
 
     function getStake(address user) external view returns (uint256) {
-        return SCHEME.decode(stakes[user].amount);
+        return SCHEME.decodeUnchecked(stakes[user].amount);
     }
 
     function maxDeposit() external view returns (uint256) {
@@ -183,7 +183,7 @@ contract QuantizedExtremePackingShowcase {
     function decodeExtremeFloor() external view returns (uint256[12] memory values) {
         uint256 p = packedExtreme;
         for (uint256 i; i < LANES; ++i) {
-            values[i] = SCHEME.decode((p >> (i * 20)) & LANE_MASK);
+            values[i] = SCHEME.decodeUnchecked((p >> (i * 20)) & LANE_MASK);
         }
     }
 }
