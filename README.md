@@ -52,9 +52,11 @@ The `Quant` value type is a `uint16` with the following bit layout:
 | `q.encode(value, true)` | Same as `encode(value)`, but also reverts with `NotAligned` if `value` is not step-aligned. |
 | `q.decode(encoded)` | Decompresses `encoded` back to the original scale. Discarded bits are restored as zeros (lower bound). |
 | `q.decodeMax(encoded)` | Like `decode`, but fills discarded bits with ones (upper bound within the step). |
+| `q.isValid()` | True if `q` satisfies the invariants enforced by `create`. Use to validate hand-wrapped `Quant` values. |
 | `q.fits(value)` | True if `value` fits within the scheme's representable range. |
+| `q.fitsEncoded(encoded)` | True if `encoded` is within the valid range for decoding (`encoded < 2^encodedBitWidth`). |
 | `q.floor(value)` | Rounds `value` down to the nearest step boundary. |
-| `q.ceil(value)` | Rounds `value` up to the nearest step boundary. |
+| `q.ceil(value)` | Rounds `value` up to the nearest step boundary. Reverts with `CeilOverflow` when rounding up would exceed `type(uint256).max`. |
 | `q.remainder(value)` | Resolution lost if `value` were floor-encoded (`value mod stepSize`). |
 | `q.isAligned(value)` | True if `value` is step-aligned (no resolution loss on encode). |
 | `q.stepSize()` | Smallest non-zero value the scheme can represent (`2^discardedBitWidth`). |
@@ -66,6 +68,7 @@ The `Quant` value type is a `uint16` with the following bit layout:
 error BadConfig(uint256 discardedBitWidth, uint256 encodedBitWidth);
 error Overflow(uint256 value, uint256 max);
 error NotAligned(uint256 value, uint256 stepSize);
+error CeilOverflow(uint256 value);
 ```
 
 ### Solidity usage
@@ -161,8 +164,8 @@ This demonstrates where quantization creates real gas savings: fewer storage wri
 state layout.
 
 The staking showcase intentionally exercises the full API surface:
-- `stake()` uses `encode`.
-- `stakeExact()` uses `encode(value, true)`.
+- `stake()` uses floor encoding (`encode`). This is intentionally lossy: the remainder stays in the contract as unrecoverable dust.
+- `stakeExact()` uses strict encoding (`encode(value, true)`). Reverts if the value is not step-aligned, guaranteeing lossless round-trips.
 - `unstake()` uses `decode`.
 - `maxDeposit()`, `stakeRemainder()`, and `isStakeAligned()` expose
   `max`, `remainder`, and `isAligned` for frontend UX.

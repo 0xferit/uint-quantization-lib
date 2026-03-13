@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
-import {Quant, UintQuantizationLib, Overflow, NotAligned, BadConfig} from "src/UintQuantizationLib.sol";
+import {Quant, UintQuantizationLib, Overflow, NotAligned, BadConfig, CeilOverflow} from "src/UintQuantizationLib.sol";
 
 /// @notice Thin harness that exposes library functions via `using-for` so tests call them on
 ///         `Quant` values rather than through the library name directly.
@@ -51,8 +51,16 @@ contract QuantHarness {
         return q.isAligned(value);
     }
 
+    function isValid(Quant q) external pure returns (bool) {
+        return q.isValid();
+    }
+
     function fits(Quant q, uint256 value) external pure returns (bool) {
         return q.fits(value);
+    }
+
+    function fitsEncoded(Quant q, uint256 encoded) external pure returns (bool) {
+        return q.fitsEncoded(encoded);
     }
 
     function floor(Quant q, uint256 value) external pure returns (uint256) {
@@ -201,7 +209,7 @@ contract UintQuantizationLibSmokeTest is Test {
     }
 
     // -------------------------------------------------------------------------
-    // Boundary: shift == 0 (identity / no compression)
+    // Boundary: discardedBitWidth == 0 (identity / no compression)
     // -------------------------------------------------------------------------
 
     function test_discardedBitWidth_zero_identity() public view {
@@ -281,6 +289,49 @@ contract UintQuantizationLibSmokeTest is Test {
     }
 
     // -------------------------------------------------------------------------
+    // isValid: create-produced vs hand-wrapped
+    // -------------------------------------------------------------------------
+
+    function test_isValid_createProduced() public view {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        assertTrue(harness.isValid(q));
+    }
+
+    function test_isValid_handWrapped_invalid() public view {
+        // encodedBitWidth=0 (invalid: rejected by create)
+        assertFalse(harness.isValid(Quant.wrap(0)));
+        // discardedBitWidth=255, encodedBitWidth=255: sum=510 > 256
+        assertFalse(harness.isValid(Quant.wrap(uint16(0xFF00 | 0xFF))));
+    }
+
+    // -------------------------------------------------------------------------
+    // fitsEncoded: decode-side range check
+    // -------------------------------------------------------------------------
+
+    function test_fitsEncoded_true() public view {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        // encodedBitWidth=8, so max encoded = 255
+        assertTrue(harness.fitsEncoded(q, 0));
+        assertTrue(harness.fitsEncoded(q, 255));
+    }
+
+    function test_fitsEncoded_false() public view {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        assertFalse(harness.fitsEncoded(q, 256));
+    }
+
+    // -------------------------------------------------------------------------
+    // ceil: overflow revert
+    // -------------------------------------------------------------------------
+
+    function test_ceil_overflow_reverts() public {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        // type(uint256).max is not aligned to 256; rounding up overflows
+        vm.expectRevert(abi.encodeWithSelector(CeilOverflow.selector, type(uint256).max));
+        harness.ceil(q, type(uint256).max);
+    }
+
+    // -------------------------------------------------------------------------
     // Fuzz tests
     // -------------------------------------------------------------------------
 
@@ -303,6 +354,8 @@ contract UintQuantizationLibSmokeTest is Test {
     function testFuzz_decodeMax_ge_decode(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 encoded) public view {
         vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
+        // Bound to valid encoded range so the test exercises the documented domain.
+        encoded = bound(encoded, 0, (uint256(1) << harness.encodedBitWidth(q)) - 1);
         assertGe(harness.decodeMax(q, encoded), harness.decode(q, encoded));
     }
 
@@ -324,14 +377,18 @@ contract UintQuantizationLibSmokeTest is Test {
         assertEq(harness.fits(q, value), value <= harness.max(q));
     }
 
-    function testFuzz_ceil_ge_value(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value) public view {
+    function testFuzz_ceil_ge_value(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value) public {
         vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
         uint256 s = uint256(discardedBitWidth_);
         if (s > 0) {
             uint256 mask = (uint256(1) << s) - 1;
-            // Exclude values where (value | mask) + 1 would overflow uint256
-            vm.assume(value < type(uint256).max - mask);
+            if (value >= type(uint256).max - mask && value & mask != 0) {
+                // Overflow region: ceil should revert
+                vm.expectRevert(abi.encodeWithSelector(CeilOverflow.selector, value));
+                harness.ceil(q, value);
+                return;
+            }
         }
         assertGe(harness.ceil(q, value), value);
     }

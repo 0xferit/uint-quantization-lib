@@ -67,6 +67,8 @@ contract QuantizedETHStakingShowcase {
         SCHEME = UintQuantizationLib.create(16, 96);
     }
 
+    /// @notice Floor-encodes msg.value. Intentionally lossy: the remainder (msg.value mod stepSize)
+    ///         stays in the contract as unrecoverable dust. Use `stakeExact` for lossless deposits.
     function stake() external payable {
         if (msg.value == 0) revert QuantizedETHStakingShowcase__ZeroAmount();
         uint96 encoded = uint96(SCHEME.encode(msg.value));

@@ -34,6 +34,9 @@ error NotAligned(uint256 value, uint256 stepSize);
 /// @notice Thrown by `create` when the (discardedBitWidth, encodedBitWidth) pair is invalid.
 error BadConfig(uint256 discardedBitWidth, uint256 encodedBitWidth);
 
+/// @notice Thrown by `ceil` when rounding up would overflow uint256.
+error CeilOverflow(uint256 value);
+
 library UintQuantizationLib {
     string internal constant VERSION = "6.0.3";
 
@@ -145,9 +148,23 @@ library UintQuantizationLib {
         return remainder(q, value) == 0;
     }
 
+    /// @notice Returns true when `q` satisfies the invariants enforced by `create`.
+    ///         Use this to validate a `Quant` obtained via `Quant.wrap()` rather than `create()`.
+    function isValid(Quant q) internal pure returns (bool) {
+        uint256 d = discardedBitWidth(q);
+        uint256 e = encodedBitWidth(q);
+        return e > 0 && e < 256 && d + e <= 256;
+    }
+
     /// @notice Returns true when `value <= max(q)`.
     function fits(Quant q, uint256 value) internal pure returns (bool) {
         return value <= max(q);
+    }
+
+    /// @notice Returns true when `encoded` is within the valid range for decoding.
+    ///         This is the decode-side counterpart of `fits()`.
+    function fitsEncoded(Quant q, uint256 encoded) internal pure returns (bool) {
+        return encoded < (uint256(1) << encodedBitWidth(q));
     }
 
     /// @notice Rounds `value` down to the nearest step boundary (clears low `discardedBitWidth` bits).
@@ -156,15 +173,18 @@ library UintQuantizationLib {
     }
 
     /// @notice Rounds `value` up to the nearest step boundary. Returns `value` unchanged when
-    ///         discardedBitWidth is 0 or `value` is already aligned.
-    /// @dev    Callers must ensure `value + stepSize - 1 <= type(uint256).max` to avoid overflow
-    ///         on non-aligned inputs. This function does not perform that check.
+    ///         discardedBitWidth is 0 or `value` is already aligned. Reverts with `CeilOverflow`
+    ///         when rounding up would exceed `type(uint256).max`.
     function ceil(Quant q, uint256 value) internal pure returns (uint256) {
         uint256 s = discardedBitWidth(q);
         if (s == 0) return value;
         uint256 mask = (uint256(1) << s) - 1;
         if (value & mask == 0) return value;
-        return (value | mask) + 1;
+        unchecked {
+            uint256 ceiled = (value | mask) + 1;
+            if (ceiled == 0) revert CeilOverflow(value);
+            return ceiled;
+        }
     }
 }
 
