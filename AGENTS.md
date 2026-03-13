@@ -44,7 +44,7 @@ Production-style contracts for gas benchmarks only. Raw vs quantized pairs: `Raw
 
 ## Conventions
 
-- Solidity `^0.8.25`, 4-space indentation, NatSpec on public-facing behavior.
+- Solidity `^0.8.33`, 4-space indentation, NatSpec on public-facing behavior.
 - Errors are file-level with bare names (not namespaced inside the library).
 - Create schemes with `UintQuantizationLib.create(...)`; never use `Quant.wrap(...)` directly.
 - Showcase pairs follow `Raw...` / `Quantized...` naming.
@@ -52,6 +52,19 @@ Production-style contracts for gas benchmarks only. Raw vs quantized pairs: `Raw
 - Fuzz tests: `uint8` params for scheme dimensions, `bound()` not `vm.assume` for bounding values.
 - Conventional Commits: `feat:`, `fix:`, `ci:`, `docs:`, `chore:`, `refactor:`, `perf:`.
 - If gas numbers change, include before/after output from the showcase gas report.
+
+## Testing doctrine
+
+A test is worth keeping if it protects against a plausible future regression that a reviewer could miss. Write a test when at least one is true:
+
+1. It explores more of the input space than review will (fuzz/property tests, parameterized ranges).
+2. It pins a singular boundary where arithmetic or bit logic tends to fail (0, 1, max, first invalid value).
+3. It captures a non-local contract (constructor invariants, checked vs unchecked semantics, round-trip relationships).
+4. It documents a user-visible revert condition with non-trivial control flow.
+5. It prevents a known regression or a previously identified review finding.
+6. It serves as executable documentation for a tricky public semantic (one golden test per semantic, not per function).
+
+Do not write a test that re-implements the function under test, proves the language works as documented, or duplicates coverage from a stronger fuzz/property test. For one-liners, prefer testing through richer invariants.
 
 ## Release pipeline
 
