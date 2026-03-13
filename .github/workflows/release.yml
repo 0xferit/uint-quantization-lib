@@ -71,6 +71,9 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
+      - name: Install Soldeer
+        run: cargo install soldeer
+
       - name: Publish to Soldeer registry
         env:
           SOLDEER_TOKEN: ${{ secrets.SOLDEER_TOKEN }}
