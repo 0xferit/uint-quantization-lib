@@ -38,32 +38,32 @@ The `Quant` value type is a `uint16` with the following bit layout:
 
 | Bits | Field | Notes |
 |---|---|---|
-| 0-7 | `shift` | LSBs discarded during encoding |
-| 8-15 | `targetBits` | Bit-width of the encoded value |
+| 0-7 | `discardedBitWidth` | LSBs discarded during encoding |
+| 8-15 | `encodedBitWidth` | Bit-width of the encoded value |
 
 ### API
 
 | Function | Description |
 |---|---|
-| `UintQuantizationLib.create(shift, targetBits)` | Creates a `Quant` scheme from readable parameters. Reverts with `BadConfig` when shift >= 256, targetBits == 0, targetBits >= 256, or shift + targetBits > 256. |
-| `q.shift()` | Number of low bits discarded during encoding (set at creation). |
-| `q.targetBits()` | Bit-width of the encoded value (set at creation). |
-| `q.encode(value)` | Floor-encodes `value`. Reverts with `Overflow` when `value > max(q)`. |
-| `q.encode(value, true)` | Strict mode: also reverts with `NotAligned` when `value` is not step-aligned. |
-| `q.decode(encoded)` | Left-shifts `encoded` by shift, restoring discarded bits as zeros (lower bound). |
-| `q.decodeMax(encoded)` | Like `decode` but fills discarded bits with ones (upper bound within the step). |
-| `q.fits(value)` | Returns `true` when `value <= max(q)`. |
+| `UintQuantizationLib.create(discardedBitWidth, encodedBitWidth)` | Creates a `Quant` scheme. Reverts with `BadConfig` on invalid parameters. |
+| `q.discardedBitWidth()` | Number of low bits discarded during encoding (set at creation). |
+| `q.encodedBitWidth()` | Bit-width of the encoded value (set at creation). |
+| `q.encode(value)` | Compresses `value` by discarding the low bits (floor). Reverts with `Overflow` if `value > max(q)`. |
+| `q.encode(value, true)` | Same as `encode(value)`, but also reverts with `NotAligned` if `value` is not step-aligned. |
+| `q.decode(encoded)` | Decompresses `encoded` back to the original scale. Discarded bits are restored as zeros (lower bound). |
+| `q.decodeMax(encoded)` | Like `decode`, but fills discarded bits with ones (upper bound within the step). |
+| `q.fits(value)` | True if `value` fits within the scheme's representable range. |
 | `q.floor(value)` | Rounds `value` down to the nearest step boundary. |
 | `q.ceil(value)` | Rounds `value` up to the nearest step boundary. |
-| `q.remainder(value)` | Returns discarded low bits (`value mod stepSize`). |
-| `q.isAligned(value)` | Returns `true` when `value` is exactly representable (step-aligned). |
-| `q.stepSize()` | Returns `2^shift`. |
-| `q.max()` | Returns the maximum original value representable: `(2^targetBits - 1) << shift`. |
+| `q.remainder(value)` | Resolution lost if `value` were floor-encoded (`value mod stepSize`). |
+| `q.isAligned(value)` | True if `value` is step-aligned (no resolution loss on encode). |
+| `q.stepSize()` | Smallest non-zero value the scheme can represent (`2^discardedBitWidth`). |
+| `q.max()` | Largest value the scheme can represent: `(2^encodedBitWidth - 1) << discardedBitWidth`. |
 
 ### Errors
 
 ```solidity
-error BadConfig(uint256 shift, uint256 targetBits);
+error BadConfig(uint256 discardedBitWidth, uint256 encodedBitWidth);
 error Overflow(uint256 value, uint256 max);
 error NotAligned(uint256 value, uint256 stepSize);
 ```
@@ -132,8 +132,8 @@ contract StakingVault {
 ```
 
 > `encode(value)` and `encode(value, true)` return `uint256` due to Solidity type constraints. The encoded
-> result is guaranteed to fit in `2^targetBits - 1`, so store it using the matching `uintN` for
-> your scheme (for example, `uint16` for `targetBits=16`, `uint24` for `targetBits=24`). Using a
+> result is guaranteed to fit in `2^encodedBitWidth - 1`, so store it using the matching `uintN` for
+> your scheme (for example, `uint16` for `encodedBitWidth=16`, `uint24` for `encodedBitWidth=24`). Using a
 > smaller type will silently truncate.
 
 ## Which encode function should I use?
