@@ -26,6 +26,12 @@ pragma solidity ^0.8.25;
  *         **Important:** Always construct `Quant` values via `create()`. Using `Quant.wrap()`
  *         directly bypasses validation and produces undefined behavior in all library functions.
  *         Use `isValid()` to check a `Quant` of unknown origin.
+ *
+ *         Design note: library functions do not validate `q` on every call. All functions are
+ *         `internal pure` and run inside the integrator's contract; the expected pattern is a
+ *         single `create()` at construction time (typically `immutable`). Adding per-call
+ *         validation would penalize the correct-usage path for a scenario that only arises
+ *         from explicit `Quant.wrap()` misuse.
  */
 type Quant is uint16;
 

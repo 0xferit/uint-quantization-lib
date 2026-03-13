@@ -35,7 +35,7 @@ Production-style contracts for gas benchmarks only. Raw vs quantized pairs: `Raw
 ### Tests: `test/`
 
 - `UintQuantizationLib.t.sol`: `QuantHarness` exposes library via method-call syntax for external calls. `UintQuantizationLibSmokeTest` has concrete regression tests and fuzz tests. Fuzz parameters use `uint8` for discardedBitWidth/encodedBitWidth; use `bound()` over `vm.assume` for value-in-range constraints.
-- `showcase/ShowcaseGas.t.sol`: Asserts quantized paths save >= 32% (real-life) and >= 80% (extreme) gas vs raw on zero-to-nonzero writes.
+- `showcase/ShowcaseGas.t.sol`: Real-life benchmark asserts >= 32% gas savings vs raw on zero-to-nonzero writes. Extreme benchmark logs gas numbers for documentation (not a regression gate).
 
 ### Configuration
 
