@@ -28,7 +28,7 @@ type Quant is uint16;
 /// @notice Thrown when a value exceeds the maximum representable by the scheme.
 error Overflow(uint256 value, uint256 max);
 
-/// @notice Thrown by `encodeLossless` when a value is not aligned to the step size.
+/// @notice Thrown by `encode` (precise mode) when a value is not aligned to the step size.
 error NotAligned(uint256 value, uint256 stepSize);
 
 /// @notice Thrown by `create` when the (shift, targetBits) pair is invalid.
@@ -92,13 +92,16 @@ library UintQuantizationLib {
         return value >> shift(q);
     }
 
-    /// @notice Strict mode: reverts if value exceeds max(q) or is not step-aligned.
-    function encodeLossless(Quant q, uint256 value) internal pure returns (uint256) {
+    /// @notice Encodes `value`. When `precise` is true, reverts if value is not step-aligned.
+    ///         Always reverts if value exceeds `max(q)`.
+    function encode(Quant q, uint256 value, bool precise) internal pure returns (uint256) {
         uint256 m = max(q);
         if (value > m) revert Overflow(value, m);
         uint256 s = shift(q);
-        uint256 step = uint256(1) << s;
-        if (value & (step - 1) != 0) revert NotAligned(value, step);
+        if (precise) {
+            uint256 step = uint256(1) << s;
+            if (value & (step - 1) != 0) revert NotAligned(value, step);
+        }
         return value >> s;
     }
 
@@ -109,7 +112,7 @@ library UintQuantizationLib {
     /// @notice Left-shifts `encoded` by shift, restoring discarded bits as zeros (lower bound).
     /// @dev    The caller must ensure `encoded < 2**targetBits(q)`. Passing a larger value
     ///         produces a result that may silently wrap or exceed the scheme's representable range.
-    ///         Values returned by `encode` and `encodeLossless` always satisfy this constraint.
+    ///         Values returned by `encode` always satisfy this constraint.
     function decode(Quant q, uint256 encoded) internal pure returns (uint256) {
         unchecked {
             return encoded << shift(q);
