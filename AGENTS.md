@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`uint-quantization-lib` is a pure-function Solidity library for shift-based `uint256` lossy compression. The core mechanism is floor quantization via right-shifting. A `Quant` value type packs `(discardedBitWidth, encodedBitWidth)` into a single `uint16`, making the compression scheme explicit and reusable. The recommended pattern is `immutable` + `create(discardedBitWidth, encodedBitWidth)`.
+`uint-quantization-lib` is a pure-function Solidity library for shift-based `uint256` quantization. The core mechanism is floor quantization via right-shifting. A `Quant` value type packs `(discardedBitWidth, encodedBitWidth)` into a single `uint16`, making the quantization scheme explicit and reusable. The recommended pattern is `immutable` + `create(discardedBitWidth, encodedBitWidth)`.
 
 ## Commands
 

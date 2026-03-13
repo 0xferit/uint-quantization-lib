@@ -5,7 +5,7 @@
 
 On-chain values routinely carry more resolution than the protocol needs, but storage charges for every bit you store, not every bit you use. Unnecessary resolution widens structs, fills extra slots, and costs 20,000 gas per cold write. You do not have to pay for resolution you do not use.
 
-This library quantizes `uint256` values via right-shift compression, packing more fields per storage slot and cutting gas on every write.
+This library quantizes `uint256` values via right-shift, packing more fields per storage slot and cutting gas on every write.
 
 **Quick start:**
 
@@ -14,8 +14,8 @@ import {Quant, UintQuantizationLib} from "uint-quantization-lib/src/UintQuantiza
 
 Quant private immutable SCHEME = UintQuantizationLib.create(32, 24);
 
-uint24 stored = uint24(SCHEME.encode(largeValue)); // compress
-uint256 restored = SCHEME.decode(stored); // decompress
+uint24 stored = uint24(SCHEME.encode(largeValue)); // quantize
+uint256 restored = SCHEME.decode(stored); // restore
 ```
 
 ## Installation
@@ -50,7 +50,7 @@ The `Quant` value type is a `uint16` with the following bit layout:
 | `q.encodedBitWidth()` | Bit-width of the encoded value (set at creation). |
 | `q.encode(value)` | Compresses `value` by discarding the low bits (floor). Reverts with `Overflow` if `value > max(q)`. |
 | `q.encode(value, true)` | Same as `encode(value)`, but also reverts with `NotAligned` if `value` is not step-aligned. |
-| `q.decode(encoded)` | Decompresses `encoded` back to the original scale. Discarded bits are restored as zeros (lower bound). |
+| `q.decode(encoded)` | Restores `encoded` back to the original scale. Discarded bits are restored as zeros (lower bound). |
 | `q.decodeMax(encoded)` | Like `decode`, but fills discarded bits with ones (upper bound within the step). |
 | `q.isValid()` | True if `q` satisfies the invariants enforced by `create`. Use to validate hand-wrapped `Quant` values. |
 | `q.fits(value)` | True if `value` fits within the scheme's representable range. |
@@ -81,7 +81,7 @@ contract StakingVault {
 
     mapping(address => uint96) internal stakes;
 
-    /// Floor-encodes msg.value and stores the compressed amount.
+    /// Floor-encodes msg.value and stores the quantized amount.
     function stake() external payable {
         require(SCHEME.fits(msg.value), "amount exceeds scheme max");
         stakes[msg.sender] = uint96(SCHEME.encode(msg.value));
@@ -154,7 +154,7 @@ Showcase contracts under `src/showcase/` use `UintQuantizationLib` and compare:
 
 - Real-life example (production-style ETH staking):
   raw path uses realistic packed fields by default (`uint128 amount`, `uint64` timestamps, `bool active`)
-  in `RawETHStakingShowcase`, while the quantized path further compresses stake amount into `uint96`
+  in `RawETHStakingShowcase`, while the quantized path further reduces stake amount into `uint96`
   in `QuantizedETHStakingShowcase`.
 - Extreme example (upper-bound packing showcase):
   raw path stores 12 full-width `uint256` values (`RawExtremePackingShowcase`),

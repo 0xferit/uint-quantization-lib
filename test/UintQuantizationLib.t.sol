@@ -209,7 +209,7 @@ contract UintQuantizationLibSmokeTest is Test {
     }
 
     // -------------------------------------------------------------------------
-    // Boundary: discardedBitWidth == 0 (identity / no compression)
+    // Boundary: discardedBitWidth == 0 (identity / no quantization)
     // -------------------------------------------------------------------------
 
     function test_discardedBitWidth_zero_identity() public view {

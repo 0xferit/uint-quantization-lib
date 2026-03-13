@@ -5,10 +5,10 @@ pragma solidity ^0.8.25;
  * @title UintQuantizationLib
  * @author [0xferit](https://github.com/0xferit)
  * @custom:security-contact ferit@cryptolab.net
- * @notice Pure-function library for shift-based uint256 compression using a bundled config type.
+ * @notice Pure-function library for shift-based uint256 quantization using a bundled config type.
  *
  *         The `Quant` value type packs a `(discardedBitWidth, encodedBitWidth)` scheme into a single `uint16`,
- *         allowing callers to define the compression config once and invoke methods on it.
+ *         allowing callers to define the quantization scheme once and invoke methods on it.
  *         Type layout (uint16):
  *           bits 0-7  → discardedBitWidth (LSBs discarded during encoding)
  *           bits 8-15 → encodedBitWidth   (bit-width of the encoded value)

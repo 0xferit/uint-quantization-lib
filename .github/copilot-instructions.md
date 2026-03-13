@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`uint-quantization-lib` is a pure-function Solidity library for shift-based `uint256` compression.
+`uint-quantization-lib` is a pure-function Solidity library for shift-based `uint256` quantization.
 The core implementation is `UintQuantizationLib` in `src/UintQuantizationLib.sol`, built around
 `Quant` (a `uint16` value type that packs `discardedBitWidth` and `encodedBitWidth`).
 
