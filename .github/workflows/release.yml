@@ -82,3 +82,8 @@ jobs:
           echo "Publishing uint-quantization-lib~$VERSION to Soldeer..."
           soldeer login --token "$SOLDEER_TOKEN"
           soldeer push uint-quantization-lib~"$VERSION"
+
+      - name: Tag last Soldeer publish
+        run: |
+          git tag -f soldeer-published
+          git push origin soldeer-published --force

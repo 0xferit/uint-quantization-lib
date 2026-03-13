@@ -10,8 +10,11 @@ if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
   exit 0
 fi
 
-# Comparison base: last release tag, or the repo root for the first release
-if [ -n "${LAST_RELEASE_GIT_TAG:-}" ]; then
+# Comparison base: last successful Soldeer publish, then last release tag, then repo root.
+# This ensures the bump reflects what users actually have, not intermediate failed publishes.
+if git rev-parse soldeer-published >/dev/null 2>&1; then
+  BASE="soldeer-published"
+elif [ -n "${LAST_RELEASE_GIT_TAG:-}" ]; then
   BASE="$LAST_RELEASE_GIT_TAG"
 else
   BASE=$(git rev-list --max-parents=0 HEAD)
