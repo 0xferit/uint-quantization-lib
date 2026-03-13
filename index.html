@@ -173,7 +173,7 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
       <div class="api-list sr" style="transition-delay:0.1s">
         <div class="api-item"><code class="api-fn">create(shift, targetBits)</code><span class="api-desc">Create a quantization scheme</span></div>
         <div class="api-item"><code class="api-fn">encode(value)</code><span class="api-desc">Floor-encode a value (reverts on overflow)</span></div>
-        <div class="api-item"><code class="api-fn">encodeLossless(value)</code><span class="api-desc">Strict encode (reverts if value is not step-aligned)</span></div>
+        <div class="api-item"><code class="api-fn">encode(value, true)</code><span class="api-desc">Strict encode (reverts if value is not step-aligned)</span></div>
         <div class="api-item"><code class="api-fn">decode(encoded)</code><span class="api-desc">Restore lower-bound value</span></div>
         <div class="api-item"><code class="api-fn">decodeMax(encoded)</code><span class="api-desc">Restore upper-bound value</span></div>
         <div class="api-item"><code class="api-fn">fits(value)</code><span class="api-desc">Check if value is representable</span></div>

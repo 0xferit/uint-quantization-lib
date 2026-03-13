@@ -21,7 +21,7 @@ forge test
 forge test --match-path test/UintQuantizationLib.t.sol
 
 # Run a single test function
-forge test --match-test test_encodeLossless_notAligned_reverts
+forge test --match-test test_encodePrecise_notAligned_reverts
 
 # Run with verbose output
 forge test -vv

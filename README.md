@@ -49,7 +49,7 @@ The `Quant` value type is a `uint16` with the following bit layout:
 | `q.shift()` | Returns the shift component (bits discarded during encoding). |
 | `q.targetBits()` | Returns the targetBits component (bit-width of the encoded value). |
 | `q.encode(value)` | Floor-encodes `value`. Reverts with `Overflow` when `value > max(q)`. |
-| `q.encodeLossless(value)` | Strict mode: also reverts with `NotAligned` when `value` is not step-aligned. |
+| `q.encode(value, true)` | Strict mode: also reverts with `NotAligned` when `value` is not step-aligned. |
 | `q.decode(encoded)` | Left-shifts `encoded` by shift, restoring discarded bits as zeros (lower bound). |
 | `q.decodeMax(encoded)` | Like `decode` but fills discarded bits with ones (upper bound within the step). |
 | `q.fits(value)` | Returns `true` when `value <= max(q)`. |
@@ -86,7 +86,7 @@ contract StakingVault {
 
     /// Strict mode: reverts if msg.value is not step-aligned.
     function stakeExact() external payable {
-        stakes[msg.sender] = uint96(SCHEME.encodeLossless(msg.value));
+        stakes[msg.sender] = uint96(SCHEME.encode(msg.value, true));
     }
 
     /// Restores the lower-bound value (what was actually stored).
@@ -114,7 +114,7 @@ contract StakingVault {
         return SCHEME.remainder(amount);
     }
 
-    /// True when `amount` is step-aligned (no precision loss).
+    /// True when `amount` is step-aligned (no resolution loss).
     function isDepositLossless(uint256 amount) external pure returns (bool) {
         return SCHEME.isLossless(amount);
     }
@@ -131,18 +131,18 @@ contract StakingVault {
 }
 ```
 
-> `encode()` and `encodeLossless()` return `uint256` due to Solidity type constraints. The encoded
+> `encode(value)` and `encode(value, true)` return `uint256` due to Solidity type constraints. The encoded
 > result is guaranteed to fit in `2^targetBits - 1`, so store it using the matching `uintN` for
 > your scheme (for example, `uint16` for `targetBits=16`, `uint24` for `targetBits=24`). Using a
 > smaller type will silently truncate.
 
 ## Which encode function should I use?
 
-> - `encode` — Floor encoding with overflow check. Reverts when the value exceeds `max(q)`.
-> - `encodeLossless` — Strict mode: reverts on overflow or when any precision would be lost.
+> - `encode(value)` — Floor encoding with overflow check. Reverts when the value exceeds `max(q)`.
+> - `encode(value, true)` — Strict mode: reverts on overflow or when any resolution would be lost.
 
 Use `encode` when the caller controls or bounds the input and floor truncation is acceptable.
-Use `encodeLossless` when exactness is a protocol requirement (e.g., the transaction should revert
+Use `encode(value, true)` when exactness is a protocol requirement (e.g., the transaction should revert
 rather than silently truncate the value).
 
 ## Showcase and gas savings
@@ -162,7 +162,7 @@ state layout.
 
 The staking showcase intentionally exercises the full API surface:
 - `stake()` uses `encode`.
-- `stakeExact()` uses `encodeLossless`.
+- `stakeExact()` uses `encode(value, true)`.
 - `unstake()` uses `decode`.
 - `maxDeposit()`, `stakeRemainder()`, and `isStakeLossless()` expose
   `max`, `remainder`, and `isLossless` for frontend UX.

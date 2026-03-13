@@ -12,7 +12,7 @@ The core implementation is `UintQuantizationLib` in `src/UintQuantizationLib.sol
 - `Quant` layout is fixed: bits 0-7 = `shift`, bits 8-15 = `targetBits`.
 - Keep custom errors file-level with bare names (`BadConfig`, `Overflow`, `NotAligned`).
 - Keep fuzz constraints consistent with existing tests (`bound()` instead of `vm.assume`).
-- For precision-sensitive flows, prefer `encodeLossless`; for floor truncation use `encode`.
+- For resolution-sensitive flows, prefer `encode(value, true)`; for floor truncation use `encode`.
 
 ## Validation commands
 
