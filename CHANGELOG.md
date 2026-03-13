@@ -1,3 +1,5 @@
+## [3.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v2.0.0...v3.0.0) (2026-03-13)
+
 ## [2.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v1.0.1...v2.0.0) (2026-03-13)
 
 ## [1.0.1](https://github.com/0xferit/uint-quantization-lib/compare/v1.0.0...v1.0.1) (2026-03-13)
