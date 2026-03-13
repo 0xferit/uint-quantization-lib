@@ -39,7 +39,7 @@ ${DIFF_STAT}
 Solidity diff (truncated):
 ${SOL_DIFF}"
 
-RESPONSE=$(echo "$PROMPT" | claude --print --model haiku --max-turns 1 2>/dev/null) || { echo "patch"; exit 0; }
+RESPONSE=$(echo "$PROMPT" | claude --print --model opus --effort high 2>/dev/null) || { echo "patch"; exit 0; }
 
 BUMP=$(echo "$RESPONSE" | tr '[:upper:]' '[:lower:]' | grep -oE 'major|minor|patch' | head -1)
 
