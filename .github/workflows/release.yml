@@ -14,6 +14,9 @@ jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
+    outputs:
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,6 +39,43 @@ jobs:
             conventional-changelog-conventionalcommits
 
       - name: Release
+        id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: |
+          OUTPUT=$(npx semantic-release --dry-run 2>&1 | grep 'The next release version is' | sed 's/.*The next release version is //' || true)
+          npx semantic-release
+          # Capture the version that was actually released
+          RELEASED_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)
+          echo "new_release_version=$RELEASED_VERSION" >> $GITHUB_OUTPUT
+          # Check if a new tag was created in this run
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          PREV_SHA=$(git rev-parse HEAD~1 2>/dev/null || true)
+          if git tag --contains $PREV_SHA | grep -q "$LATEST_TAG"; then
+            echo "new_release_published=false" >> $GITHUB_OUTPUT
+          else
+            echo "new_release_published=true" >> $GITHUB_OUTPUT
+          fi
+
+  soldeer-publish:
+    name: Publish to Soldeer
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Publish to Soldeer registry
+        env:
+          SOLDEER_TOKEN: ${{ secrets.SOLDEER_TOKEN }}
+        run: |
+          VERSION=${{ needs.release.outputs.new_release_version }}
+          echo "Publishing uint-quantization-lib~$VERSION to Soldeer..."
+          soldeer login --token "$SOLDEER_TOKEN"
+          soldeer push uint-quantization-lib~"$VERSION"
