@@ -3,9 +3,9 @@ set -euo pipefail
 
 # Called by @semantic-release/exec as analyzeCommitsCmd.
 # Asks Claude to determine the semantic version bump from the diff.
-# Falls back to "patch" if the API key is missing or the call fails.
+# Falls back to "patch" if the token is missing or the call fails.
 
-if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
   echo "patch"
   exit 0
 fi
@@ -39,17 +39,8 @@ ${DIFF_STAT}
 Solidity diff (truncated):
 ${SOL_DIFF}"
 
-RESPONSE=$(curl -sf --max-time 30 \
-  -H "x-api-key: $ANTHROPIC_API_KEY" \
-  -H "anthropic-version: 2023-06-01" \
-  -H "content-type: application/json" \
-  "https://api.anthropic.com/v1/messages" \
-  -d "$(jq -n --arg prompt "$PROMPT" '{
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 10,
-    messages: [{ role: "user", content: $prompt }]
-  }')" 2>/dev/null) || { echo "patch"; exit 0; }
+RESPONSE=$(echo "$PROMPT" | claude --print --model haiku --max-turns 1 2>/dev/null) || { echo "patch"; exit 0; }
 
-BUMP=$(echo "$RESPONSE" | jq -r '.content[0].text' 2>/dev/null | tr '[:upper:]' '[:lower:]' | grep -oE 'major|minor|patch' | head -1)
+BUMP=$(echo "$RESPONSE" | tr '[:upper:]' '[:lower:]' | grep -oE 'major|minor|patch' | head -1)
 
 echo "${BUMP:-patch}"
