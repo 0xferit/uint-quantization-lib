@@ -1,3 +1,5 @@
+## [6.0.3](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.2...v6.0.3) (2026-03-13)
+
 ## [6.0.2](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.1...v6.0.2) (2026-03-13)
 
 ## [6.0.1](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.0...v6.0.1) (2026-03-13)
