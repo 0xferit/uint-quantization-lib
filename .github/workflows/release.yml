@@ -71,9 +71,6 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Install Soldeer
-        run: cargo install soldeer
-
       - name: Publish to Soldeer registry
         env:
           SOLDEER_API_TOKEN: ${{ secrets.SOLDEER_API_TOKEN }}
@@ -84,7 +81,7 @@ jobs:
           fi
           VERSION=${{ needs.release.outputs.new_release_version }}
           echo "Publishing uint-quantization-lib~$VERSION to Soldeer..."
-          soldeer push uint-quantization-lib~"$VERSION" 2>&1 | tee /tmp/soldeer-output.log
+          forge soldeer push uint-quantization-lib~"$VERSION" --skip-warnings 2>&1 | tee /tmp/soldeer-output.log
           if grep -q "error during" /tmp/soldeer-output.log; then
             echo "::error::Soldeer push failed"
             exit 1
