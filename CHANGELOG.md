@@ -1,3 +1,9 @@
+## [6.1.0](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.3...v6.1.0) (2026-03-13)
+
+### Features
+
+* add isValid, fitsEncoded helpers and fix ceil overflow ([903287c](https://github.com/0xferit/uint-quantization-lib/commit/903287c19bd7b97b4d8f096a1dce5479638805f5))
+
 ## [6.0.3](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.2...v6.0.3) (2026-03-13)
 
 ## [6.0.2](https://github.com/0xferit/uint-quantization-lib/compare/v6.0.1...v6.0.2) (2026-03-13)
