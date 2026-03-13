@@ -31,8 +31,8 @@ contract QuantHarness {
         return q.encode(value);
     }
 
-    function encodeLossless(Quant q, uint256 value) external pure returns (uint256) {
-        return q.encodeLossless(value);
+    function encode(Quant q, uint256 value, bool precise) external pure returns (uint256) {
+        return q.encode(value, precise);
     }
 
     function decode(Quant q, uint256 encoded) external pure returns (uint256) {
@@ -113,23 +113,30 @@ contract UintQuantizationLibSmokeTest is Test {
     }
 
     // -------------------------------------------------------------------------
-    // encodeLossless: overflow and alignment reverts
+    // encode (precise=true): overflow and alignment reverts
     // -------------------------------------------------------------------------
 
-    function test_encodeLossless_overflow_reverts() public {
+    function test_encodePrecise_overflow_reverts() public {
         Quant q = harness.create(SHIFT_8, BITS_8);
         uint256 m = harness.max(q);
         uint256 value = m + 1;
         vm.expectRevert(abi.encodeWithSelector(Overflow.selector, value, m));
-        harness.encodeLossless(q, value);
+        harness.encode(q, value, true);
     }
 
-    function test_encodeLossless_notAligned_reverts() public {
+    function test_encodePrecise_notAligned_reverts() public {
         Quant q = harness.create(SHIFT_8, BITS_8);
         uint256 step = harness.stepSize(q); // 256
         uint256 value = step + 1; // 257, not aligned
         vm.expectRevert(abi.encodeWithSelector(NotAligned.selector, value, step));
-        harness.encodeLossless(q, value);
+        harness.encode(q, value, true);
+    }
+
+    function test_encodePrecise_aligned_succeeds() public view {
+        Quant q = harness.create(SHIFT_8, BITS_8);
+        uint256 step = harness.stepSize(q); // 256
+        // 256 is aligned: encode(256, true) == 1
+        assertEq(harness.encode(q, step, true), 1);
     }
 
     // -------------------------------------------------------------------------

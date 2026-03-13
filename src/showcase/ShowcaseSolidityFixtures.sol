@@ -80,7 +80,7 @@ contract QuantizedETHStakingShowcase {
 
     function stakeExact() external payable {
         if (msg.value == 0) revert QuantizedETHStakingShowcase__ZeroAmount();
-        uint96 encoded = uint96(SCHEME.encodeLossless(msg.value));
+        uint96 encoded = uint96(SCHEME.encode(msg.value, true));
         stakes[msg.sender] = UserStake({
             amount: encoded,
             stakedAt: uint64(block.timestamp),
@@ -165,7 +165,7 @@ contract QuantizedExtremePackingShowcase {
     function setExtremeStrict(uint256[12] calldata values) external {
         uint256 p;
         for (uint256 i; i < LANES; ++i) {
-            uint256 lane = SCHEME.encodeLossless(values[i]);
+            uint256 lane = SCHEME.encode(values[i], true);
             p |= lane << (i * 20);
         }
         packedExtreme = p;
