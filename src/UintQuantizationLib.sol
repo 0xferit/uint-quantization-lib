@@ -44,6 +44,9 @@ error NotAligned(uint256 value, uint256 stepSize);
 /// @notice Thrown by `create` when the (discardedBitWidth, encodedBitWidth) pair is invalid.
 error BadConfig(uint256 discardedBitWidth, uint256 encodedBitWidth);
 
+/// @notice Thrown by `requireMinStep` when a non-zero value is smaller than the step size.
+error BelowMinStep(uint256 value, uint256 stepSize);
+
 /// @notice Thrown by `ceil` when rounding up would overflow uint256.
 error CeilOverflow(uint256 value);
 
@@ -193,6 +196,21 @@ library UintQuantizationLib {
     ///         This is the decode-side counterpart of `fits()`.
     function fitsEncoded(Quant q, uint256 encoded) internal pure returns (bool) {
         return encoded < (uint256(1) << encodedBitWidth(q));
+    }
+
+    /// @notice Reverts with `NotAligned` if `value` is not a multiple of the step size.
+    function requireAligned(Quant q, uint256 value) internal pure {
+        uint256 step = stepSize(q);
+        if (value & (step - 1) != 0) revert NotAligned(value, step);
+    }
+
+    /// @notice Reverts with `BelowMinStep` if `value` is non-zero and smaller than the step size.
+    ///         Zero is allowed (represents empty/uninitialized state).
+    function requireMinStep(Quant q, uint256 value) internal pure {
+        if (value != 0) {
+            uint256 step = stepSize(q);
+            if (value < step) revert BelowMinStep(value, step);
+        }
     }
 
     /// @notice Rounds `value` down to the nearest step boundary (clears low `discardedBitWidth` bits).

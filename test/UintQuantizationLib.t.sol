@@ -2,7 +2,15 @@
 pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
-import {Quant, UintQuantizationLib, Overflow, NotAligned, BadConfig, CeilOverflow} from "src/UintQuantizationLib.sol";
+import {
+    Quant,
+    UintQuantizationLib,
+    Overflow,
+    NotAligned,
+    BadConfig,
+    CeilOverflow,
+    BelowMinStep
+} from "src/UintQuantizationLib.sol";
 
 /// @notice Thin harness that exposes library functions via `using-for` so tests call them on
 ///         `Quant` values rather than through the library name directly.
@@ -77,6 +85,14 @@ contract QuantHarness {
 
     function ceil(Quant q, uint256 value) external pure returns (uint256) {
         return q.ceil(value);
+    }
+
+    function requireAligned(Quant q, uint256 value) external pure {
+        q.requireAligned(value);
+    }
+
+    function requireMinStep(Quant q, uint256 value) external pure {
+        q.requireMinStep(value);
     }
 }
 
@@ -292,6 +308,54 @@ contract UintQuantizationLibSmokeTest is Test {
     }
 
     // -------------------------------------------------------------------------
+    // requireAligned: revert on non-aligned, pass on aligned
+    // -------------------------------------------------------------------------
+
+    function test_requireAligned_notAligned_reverts() public {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        uint256 step = harness.stepSize(q); // 256
+        vm.expectRevert(abi.encodeWithSelector(NotAligned.selector, step + 1, step));
+        harness.requireAligned(q, step + 1);
+    }
+
+    function test_requireAligned_aligned_succeeds() public view {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        harness.requireAligned(q, 512); // 2 * stepSize, aligned
+    }
+
+    function test_requireAligned_zero_succeeds() public view {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        harness.requireAligned(q, 0);
+    }
+
+    // -------------------------------------------------------------------------
+    // requireMinStep: revert below step, pass on zero and >= step
+    // -------------------------------------------------------------------------
+
+    function test_requireMinStep_belowStep_reverts() public {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        uint256 step = harness.stepSize(q); // 256
+        vm.expectRevert(abi.encodeWithSelector(BelowMinStep.selector, uint256(1), step));
+        harness.requireMinStep(q, 1);
+    }
+
+    function test_requireMinStep_zero_succeeds() public view {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        harness.requireMinStep(q, 0);
+    }
+
+    function test_requireMinStep_exactStep_succeeds() public view {
+        Quant q = harness.create(DISCARDED_8, ENCODED_8);
+        harness.requireMinStep(q, 256); // exactly stepSize
+    }
+
+    function test_requireMinStep_noShift_always_succeeds() public view {
+        // discardedBitWidth=0: stepSize=1, so every non-zero value >= 1 passes
+        Quant q = harness.create(0, 8);
+        harness.requireMinStep(q, 1);
+    }
+
+    // -------------------------------------------------------------------------
     // Fuzz tests
     // -------------------------------------------------------------------------
 
@@ -302,7 +366,10 @@ contract UintQuantizationLibSmokeTest is Test {
         assertTrue(harness.isAligned(q, floored));
     }
 
-    function testFuzz_lower_bound_round_trip(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value) public view {
+    function testFuzz_lower_bound_round_trip(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value)
+        public
+        view
+    {
         vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
         // Use bound instead of assume: schemes with small max reject most random uint256 values.
@@ -311,7 +378,10 @@ contract UintQuantizationLibSmokeTest is Test {
         assertLe(decoded, value);
     }
 
-    function testFuzz_decodeMax_ge_decode(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 encoded) public view {
+    function testFuzz_decodeMax_ge_decode(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 encoded)
+        public
+        view
+    {
         vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
         // Bound to valid encoded range so the test exercises the documented domain.
@@ -319,13 +389,19 @@ contract UintQuantizationLibSmokeTest is Test {
         assertGe(harness.decodeMax(q, encoded), harness.decode(q, encoded));
     }
 
-    function testFuzz_remainder_lt_stepSize(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value) public view {
+    function testFuzz_remainder_lt_stepSize(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value)
+        public
+        view
+    {
         vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
         assertLt(harness.remainder(q, value), harness.stepSize(q));
     }
 
-    function testFuzz_isAligned_equivalence(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value) public view {
+    function testFuzz_isAligned_equivalence(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value)
+        public
+        view
+    {
         vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
         assertEq(harness.isAligned(q, value), harness.remainder(q, value) == 0);
@@ -353,7 +429,10 @@ contract UintQuantizationLibSmokeTest is Test {
         assertGe(harness.ceil(q, value), value);
     }
 
-    function testFuzz_encode_monotonicity(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 v1, uint256 v2) public view {
+    function testFuzz_encode_monotonicity(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 v1, uint256 v2)
+        public
+        view
+    {
         vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
         uint256 m = harness.max(q);
@@ -362,5 +441,37 @@ contract UintQuantizationLibSmokeTest is Test {
         v2 = bound(v2, 0, m);
         if (v1 > v2) (v1, v2) = (v2, v1);
         assertLe(harness.encode(q, v1), harness.encode(q, v2));
+    }
+
+    function testFuzz_requireAligned_consistent_with_isAligned(
+        uint8 discardedBitWidth_,
+        uint8 encodedBitWidth_,
+        uint256 value
+    ) public {
+        vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
+        Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
+        if (harness.isAligned(q, value)) {
+            harness.requireAligned(q, value); // must not revert
+        } else {
+            vm.expectRevert(abi.encodeWithSelector(NotAligned.selector, value, harness.stepSize(q)));
+            harness.requireAligned(q, value);
+        }
+    }
+
+    function testFuzz_requireMinStep_zero_always_passes(uint8 discardedBitWidth_, uint8 encodedBitWidth_) public view {
+        vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
+        Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
+        harness.requireMinStep(q, 0); // must not revert
+    }
+
+    function testFuzz_requireMinStep_ge_step_passes(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value)
+        public
+        view
+    {
+        vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
+        Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
+        uint256 step = harness.stepSize(q);
+        value = bound(value, step, type(uint256).max);
+        harness.requireMinStep(q, value); // must not revert
     }
 }
