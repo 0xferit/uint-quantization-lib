@@ -1,3 +1,13 @@
+## [7.1.0](https://github.com/0xferit/uint-quantization-lib/compare/v7.0.1...v7.1.0) (2026-03-14)
+
+### Features
+
+* add requireAligned() and requireMinStep() convenience guards ([0acead9](https://github.com/0xferit/uint-quantization-lib/commit/0acead9b4ed00e1f1265f94b8d0107cd1a04efa7))
+
+### Bug Fixes
+
+* badge now measures strict path and parses test logs ([9413c86](https://github.com/0xferit/uint-quantization-lib/commit/9413c868687fc2ee8246fe507359ebbc646ac96f))
+
 ## [7.0.1](https://github.com/0xferit/uint-quantization-lib/compare/v7.0.0...v7.0.1) (2026-03-13)
 
 ## [7.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v6.1.1...v7.0.0) (2026-03-13)

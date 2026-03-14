@@ -51,7 +51,7 @@ error BelowMinStep(uint256 value, uint256 stepSize);
 error CeilOverflow(uint256 value);
 
 library UintQuantizationLib {
-    string internal constant VERSION = "7.0.1";
+    string internal constant VERSION = "7.1.0";
 
     // -------------------------------------------------------------------------
     // Factory
