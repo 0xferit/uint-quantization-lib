@@ -32,7 +32,7 @@
 
     /* ── Nav ── */
     .nav { position: sticky; top: 0; z-index: 100; background: rgba(8,9,11,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
-    .nav-inner { max-width: 960px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
     .nav-logo { font-family: 'Azeret Mono', monospace; font-size: 0.85rem; font-weight: 600; color: var(--fg-0); text-decoration: none; letter-spacing: -0.02em; }
     .nav-logo:hover { color: var(--accent); text-decoration: none; }
     .nav-links { display: flex; align-items: center; gap: 24px; }
@@ -40,7 +40,7 @@
     .nav-links a:hover { color: var(--fg-0); text-decoration: none; }
     .nav-links a.active { color: var(--accent); }
 
-    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
     /* ── Buttons ── */
     .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 22px; border-radius: 6px; font-family: 'Sora', sans-serif; font-size: 0.9rem; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; }
@@ -94,6 +94,46 @@
     .footer p { font-size: 0.85rem; color: var(--fg-2); }
     .footer a { color: var(--fg-2); } .footer a:hover { color: var(--accent); }
 
+    /* ── Infographic ── */
+    .ig-pipeline { display: flex; align-items: center; gap: 0; margin-bottom: 20px; overflow-x: auto; }
+    .ig-stage { flex: 1; background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 12px; text-align: center; min-width: 130px; }
+    .ig-hl { border-color: var(--accent-dim); background: rgba(34,211,238,0.04); }
+    .ig-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-2); margin-bottom: 2px; }
+    .ig-num { font-family: 'Azeret Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--fg-0); margin-bottom: 10px; }
+    .ig-bar { display: flex; height: 20px; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+    .ig-seg { display: flex; align-items: center; justify-content: center; min-width: 1px; overflow: hidden; }
+    .ig-seg span { font-family: 'Azeret Mono', monospace; font-size: 0.58rem; font-weight: 500; color: rgba(255,255,255,0.7); white-space: nowrap; }
+    .ig-kept { background: var(--accent-dim); }
+    .ig-lost { background: rgba(251,191,36,0.3); }
+    .ig-zeros { background: rgba(255,255,255,0.06); border: 1px dashed rgba(255,255,255,0.12); }
+    .ig-empty { background: rgba(255,255,255,0.03); }
+    .ig-sub { font-size: 0.72rem; color: var(--fg-2); }
+    .ig-legend { display: flex; gap: 14px; justify-content: center; margin-top: 5px; }
+    .ig-legend-item { font-family: 'Azeret Mono', monospace; font-size: 0.6rem; color: var(--fg-2); display: flex; align-items: center; gap: 5px; }
+    .ig-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    .ig-dot.ig-kept { background: var(--accent-dim); }
+    .ig-dot.ig-lost { background: rgba(251,191,36,0.3); }
+    .ig-dot.ig-zeros { background: rgba(255,255,255,0.12); border: 1px dashed rgba(255,255,255,0.25); }
+    .ig-arrow { padding: 0 10px; text-align: center; flex-shrink: 0; }
+    .ig-arrow-op { font-family: 'Azeret Mono', monospace; font-size: 0.85rem; font-weight: 600; color: var(--fg-2); }
+    .ig-arrow-lbl { font-size: 0.62rem; color: var(--fg-2); text-transform: uppercase; letter-spacing: 0.05em; }
+    .ig-bridge { font-size: 0.9rem; color: var(--fg-1); line-height: 1.7; margin-bottom: 20px; }
+    .ig-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .ig-slot-side { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .ig-slot-side-hl { border-color: var(--accent-dim); }
+    .ig-slot-hd { font-size: 0.78rem; font-weight: 600; color: var(--fg-1); margin-bottom: 10px; }
+    .ig-slot-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .ig-slot-n { font-family: 'Azeret Mono', monospace; font-size: 0.65rem; color: var(--fg-2); width: 14px; flex-shrink: 0; }
+    .ig-slot-bar { flex: 1; display: flex; height: 28px; border-radius: 3px; overflow: hidden; }
+
+    /* ── Ask AI ── */
+    .ask-ai { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; }
+    .ask-q { font-size: 0.92rem; color: var(--fg-1); line-height: 1.7; margin-bottom: 18px; padding: 14px 16px; background: var(--bg-2); border-radius: var(--radius); border-left: 3px solid var(--accent-dim); }
+    .ask-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ask-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 6px; font-family: 'Sora', sans-serif; font-size: 0.85rem; font-weight: 500; border: 1px solid var(--border); background: var(--bg-2); color: var(--fg-0); cursor: pointer; transition: all 0.2s; }
+    .ask-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+    .ask-btn.copied { border-color: var(--green-dim); color: var(--green); }
+
     /* ── Scroll reveal ── */
     .sr { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .sr.visible { opacity: 1; transform: translateY(0); }
@@ -105,6 +145,10 @@
       .api-item { flex-direction: column; gap: 4px; }
       .api-desc { text-align: left; }
       .nav-links { gap: 16px; }
+      .ig-pipeline { flex-direction: column; }
+      .ig-arrow { padding: 4px 0; }
+      .ig-slots { grid-template-columns: 1fr; }
+      .ask-btns { flex-direction: column; }
     }
   </style>
 </head>
@@ -127,7 +171,7 @@
     <section class="hero">
       <span class="hero-tag">Solidity Library</span>
       <h1>Stop paying for resolution you don't need.</h1>
-      <p class="hero-desc">A Solidity library that compresses uint256 values into smaller types for tighter struct packing and lower gas costs.</p>
+      <p class="hero-desc">A Solidity library for shift-based quantization of unsigned integers, enabling tighter struct packing and lower gas costs.</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="https://github.com/0xferit/uint-quantization-lib">View on GitHub</a>
         <a class="btn btn-outline" href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Documentation</a>
@@ -159,11 +203,62 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
     </section>
 
     <section class="section">
-      <h2 class="section-title sr">Why Quantization?</h2>
-      <div class="card-grid">
-        <div class="card sr" style="transition-delay:0.1s">
-          <h3>Gas Savings</h3>
-          <p>Compress values that don't need full uint256 resolution so more fields fit per storage slot, cutting SSTORE/SLOAD costs.</p>
+      <h2 class="section-title sr">How It Works</h2>
+      <div class="ig-pipeline sr" style="transition-delay:0.1s">
+        <div class="ig-stage">
+          <div class="ig-label">Original</div>
+          <div class="ig-num">1e18 wei</div>
+          <div class="ig-bar">
+            <div class="ig-seg ig-kept" style="flex:224"></div>
+            <div class="ig-seg ig-lost" style="flex:32"></div>
+          </div>
+          <div class="ig-legend">
+            <span class="ig-legend-item"><span class="ig-dot ig-kept"></span>kept: 224 bits</span>
+            <span class="ig-legend-item"><span class="ig-dot ig-lost"></span>discarded: 32 bits</span>
+          </div>
+          <div class="ig-sub">256 bits total (1 token, 18 decimals)</div>
+        </div>
+        <div class="ig-arrow">
+          <div class="ig-arrow-op">&gt;&gt; 32</div>
+          <div class="ig-arrow-lbl">encode</div>
+        </div>
+        <div class="ig-stage ig-hl">
+          <div class="ig-label">Stored</div>
+          <div class="ig-num">232,830,643 wei</div>
+          <div class="ig-bar">
+            <div class="ig-seg ig-kept" style="flex:1"></div>
+          </div>
+          <div class="ig-sub">fits in uint224</div>
+        </div>
+        <div class="ig-arrow">
+          <div class="ig-arrow-op">&lt;&lt; 32</div>
+          <div class="ig-arrow-lbl">decode</div>
+        </div>
+        <div class="ig-stage">
+          <div class="ig-label">Restored</div>
+          <div class="ig-num">&asymp; 1e18 wei</div>
+          <div class="ig-bar">
+            <div class="ig-seg ig-kept" style="flex:224"></div>
+            <div class="ig-seg ig-zeros" style="flex:32"></div>
+          </div>
+          <div class="ig-legend">
+            <span class="ig-legend-item"><span class="ig-dot ig-kept"></span>preserved: 224 bits</span>
+            <span class="ig-legend-item"><span class="ig-dot ig-zeros"></span>zero-filled: 32 bits</span>
+          </div>
+          <div class="ig-sub">max error &lt; 2^32 wei (~4.3 gwei)</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <h2 class="section-title sr">Ask an AI</h2>
+      <div class="ask-ai sr" style="transition-delay:0.1s">
+        <p class="ask-q" id="askQuestion">Explain how the uint-quantization-lib Solidity library (https://github.com/0xferit/uint-quantization-lib) works. How does its shift-based quantization reduce gas costs, and what are the tradeoffs?</p>
+        <div class="ask-btns">
+          <button class="ask-btn" data-url="https://claude.ai/new">Ask Claude</button>
+          <button class="ask-btn" data-url="https://chatgpt.com">Ask ChatGPT</button>
+          <button class="ask-btn" data-url="https://gemini.google.com/app">Ask Gemini</button>
+          <button class="ask-btn" data-url="https://www.perplexity.ai/search">Ask Perplexity</button>
         </div>
       </div>
     </section>
@@ -171,12 +266,13 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
     <section class="section">
       <h2 class="section-title sr">API</h2>
       <div class="api-list sr" style="transition-delay:0.1s">
-        <div class="api-item"><code class="api-fn">create(shift, targetBits)</code><span class="api-desc">Create a quantization scheme</span></div>
+        <div class="api-item"><code class="api-fn">create(discardedBitWidth, encodedBitWidth)</code><span class="api-desc">Create a quantization scheme</span></div>
         <div class="api-item"><code class="api-fn">encode(value)</code><span class="api-desc">Floor-encode a value (reverts on overflow)</span></div>
-        <div class="api-item"><code class="api-fn">encode(value, true)</code><span class="api-desc">Strict encode (reverts if value is not step-aligned)</span></div>
-        <div class="api-item"><code class="api-fn">decode(encoded)</code><span class="api-desc">Restore lower-bound value</span></div>
-        <div class="api-item"><code class="api-fn">decodeMax(encoded)</code><span class="api-desc">Restore upper-bound value</span></div>
-        <div class="api-item"><code class="api-fn">fits(value)</code><span class="api-desc">Check if value is representable</span></div>
+        <div class="api-item"><code class="api-fn">encode(value, true)</code><span class="api-desc">Strict encode (reverts if not step-aligned)</span></div>
+        <div class="api-item"><code class="api-fn">decode(encoded) / decodeMax(encoded)</code><span class="api-desc">Restore lower-bound or upper-bound value</span></div>
+        <div class="api-item"><code class="api-fn">fits(value) / fitsEncoded(encoded)</code><span class="api-desc">Check if value is representable</span></div>
+        <div class="api-item"><code class="api-fn">isAligned(value) / remainder(value)</code><span class="api-desc">Check step alignment and lost bits</span></div>
+        <div class="api-item"><code class="api-fn">requireAligned(value) / requireMinStep(value)</code><span class="api-desc">Guard helpers that revert on bad input</span></div>
         <div class="api-item"><code class="api-fn">floor(value) / ceil(value)</code><span class="api-desc">Snap to nearest step boundary</span></div>
         <div class="api-item"><code class="api-fn">stepSize() / max()</code><span class="api-desc">Query scheme parameters</span></div>
       </div>
@@ -194,6 +290,22 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold: 0.1 });
     document.querySelectorAll('.sr').forEach(el => srObs.observe(el));
+
+    /* ── Ask AI ── */
+    document.querySelectorAll('.ask-btn').forEach(function(btn) {
+      var label = btn.textContent;
+      btn.addEventListener('click', function() {
+        var q = document.getElementById('askQuestion').textContent;
+        navigator.clipboard.writeText(q).then(function() {
+          var url = btn.dataset.url;
+          if (url.indexOf('perplexity') !== -1) url += '?q=' + encodeURIComponent(q);
+          window.open(url, '_blank');
+          btn.classList.add('copied');
+          btn.textContent = 'Copied! Paste in chat';
+          setTimeout(function() { btn.classList.remove('copied'); btn.textContent = label; }, 3000);
+        });
+      });
+    });
   })();
   </script>
 </body>

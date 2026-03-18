@@ -61,6 +61,8 @@ The `Quant` value type is a `uint16` with the following bit layout:
 | `q.ceil(value)` | Rounds `value` up to the nearest step boundary. Reverts with `CeilOverflow` when rounding up would exceed `type(uint256).max`. |
 | `q.remainder(value)` | Resolution lost if `value` were floor-encoded (`value mod stepSize`). |
 | `q.isAligned(value)` | True if `value` is step-aligned (no resolution loss on encode). |
+| `q.requireAligned(value)` | Reverts with `NotAligned` if `value` is not a multiple of the step size. |
+| `q.requireMinStep(value)` | Reverts with `BelowMinStep` if `value` is non-zero and smaller than the step size. Zero is always allowed. |
 | `q.stepSize()` | Smallest non-zero value the scheme can represent (`2^discardedBitWidth`). |
 | `q.max()` | Largest value the scheme can represent: `(2^encodedBitWidth - 1) << discardedBitWidth`. |
 
@@ -71,6 +73,7 @@ error BadConfig(uint256 discardedBitWidth, uint256 encodedBitWidth);
 error Overflow(uint256 value, uint256 max);
 error NotAligned(uint256 value, uint256 stepSize);
 error CeilOverflow(uint256 value);
+error BelowMinStep(uint256 value, uint256 stepSize);
 ```
 
 ### Solidity usage

@@ -1,935 +1,1022 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Struct Packing Playground | uint-quantization-lib</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-0: #08090b; --bg-1: #0f1114; --bg-2: #17191d; --bg-3: #1f2127;
-      --border: #26282e; --border-focus: #3a3d44;
-      --fg-0: #ecedef; --fg-1: #9fa1a8; --fg-2: #5f6168;
-      --accent: #22d3ee; --accent-hover: #06b6d4; --accent-dim: #0e7490;
-      --accent-ghost: rgba(34,211,238,0.06);
-      --green: #34d399; --green-dim: #059669; --green-ghost: rgba(52,211,153,0.06);
-      --red: #fb7185; --red-ghost: rgba(251,113,133,0.06);
-      --amber: #fbbf24; --violet: #c084fc;
-      --code-bg: #0b0c0e; --radius: 8px; --radius-lg: 12px;
-    }
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Sora', sans-serif; background: var(--bg-0); color: var(--fg-1);
-      line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100vh;
-      background-image: radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px);
-      background-size: 24px 24px;
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { color: var(--accent-hover); }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uint-quantization-lib Playground</title>
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #151515;
+  --surface-2: #1c1c1c;
+  --surface-3: #262626;
+  --border: #2e2e2e;
+  --text: #d4d4d4;
+  --text-dim: #666;
+  --text-bright: #f5f5f5;
+  --accent: #14b8a6;
+  --accent-dim: #0d7d72;
+  --warn: #d97706;
+  --warn-dim: #92510a;
+  --unused-c: #333;
+  --err: #ef4444;
+  --mono: 'SF Mono','Fira Code','Cascadia Code','JetBrains Mono','Consolas',monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-bright);
+  letter-spacing: -0.3px;
+}
+header .version {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.app {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.controls {
+  width: 300px;
+  min-width: 300px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.preview {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
 
-    /* ── Ambient ── */
-    .bg-glow { position: fixed; border-radius: 50%; pointer-events: none; z-index: -1; }
-    .bg-glow-1 { top: -200px; right: -100px; width: 700px; height: 700px; background: radial-gradient(circle, rgba(34,211,238,0.04) 0%, transparent 70%); filter: blur(100px); }
-    .bg-glow-2 { bottom: -300px; left: -200px; width: 800px; height: 800px; background: radial-gradient(circle, rgba(52,211,153,0.03) 0%, transparent 70%); filter: blur(120px); }
+/* Presets */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.preset-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.preset-btn:hover { border-color: var(--accent); color: var(--text-bright); }
+.preset-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--text-bright); }
 
-    /* ── Nav ── */
-    .nav { position: sticky; top: 0; z-index: 100; background: rgba(8,9,11,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
-    .nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
-    .nav-logo { font-family: 'Azeret Mono', monospace; font-size: 0.85rem; font-weight: 600; color: var(--fg-0); text-decoration: none; letter-spacing: -0.02em; }
-    .nav-logo:hover { color: var(--accent); }
-    .nav-links { display: flex; align-items: center; gap: 24px; }
-    .nav-links a { font-size: 0.85rem; font-weight: 500; color: var(--fg-2); text-decoration: none; transition: color 0.2s; }
-    .nav-links a:hover { color: var(--fg-0); }
-    .nav-links a.active { color: var(--accent); }
+/* Inputs */
+.field { margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+.field-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.field-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 4px;
+}
+.field-row input[type="number"],
+.val-input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-bright);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field-row input[type="number"] { width: 56px; text-align: center; }
+.field-row input[type="number"]:focus,
+.val-input:focus { border-color: var(--accent); }
+.val-input { width: 100%; }
+.val-input.invalid { border-color: var(--err); }
+.quick-vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.quick-btn {
+  background: var(--surface-3);
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.quick-btn:hover { color: var(--text); border-color: var(--border); }
+.error-msg {
+  color: var(--err);
+  font-size: 11px;
+  margin-top: 4px;
+  font-family: var(--mono);
+  min-height: 16px;
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.checkbox-row input { accent-color: var(--accent); }
 
-    /* ── Layout ── */
-    .playground { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 20px; max-width: 1280px; margin: 0 auto; }
-    @media (min-width: 860px) { .playground { grid-template-columns: 380px 1fr; } }
-    .left-col, .right-col { min-width: 0; }
+/* Zone bar */
+.zone-container { position: relative; }
+.zone-bar {
+  display: flex;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 3px;
+  transition: flex-basis 0.35s ease;
+  position: relative;
+  overflow: hidden;
+}
+.zone.unused-zone { background: var(--unused-c); }
+.zone.encoded-zone { background: var(--accent-dim); }
+.zone.discarded-zone { background: var(--warn-dim); }
+.zone-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+.zone-name {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255,255,255,0.7);
+}
+.zone-bits-label {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+.zone-indices {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 2px 0;
+  position: relative;
+  height: 18px;
+}
+.zone-idx {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  position: absolute;
+  transform: translateX(-50%);
+}
+.zone-idx:first-child { transform: translateX(0); }
+.zone-idx:last-child { transform: translateX(-100%); }
+.zone-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  line-height: 1.5;
+}
 
-    /* ── Panels ── */
-    .panel { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-    .panel + .panel { margin-top: 16px; }
-    .panel-section + .panel-section { border-top: 1px solid var(--border); }
-    .panel-header {
-      font-size: 0.6rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--fg-2); padding: 11px 20px; background: rgba(255,255,255,0.015);
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    }
-    .panel-body { padding: 20px; }
+/* Properties grid */
+.props-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.prop {
+  background: var(--surface);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.prop-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+}
+.prop-value {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text-bright);
+  word-break: break-all;
+}
+.prop-sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
 
-    /* ── Inputs ── */
-    input[type="text"], input[type="number"], select {
-      background: var(--bg-0); border: 1px solid var(--border); color: var(--fg-0);
-      font-family: 'Azeret Mono', monospace; font-size: 0.78rem; padding: 6px 8px;
-      border-radius: 6px; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    input:focus, select:focus { border-color: var(--accent-dim); box-shadow: 0 0 0 3px rgba(34,211,238,0.08); }
-    input[type="number"] { -moz-appearance: textfield; }
-    input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-    select { cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235f6168'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+/* Results */
+.results-section { display: none; }
+.results-section.visible { display: block; }
+.result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.result-grid.full { grid-template-columns: 1fr; }
+.result {
+  background: var(--surface);
+  padding: 10px 14px;
+}
+.result-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+.result-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-bright);
+  word-break: break-all;
+}
+.result-value.loss { color: var(--warn); }
+.result-value.ok { color: var(--accent); }
+.result-value.err { color: var(--err); }
+.result-sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
 
-    /* ── Struct name ── */
-    .struct-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-    .struct-name-row label { font-family: 'Azeret Mono', monospace; font-size: 0.78rem; color: var(--accent); font-weight: 600; }
-    .struct-name-row input { flex: 1; font-size: 0.82rem; padding: 7px 10px; }
+/* Range bar */
+.range-viz {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.range-viz-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.range-track {
+  height: 24px;
+  background: var(--surface-3);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.range-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-dim) 0%, var(--accent) 100%);
+  border-radius: 4px;
+  position: relative;
+}
+.range-marker {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--text-bright);
+  box-shadow: 0 0 4px rgba(255,255,255,0.5);
+}
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.range-labels span {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.range-labels .marker-label {
+  position: absolute;
+  transform: translateX(-50%);
+  color: var(--text-bright);
+  font-weight: 600;
+}
 
-    /* ── Field list ── */
-    .field-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-    .field-row {
-      background: var(--bg-0); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
-      transition: border-color 0.2s, background 0.15s, box-shadow 0.2s;
-      animation: fadeUp 0.3s ease both;
-    }
-    .field-row:hover { border-color: var(--border-focus); background: var(--bg-1); }
-    .field-row.has-error { border-color: rgba(251,113,133,0.3); }
-    .field-main { display: flex; align-items: center; gap: 6px; padding: 8px 10px; }
-    .field-color { width: 4px; height: 28px; border-radius: 2px; flex-shrink: 0; }
-    .field-reorder { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
-    .reorder-btn {
-      display: flex; align-items: center; justify-content: center;
-      width: 20px; height: 14px; background: transparent; border: 1px solid var(--border);
-      border-radius: 3px; color: var(--fg-2); font-size: 0.55rem; cursor: pointer;
-      transition: all 0.15s; line-height: 1; padding: 0;
-    }
-    .reorder-btn:hover { background: var(--bg-3); color: var(--fg-0); border-color: var(--border-focus); }
-    .reorder-btn:disabled { opacity: 0.2; cursor: default; }
-    .field-name-input { width: 90px; flex-shrink: 0; }
-    .field-type-select { width: 82px; flex-shrink: 0; font-size: 0.72rem; }
-    .quant-toggle {
-      display: flex; align-items: center; justify-content: center;
-      width: 28px; height: 28px; background: transparent; border: 1px solid var(--border);
-      border-radius: 6px; color: var(--fg-2); font-family: 'Azeret Mono', monospace;
-      font-size: 0.65rem; font-weight: 700; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
-    }
-    .quant-toggle:hover:not(:disabled) { background: var(--accent-ghost); border-color: var(--accent-dim); color: var(--accent); }
-    .quant-toggle.active { background: rgba(34,211,238,0.12); border-color: var(--accent-dim); color: var(--accent); }
-    .quant-toggle:disabled { opacity: 0.15; cursor: default; }
-    .field-remove {
-      display: flex; align-items: center; justify-content: center;
-      width: 24px; height: 24px; background: transparent; border: none;
-      color: var(--fg-2); font-size: 0.85rem; cursor: pointer; transition: color 0.15s;
-      flex-shrink: 0; border-radius: 4px;
-    }
-    .field-remove:hover { color: var(--red); background: var(--red-ghost); }
+/* Code */
+.code-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  overflow-x: auto;
+  white-space: pre;
+  position: relative;
+}
+.code-block .cm { color: var(--text-dim); }
+.code-block .kw { color: #c084fc; }
+.code-block .ty { color: #38bdf8; }
+.code-block .num { color: #fbbf24; }
+.code-block .fn { color: #34d399; }
 
-    /* ── Quantization sub-row ── */
-    .field-quant { padding: 8px 10px 10px 30px; border-top: 1px solid var(--border); background: rgba(34,211,238,0.02); }
-    .quant-params { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .quant-params label { font-size: 0.62rem; font-weight: 600; color: var(--fg-2); letter-spacing: 0.06em; text-transform: uppercase; }
-    .quant-params input[type="number"] { width: 56px; font-size: 0.72rem; padding: 4px 6px; }
-    .quant-info { font-family: 'Azeret Mono', monospace; font-size: 0.68rem; color: var(--fg-2); margin-top: 6px; }
-    .quant-info span { color: var(--accent); }
-    .quant-error { font-size: 0.68rem; color: var(--red); margin-top: 4px; }
+/* Prompt */
+.prompt-area {
+  border-top: 1px solid var(--border);
+  padding: 16px 24px;
+  background: var(--surface);
+}
+.prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.prompt-header .section-label { margin-bottom: 0; }
+.copy-btn {
+  background: var(--accent-dim);
+  border: none;
+  color: var(--text-bright);
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.copy-btn:hover { background: var(--accent); }
+.copy-btn.copied { background: #16a34a; }
+.prompt-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 40px;
+}
 
-    /* ── Add field ── */
-    .add-field-btn {
-      display: block; width: 100%; padding: 10px; background: transparent;
-      border: 1px dashed var(--border); border-radius: 8px; color: var(--fg-2);
-      font-family: 'Sora', sans-serif; font-size: 0.78rem; font-weight: 600;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .add-field-btn:hover { border-color: var(--accent-dim); color: var(--accent); background: var(--accent-ghost); }
+/* Intro */
+.intro {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: relative;
+}
+.intro-content { max-width: 820px; }
+.intro-text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.intro-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-family: var(--mono);
+  overflow-x: auto;
+}
+.intro-step {
+  text-align: center;
+  padding: 10px 16px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  min-width: 100px;
+}
+.intro-step.compact {
+  border-color: var(--accent);
+  background: rgba(20, 184, 166, 0.08);
+}
+.intro-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+.intro-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.intro-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 10px;
+  color: var(--text-dim);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.intro-arrow-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.intro-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  font-family: inherit;
+}
+.intro-close:hover { color: var(--text); }
 
-    /* ── Presets ── */
-    .presets { display: flex; flex-direction: column; gap: 6px; }
-    .preset-btn {
-      display: block; width: 100%; padding: 9px 14px; background: transparent;
-      border: 1px solid var(--border); border-radius: 6px; color: var(--fg-1);
-      font-family: 'Sora', sans-serif; font-size: 0.78rem; font-weight: 600;
-      text-align: left; cursor: pointer; transition: all 0.2s;
-    }
-    .preset-btn:hover { background: var(--accent-ghost); border-color: var(--accent-dim); color: var(--accent); }
-    .preset-btn.active { background: var(--accent-ghost); border-color: var(--accent-dim); color: var(--accent); }
-    .preset-desc { display: block; font-size: 0.58rem; color: var(--fg-2); font-weight: 400; margin-top: 1px; }
-
-    /* ── View tabs ── */
-    .view-tabs { display: flex; gap: 2px; background: var(--bg-0); border-radius: 6px; padding: 2px; }
-    .view-tab {
-      padding: 4px 10px; border: none; background: transparent; color: var(--fg-2);
-      font-family: 'Sora', sans-serif; font-size: 0.58rem; font-weight: 600;
-      letter-spacing: 0.06em; text-transform: uppercase; border-radius: 4px;
-      cursor: pointer; transition: all 0.2s; white-space: nowrap;
-    }
-    .view-tab:hover { color: var(--fg-1); }
-    .view-tab.active { background: var(--bg-3); color: var(--accent); }
-
-    /* ── Slot visualization ── */
-    .viz-container { display: flex; flex-direction: column; gap: 20px; }
-    .viz-column { flex: 1; min-width: 0; }
-    .viz-side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    @media (max-width: 1060px) { .viz-side-by-side { grid-template-columns: 1fr; } }
-    .viz-label {
-      font-size: 0.6rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--fg-2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
-    }
-    .viz-label .slot-count {
-      font-family: 'Azeret Mono', monospace; font-size: 0.68rem; font-weight: 700;
-      padding: 2px 8px; border-radius: 4px; letter-spacing: 0;
-    }
-    .slot-count-normal { background: rgba(255,255,255,0.04); color: var(--fg-1); }
-    .slot-count-good { background: var(--green-ghost); color: var(--green); }
-
-    .slot-group { display: flex; flex-direction: column; gap: 10px; }
-    .slot-item { animation: fadeUp 0.3s ease both; }
-    .slot-header { font-family: 'Azeret Mono', monospace; font-size: 0.6rem; color: var(--fg-2); margin-bottom: 4px; }
-    .slot-bar { display: flex; height: 52px; border-radius: 6px; overflow: hidden; background: var(--bg-0); border: 1px solid var(--border); }
-    .slot-seg {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-width: 0; overflow: hidden; position: relative;
-      transition: flex 0.3s ease, filter 0.2s, opacity 0.2s, transform 0.15s;
-    }
-    .slot-seg:hover { filter: brightness(1.3); box-shadow: inset 0 0 8px rgba(255,255,255,0.06); }
-    .slot-seg-name {
-      font-size: 0.56rem; font-weight: 600; letter-spacing: 0.04em; opacity: 0.9;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; padding: 0 4px;
-    }
-    .slot-seg-bits { font-family: 'Azeret Mono', monospace; font-size: 0.65rem; font-weight: 700; }
-    .slot-seg-quant { font-size: 0.5rem; opacity: 0.6; position: absolute; top: 2px; right: 3px; }
-    .slot-waste {
-      background: repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.035) 3px, rgba(255,255,255,0.035) 6px);
-      color: var(--fg-2);
-    }
-    .empty-msg { font-size: 0.78rem; color: var(--fg-2); text-align: center; padding: 24px 0; }
-
-    /* ── Summary ── */
-    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    @media (max-width: 560px) { .summary-grid { grid-template-columns: 1fr; } }
-    .summary-card { background: var(--bg-0); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
-    .summary-card-label { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-2); margin-bottom: 6px; }
-    .summary-stat { display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; }
-    .summary-val { font-family: 'Azeret Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--fg-0); }
-    .summary-unit { font-size: 0.72rem; color: var(--fg-2); }
-    .summary-detail { font-family: 'Azeret Mono', monospace; font-size: 0.68rem; color: var(--fg-2); }
-    .delta-row {
-      display: flex; align-items: center; gap: 16px; padding: 12px 16px;
-      background: var(--bg-0); border: 1px solid var(--border); border-radius: 8px; flex-wrap: wrap;
-    }
-    .delta-item { display: flex; align-items: baseline; gap: 5px; }
-    .delta-val { font-family: 'Azeret Mono', monospace; font-size: 0.82rem; font-weight: 700; }
-    .delta-val.positive { color: var(--green); }
-    .delta-val.neutral { color: var(--fg-2); }
-    .delta-label { font-size: 0.68rem; color: var(--fg-2); }
-
-    /* ── Code output ── */
-    .code-wrap { position: relative; }
-    .code-out {
-      font-family: 'Azeret Mono', monospace; font-size: 0.72rem; line-height: 1.65;
-      color: var(--fg-1); background: var(--bg-0); border: 1px solid var(--border);
-      border-radius: 6px; padding: 14px 16px; overflow-x: auto; white-space: pre; margin: 0;
-      min-height: 60px;
-    }
-    .copy-btn {
-      position: absolute; top: 8px; right: 8px;
-      background: var(--bg-3); border: none; color: var(--fg-2);
-      padding: 4px 10px; border-radius: 4px; font-size: 0.58rem;
-      cursor: pointer; font-family: 'Sora', sans-serif; font-weight: 600;
-      letter-spacing: 0.06em; text-transform: uppercase; transition: all 0.2s;
-    }
-    .copy-btn:hover { background: var(--accent); color: var(--bg-0); }
-
-    /* ── Animations ── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(14px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Cross-highlighting ── */
-    .field-row.highlight { border-color: var(--border-focus); box-shadow: 0 0 0 1px var(--border-focus); }
-    .slot-seg.highlight { filter: brightness(1.4); box-shadow: inset 0 0 12px rgba(255,255,255,0.08); z-index: 1; }
-    .slot-seg.dimmed { opacity: 0.3; }
-
-    /* ── Delta indicator ── */
-    .viz-delta-indicator {
-      grid-column: 1 / -1; justify-self: center;
-      font-family: 'Azeret Mono', monospace; font-size: 0.72rem; font-weight: 700;
-      color: var(--green); background: var(--green-ghost); border: 1px solid rgba(52,211,153,0.18);
-      padding: 4px 14px; border-radius: 999px; letter-spacing: 0.02em;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 859px) {
-      .playground { padding: 12px; }
-      .field-name-input { width: 72px; }
-      .field-type-select { width: 74px; }
-    }
-  </style>
+/* Responsive */
+@media (max-width: 800px) {
+  .app { flex-direction: column; }
+  .controls {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .props-grid, .result-grid { grid-template-columns: 1fr; }
+}
+</style>
 </head>
 <body>
-  <div class="bg-glow bg-glow-1"></div>
-  <div class="bg-glow bg-glow-2"></div>
 
-  <nav class="nav">
-    <div class="nav-inner">
-      <a href="index.html" class="nav-logo">uint-quantization-lib</a>
-      <div class="nav-links">
-        <a href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Docs</a>
-        <a href="playground.html" class="active">Playground</a>
-        <a href="https://github.com/0xferit/uint-quantization-lib">GitHub</a>
+<header>
+  <h1>uint-quantization-lib</h1>
+  <span class="version">v7.1.0</span>
+</header>
+
+<div class="intro" id="intro">
+  <div class="intro-content">
+    <p class="intro-text">
+      Ethereum storage charges 20,000 gas per cold write to a 256-bit slot, even when values use a fraction of the bits available. This library shrinks values by discarding low-order bits (right-shift), packs the result into a smaller type, and restores it by shifting back. The tradeoff: controlled precision loss for cheaper, denser storage.
+    </p>
+    <div class="intro-flow">
+      <div class="intro-step">
+        <div class="intro-val">1,000,000</div>
+        <div class="intro-sub">original (20 bits)</div>
+      </div>
+      <div class="intro-arrow">
+        <span>&gt;&gt; 8</span>
+        <span class="intro-arrow-label">encode</span>
+      </div>
+      <div class="intro-step compact">
+        <div class="intro-val">3,906</div>
+        <div class="intro-sub">stored (12 bits)</div>
+      </div>
+      <div class="intro-arrow">
+        <span>&lt;&lt; 8</span>
+        <span class="intro-arrow-label">decode</span>
+      </div>
+      <div class="intro-step">
+        <div class="intro-val">999,936</div>
+        <div class="intro-sub">restored (64 lost)</div>
       </div>
     </div>
-  </nav>
+  </div>
+  <button class="intro-close" onclick="this.parentElement.style.display='none'" title="Hide intro">&times;</button>
+</div>
 
-  <main class="playground">
-    <!-- Left panel -->
-    <div class="left-col">
-      <div class="panel">
-        <div class="panel-section">
-          <div class="panel-header">Struct Definition</div>
-          <div class="panel-body">
-            <div class="struct-name-row">
-              <label>struct</label>
-              <input type="text" id="structNameInput" value="UserStake" spellcheck="false" autocomplete="off">
-            </div>
-            <div class="field-list" id="fieldList"></div>
-            <button class="add-field-btn" id="addFieldBtn">+ Add Field</button>
-          </div>
+<div class="app">
+  <aside class="controls">
+
+    <div>
+      <div class="section-label">Presets</div>
+      <div class="presets" id="presets"></div>
+    </div>
+
+    <div>
+      <div class="section-label">Scheme</div>
+      <div class="field">
+        <div class="field-label">discardedBitWidth <span id="dVal" style="font-family:var(--mono);color:var(--text-bright)">16</span></div>
+        <div class="field-row">
+          <input type="range" id="dSlider" min="0" max="255" value="16">
+          <input type="number" id="dNum" min="0" max="255" value="16">
         </div>
-        <div class="panel-section">
-          <div class="panel-header">Presets</div>
-          <div class="panel-body"><div class="presets" id="presets"></div></div>
+      </div>
+      <div class="field">
+        <div class="field-label">encodedBitWidth <span id="eVal" style="font-family:var(--mono);color:var(--text-bright)">96</span></div>
+        <div class="field-row">
+          <input type="range" id="eSlider" min="0" max="255" value="96">
+          <input type="number" id="eNum" min="0" max="255" value="96">
         </div>
+      </div>
+      <div class="error-msg" id="configError"></div>
+    </div>
+
+    <div>
+      <div class="section-label">Test Value</div>
+      <input type="text" class="val-input" id="valueInput" placeholder="Enter a uint256 value" value="1000000000000000000" spellcheck="false" autocomplete="off">
+      <div class="quick-vals" id="quickVals"></div>
+      <div class="error-msg" id="valueError"></div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="preciseCheck"> precise mode (require step-aligned)
+      </label>
+    </div>
+
+  </aside>
+
+  <main class="preview">
+    <div>
+      <div class="section-label">Bit Layout (uint256)</div>
+      <div class="zone-container">
+        <div class="zone-bar" id="zoneBar"></div>
+        <div class="zone-indices" id="zoneIndices"></div>
       </div>
     </div>
 
-    <!-- Right panel -->
-    <div class="right-col">
-      <div class="panel">
-        <div class="panel-section">
-          <div class="panel-header">
-            <span>Storage Layout</span>
-            <div class="view-tabs" id="viewTabs">
-              <button class="view-tab" data-view="original">Original</button>
-              <button class="view-tab" data-view="quantized">Quantized</button>
-              <button class="view-tab active" data-view="side">Side by Side</button>
-            </div>
-          </div>
-          <div class="panel-body" id="vizPanel"></div>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-section">
-          <div class="panel-header">Summary</div>
-          <div class="panel-body" id="summaryPanel"></div>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-section">
-          <div class="panel-header">Generated Solidity</div>
-          <div class="panel-body">
-            <div class="code-wrap">
-              <pre class="code-out" id="codeOut"></pre>
-              <button class="copy-btn" id="copyBtn">Copy</button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div>
+      <div class="section-label">Scheme Properties</div>
+      <div class="props-grid" id="propsGrid"></div>
+    </div>
+
+    <div class="results-section" id="resultsSection">
+      <div class="section-label">Encode / Decode</div>
+      <div class="result-grid" id="resultGrid"></div>
+      <div id="rangeViz"></div>
+    </div>
+
+    <div>
+      <div class="section-label">Solidity</div>
+      <div class="code-block" id="codeBlock"></div>
     </div>
   </main>
+</div>
 
-  <script>
-  (function() {
-    // ── Color palette ──
-    const PALETTE = [
-      { bg: 'rgba(34,211,238,0.15)',  border: 'rgba(34,211,238,0.25)',  text: '#22d3ee'  },
-      { bg: 'rgba(52,211,153,0.15)',  border: 'rgba(52,211,153,0.25)',  text: '#34d399'  },
-      { bg: 'rgba(251,191,36,0.15)',  border: 'rgba(251,191,36,0.25)', text: '#fbbf24'  },
-      { bg: 'rgba(192,132,252,0.15)', border: 'rgba(192,132,252,0.25)', text: '#c084fc'  },
-      { bg: 'rgba(251,113,133,0.15)', border: 'rgba(251,113,133,0.25)', text: '#fb7185'  },
-      { bg: 'rgba(56,189,248,0.15)',  border: 'rgba(56,189,248,0.25)',  text: '#38bdf8'  },
-      { bg: 'rgba(163,230,53,0.15)',  border: 'rgba(163,230,53,0.25)',  text: '#a3e635'  },
-      { bg: 'rgba(251,146,60,0.15)',  border: 'rgba(251,146,60,0.25)',  text: '#fb923c'  },
-    ];
+<div class="prompt-area">
+  <div class="prompt-header">
+    <div class="section-label">Prompt</div>
+    <button class="copy-btn" id="copyBtn">Copy</button>
+  </div>
+  <div class="prompt-text" id="promptText"></div>
+</div>
 
-    // ── Presets ──
-    const PRESETS = [
-      {
-        name: 'ETH Staking (raw)',
-        desc: 'uint128 amount, uint64 timestamps, bool active',
-        structName: 'UserStakeRaw',
-        fields: [
-          { name: 'amount',          bits: 128, isBool: false, quantized: false, shift: 0, targetBits: 64 },
-          { name: 'stakedAt',        bits: 64,  isBool: false, quantized: false, shift: 0, targetBits: 32 },
-          { name: 'cooldownEndsAt',  bits: 64,  isBool: false, quantized: false, shift: 0, targetBits: 32 },
-          { name: 'active',          bits: 8,   isBool: true,  quantized: false, shift: 0, targetBits: 8 },
-        ],
-      },
-      {
-        name: 'ETH Staking (quantized)',
-        desc: 'amount >> create(16, 96), fits in 1 slot',
-        structName: 'UserStake',
-        fields: [
-          { name: 'amount',          bits: 128, isBool: false, quantized: true,  shift: 16, targetBits: 96 },
-          { name: 'stakedAt',        bits: 64,  isBool: false, quantized: false, shift: 0,  targetBits: 32 },
-          { name: 'cooldownEndsAt',  bits: 64,  isBool: false, quantized: false, shift: 0,  targetBits: 32 },
-          { name: 'active',          bits: 8,   isBool: true,  quantized: false, shift: 0,  targetBits: 8 },
-        ],
-      },
-    ];
+<script>
+const UINT256_MAX = (1n << 256n) - 1n;
 
-    // ── State ──
-    let structName = 'UserStake';
-    let fields = [];
-    let nextId = 1;
-    let viewMode = 'side';
-    let activePreset = -1;
+const PRESETS = [
+  { name: 'ETH Staking', d: 16, e: 96, val: '1000000000000000000', desc: 'Staking with 65,536 wei step' },
+  { name: 'Extreme Pack', d: 8, e: 20, val: '1000000', desc: '12 values per uint256 slot' },
+  { name: 'NatSpec Example', d: 32, e: 24, val: '1000000000000000', desc: 'From the docs: create(32, 24)' },
+  { name: 'Identity', d: 0, e: 8, val: '200', desc: 'No quantization, 8-bit' },
+  { name: 'Full Range', d: 128, e: 128, val: '100000000000000000000000000000000000000', desc: 'Maximum uint256 coverage' },
+];
 
-    const el = id => document.getElementById(id);
+const state = { d: 16, e: 96, value: 1000000000000000000n, valueStr: '1000000000000000000', precise: false, activePreset: 0 };
 
-    // ── Helpers ──
-    function ceilTo8(n) { return Math.ceil(n / 8) * 8; }
-    function snap8(v) { return Math.round(v / 8) * 8; }
+// --- DOM refs ---
+const $ = id => document.getElementById(id);
+const dSlider = $('dSlider'), dNum = $('dNum'), dVal = $('dVal');
+const eSlider = $('eSlider'), eNum = $('eNum'), eVal = $('eVal');
+const configError = $('configError');
+const valueInput = $('valueInput'), valueError = $('valueError');
+const preciseCheck = $('preciseCheck');
+const presetsEl = $('presets');
+const zoneBar = $('zoneBar'), zoneIndices = $('zoneIndices');
+const propsGrid = $('propsGrid');
+const resultsSection = $('resultsSection'), resultGrid = $('resultGrid'), rangeViz = $('rangeViz');
+const codeBlock = $('codeBlock');
+const promptText = $('promptText'), copyBtn = $('copyBtn');
 
-    function effectiveBits(f) {
-      return f.quantized ? ceilTo8(f.targetBits) : f.bits;
+// --- Parsing ---
+function parseValue(str) {
+  str = str.trim().replace(/_/g, '');
+  if (!str) return null;
+  try {
+    if (str.startsWith('0x') || str.startsWith('0X')) return BigInt(str);
+    if (/^\d+[eE]\d+$/.test(str)) {
+      const [b, x] = str.split(/[eE]/);
+      return BigInt(b) * (10n ** BigInt(x));
     }
+    if (/^\d+$/.test(str)) return BigInt(str);
+    return null;
+  } catch { return null; }
+}
 
-    function origType(f) {
-      return f.isBool ? 'bool' : 'uint' + f.bits;
-    }
+// --- Formatting ---
+function fmt(n) {
+  if (n < 0n) return '-' + fmt(-n);
+  const s = n.toString();
+  if (s.length <= 22) return s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return '~' + s[0] + '.' + s.slice(1, 5) + 'e' + (s.length - 1);
+}
+function fmtShort(n) {
+  const s = n.toString();
+  if (s.length <= 10) return s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return '~' + s[0] + '.' + s.slice(1, 3) + 'e' + (s.length - 1);
+}
+function fmtFull(n) { return n.toString(); }
+function fmtHex(n) { return '0x' + n.toString(16); }
+function fmtPow(n) { return '2^' + n; }
 
-    function quantType(f) {
-      if (!f.quantized) return origType(f);
-      return 'uint' + ceilTo8(f.targetBits);
-    }
+// --- Validation ---
+function validateConfig(d, e) {
+  if (e === 0) return 'encodedBitWidth must be > 0';
+  if (e >= 256) return 'encodedBitWidth must be < 256';
+  if (d >= 256) return 'discardedBitWidth must be < 256';
+  if (d + e > 256) return 'd + e = ' + (d + e) + ', exceeds 256';
+  return null;
+}
 
-    function fieldError(f) {
-      if (!f.quantized) return '';
-      if (f.shift < 0) return 'shift must be non-negative';
-      if (f.targetBits < 1) return 'targetBits must be at least 1';
-      if (f.shift + f.targetBits > 256) return 'shift + targetBits exceeds 256';
-      if (ceilTo8(f.targetBits) >= f.bits) return 'quantized type must be smaller than original';
-      return '';
-    }
+// --- Compute ---
+function compute() {
+  const d = state.d, e = state.e;
+  const err = validateConfig(d, e);
+  if (err) return { valid: false, error: err };
 
-    function quantHex(f) {
-      if (!f.quantized) return '';
-      const v = (f.targetBits << 8) | f.shift;
-      return '0x' + v.toString(16).toUpperCase().padStart(4, '0');
-    }
+  const dn = BigInt(d), en = BigInt(e);
+  const stepSize = 1n << dn;
+  const maxVal = ((1n << en) - 1n) << dn;
+  const unused = 256 - d - e;
+  const uintBits = Math.ceil(e / 8) * 8;
+  const uintType = uintBits > 256 ? 'uint256' : 'uint' + uintBits;
+  const perSlot = Math.floor(256 / e);
+  const slotWaste = 256 - perSlot * e;
+  const quantRaw = (e << 8) | d;
+  const quantHex = '0x' + quantRaw.toString(16).padStart(4, '0');
 
-    function fieldColor(idx) { return PALETTE[idx % PALETTE.length]; }
+  let va = null;
+  if (state.value !== null && state.value >= 0n) {
+    const v = state.value;
+    const fits = v <= maxVal;
+    const aligned = (v & (stepSize - 1n)) === 0n;
+    const remainder = v & (stepSize - 1n);
+    const floorVal = v & ~(stepSize - 1n);
 
-    // ── Packing algorithm (mirrors Solidity struct layout) ──
-    function packFields(useQuantized) {
-      const slots = [];
-      let cur = { segs: [], used: 0 };
-      fields.forEach((f, i) => {
-        const bits = useQuantized ? effectiveBits(f) : f.bits;
-        if (cur.used + bits > 256) {
-          if (cur.segs.length > 0) slots.push(cur);
-          cur = { segs: [], used: 0 };
-        }
-        cur.segs.push({ field: f, bits, idx: i });
-        cur.used += bits;
-      });
-      if (cur.segs.length > 0) slots.push(cur);
-      return slots;
-    }
-
-    function totalBitsUsed(slots) { return slots.reduce((s, sl) => s + sl.used, 0); }
-    function totalBitsWasted(slots) { return slots.length * 256 - totalBitsUsed(slots); }
-
-    // ── Render field list ──
-    function renderFieldList() {
-      // Save focus state for restoration after re-render
-      const active = document.activeElement;
-      const focusId = active?.dataset?.id;
-      const focusProp = active?.dataset?.prop;
-      const selStart = active?.selectionStart;
-      const selEnd = active?.selectionEnd;
-
-      const container = el('fieldList');
-      container.innerHTML = '';
-      fields.forEach((f, i) => {
-        const c = fieldColor(i);
-        const canQuant = !f.isBool && f.bits > 8;
-        const err = fieldError(f);
-        const row = document.createElement('div');
-        row.className = 'field-row' + (err ? ' has-error' : '');
-        row.dataset.fieldId = f.id;
-        row.style.animationDelay = (i * 0.04) + 's';
-
-        let html = '<div class="field-main">';
-        html += '<div class="field-color" style="background:' + c.text + '"></div>';
-        html += '<div class="field-reorder">';
-        html += '<button class="reorder-btn" data-action="up" data-id="' + f.id + '"' + (i === 0 ? ' disabled' : '') + '>&uarr;</button>';
-        html += '<button class="reorder-btn" data-action="down" data-id="' + f.id + '"' + (i === fields.length - 1 ? ' disabled' : '') + '>&darr;</button>';
-        html += '</div>';
-        html += '<input type="text" class="field-name-input" data-id="' + f.id + '" data-prop="name" value="' + escAttr(f.name) + '" spellcheck="false" autocomplete="off" placeholder="name">';
-
-        html += '<select class="field-type-select" data-id="' + f.id + '" data-prop="type">';
-        html += '<option value="bool"' + (f.isBool ? ' selected' : '') + '>bool</option>';
-        for (let b = 8; b <= 256; b += 8) {
-          html += '<option value="' + b + '"' + (!f.isBool && f.bits === b ? ' selected' : '') + '>uint' + b + '</option>';
-        }
-        html += '</select>';
-
-        html += '<button class="quant-toggle' + (f.quantized ? ' active' : '') + '" data-id="' + f.id + '" title="' + (canQuant ? 'Toggle quantization' : 'Cannot quantize bool or uint8') + '"' + (!canQuant ? ' disabled' : '') + '>&gt;&gt;</button>';
-        html += '<button class="field-remove" data-id="' + f.id + '" title="Remove field">&times;</button>';
-        html += '</div>';
-
-        if (f.quantized) {
-          html += '<div class="field-quant">';
-          html += '<div class="quant-params">';
-          html += '<label>shift</label>';
-          html += '<input type="number" data-id="' + f.id + '" data-prop="shift" min="0" max="248" step="8" value="' + f.shift + '">';
-          html += '<label>targetBits</label>';
-          html += '<input type="number" data-id="' + f.id + '" data-prop="targetBits" min="8" max="248" step="8" value="' + f.targetBits + '">';
-          html += '</div>';
-          if (!err) {
-            html += '<div class="quant-info">' + quantType(f) + ' | Quant: <span>' + quantHex(f) + '</span></div>';
-          } else {
-            html += '<div class="quant-error">' + err + '</div>';
-          }
-          html += '</div>';
-        }
-
-        row.innerHTML = html;
-        container.appendChild(row);
-      });
-
-      // Restore focus
-      if (focusId && focusProp) {
-        const target = container.querySelector('[data-id="' + focusId + '"][data-prop="' + focusProp + '"]');
-        if (target) {
-          target.focus();
-          if (selStart != null && target.setSelectionRange) {
-            try { target.setSelectionRange(selStart, selEnd); } catch {}
-          }
-        }
+    if (fits) {
+      const encoded = v >> dn;
+      const decoded = encoded << dn;
+      const decodedMax = d === 0 ? decoded : (encoded << dn) | (stepSize - 1n);
+      const lossAbs = v - decoded;
+      const lossPct = v > 0n ? Number(lossAbs * 10000n / v) / 100 : 0;
+      let ceilVal;
+      if (d === 0) { ceilVal = v; }
+      else if (aligned) { ceilVal = v; }
+      else {
+        const c = (v | (stepSize - 1n)) + 1n;
+        ceilVal = c > UINT256_MAX ? null : c;
       }
+      const preciseErr = state.precise && !aligned;
+      va = { fits: true, encoded, decoded, decodedMax, lossAbs, lossPct, aligned, remainder, floor: floorVal, ceil: ceilVal, preciseErr };
+    } else {
+      va = { fits: false, maxVal };
     }
+  }
 
-    function escAttr(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+  return { valid: true, stepSize, maxVal, unused, uintType, uintBits, perSlot, slotWaste, quantRaw, quantHex, va };
+}
 
-    // ── Render slot visualization ──
-    function renderSlotDiagram(slots, label, isQuantized) {
-      if (fields.length === 0) return '<div class="empty-msg">Add fields to your struct</div>';
-      const slotCount = slots.length;
-      const countClass = isQuantized ? 'slot-count-good' : 'slot-count-normal';
+// --- Render ---
+function renderZoneBar(c) {
+  if (!c.valid) {
+    zoneBar.innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--err);font-size:12px">Invalid configuration</div>';
+    zoneIndices.innerHTML = '';
+    return;
+  }
+  const d = state.d, e = state.e, u = c.unused;
+  const total = 256;
+  const pU = u / total * 100, pE = e / total * 100, pD = d / total * 100;
 
-      let html = '<div class="viz-column">';
-      html += '<div class="viz-label">' + label + ' <span class="slot-count ' + countClass + '">' + slotCount + ' slot' + (slotCount !== 1 ? 's' : '') + '</span></div>';
-      html += '<div class="slot-group">';
+  let html = '';
+  if (u > 0) {
+    html += `<div class="zone unused-zone" style="flex-basis:${pU}%"><div class="zone-inner"><span class="zone-name">unused</span><span class="zone-bits-label">${u}b</span></div></div>`;
+  }
+  html += `<div class="zone encoded-zone" style="flex-basis:${pE}%"><div class="zone-inner"><span class="zone-name">encoded</span><span class="zone-bits-label">${e}b</span></div></div>`;
+  if (d > 0) {
+    html += `<div class="zone discarded-zone" style="flex-basis:${pD}%"><div class="zone-inner"><span class="zone-name">discarded</span><span class="zone-bits-label">${d}b</span></div></div>`;
+  }
+  zoneBar.innerHTML = html;
 
-      slots.forEach((slot, si) => {
-        html += '<div class="slot-item" style="animation-delay:' + (si * 0.05) + 's">';
-        html += '<div class="slot-header">Slot ' + si + ' (' + slot.used + '/256 bits)</div>';
-        html += '<div class="slot-bar">';
+  // Indices
+  let idxHtml = `<span class="zone-idx" style="left:0">255</span>`;
+  if (u > 0 && e > 0) {
+    const pos = u / total * 100;
+    idxHtml += `<span class="zone-idx" style="left:${pos}%">${d + e - 1}</span>`;
+  }
+  if (d > 0 && e > 0) {
+    const pos = (u + e) / total * 100;
+    idxHtml += `<span class="zone-idx" style="left:${pos}%">${d - 1}</span>`;
+  }
+  idxHtml += `<span class="zone-idx" style="left:100%">0</span>`;
+  zoneIndices.innerHTML = idxHtml;
+}
 
-        slot.segs.forEach(seg => {
-          const c = fieldColor(seg.idx);
-          const isNarrow = seg.bits < 32;
-          const showQuant = isQuantized && seg.field.quantized;
-          html += '<div class="slot-seg" data-field-id="' + seg.field.id + '" style="flex:' + seg.bits + ';background:' + c.bg + ';border-left:1px solid ' + c.border + ';border-right:1px solid ' + c.border + ';color:' + c.text + '" title="' + escAttr(seg.field.name) + ': ' + seg.bits + ' bits' + (showQuant ? ' (quantized)' : '') + '">';
-          if (showQuant) html += '<span class="slot-seg-quant">&gt;&gt;</span>';
-          if (!isNarrow) html += '<span class="slot-seg-name">' + escAttr(seg.field.name) + '</span>';
-          html += '<span class="slot-seg-bits">' + seg.bits + '</span>';
-          html += '</div>';
-        });
+function renderProperties(c) {
+  if (!c.valid) { propsGrid.innerHTML = ''; return; }
+  propsGrid.innerHTML = `
+    <div class="prop"><span class="prop-label">Step Size</span><span class="prop-value">${fmt(c.stepSize)}</span><span class="prop-sub">${fmtPow(state.d)}</span></div>
+    <div class="prop"><span class="prop-label">Max Value</span><span class="prop-value" title="${fmtFull(c.maxVal)}">${fmt(c.maxVal)}</span><span class="prop-sub">${fmtHex(c.maxVal).length < 80 ? fmtHex(c.maxVal) : ''}</span></div>
+    <div class="prop"><span class="prop-label">Encoded Type</span><span class="prop-value">${c.uintType}</span><span class="prop-sub">${c.uintBits} bits</span></div>
+    <div class="prop"><span class="prop-label">Per Slot</span><span class="prop-value">${c.perSlot} value${c.perSlot === 1 ? '' : 's'}</span><span class="prop-sub">${c.slotWaste > 0 ? c.slotWaste + 'b waste' : 'exact fit'}</span></div>
+    <div class="prop"><span class="prop-label">Unused Bits</span><span class="prop-value">${c.unused}</span><span class="prop-sub">${c.unused > 0 ? 'bits 255 down to ' + (state.d + state.e) : 'all 256 bits used'}</span></div>
+    <div class="prop"><span class="prop-label">Quant (uint16)</span><span class="prop-value">${c.quantHex}</span><span class="prop-sub">raw ${c.quantRaw}</span></div>
+  `;
+}
 
-        const waste = 256 - slot.used;
-        if (waste > 0) {
-          html += '<div class="slot-seg slot-waste" style="flex:' + waste + '" title="Unused: ' + waste + ' bits">';
-          if (waste >= 24) html += '<span class="slot-seg-bits">' + waste + '</span>';
-          html += '</div>';
-        }
+function renderResults(c) {
+  if (!c.valid || !c.va) {
+    resultsSection.classList.remove('visible');
+    return;
+  }
+  resultsSection.classList.add('visible');
+  const va = c.va;
 
-        html += '</div></div>';
-      });
+  if (!va.fits) {
+    resultGrid.innerHTML = `<div class="result" style="grid-column:1/-1"><span class="result-label">Overflow</span><span class="result-value err">Value exceeds max (${fmt(va.maxVal)})</span></div>`;
+    rangeViz.innerHTML = '';
+    return;
+  }
 
-      html += '</div></div>';
-      return html;
+  let alignedHtml;
+  if (va.aligned) {
+    alignedHtml = '<span class="result-value ok">yes</span>';
+  } else {
+    alignedHtml = '<span class="result-value loss">no</span>';
+  }
+  let preciseHtml = '';
+  if (va.preciseErr) {
+    preciseHtml = '<span class="result-sub" style="color:var(--err)">NotAligned revert</span>';
+  }
+
+  resultGrid.innerHTML = `
+    <div class="result"><span class="result-label">Encoded</span><span class="result-value">${fmt(va.encoded)}</span><span class="result-sub">${fmtHex(va.encoded)}</span></div>
+    <div class="result"><span class="result-label">Decoded (floor)</span><span class="result-value">${fmt(va.decoded)}</span></div>
+    <div class="result"><span class="result-label">Decode Max (ceil)</span><span class="result-value">${fmt(va.decodedMax)}</span></div>
+    <div class="result"><span class="result-label">Precision Loss</span><span class="result-value ${va.lossPct > 0 ? 'loss' : 'ok'}">${va.lossPct.toFixed(va.lossPct < 0.01 && va.lossPct > 0 ? 4 : 2)}%</span><span class="result-sub">${va.lossAbs > 0n ? fmt(va.lossAbs) + ' lost' : 'lossless'}</span></div>
+    <div class="result"><span class="result-label">Aligned</span>${alignedHtml}${preciseHtml}</div>
+    <div class="result"><span class="result-label">Remainder</span><span class="result-value">${fmt(va.remainder)}</span></div>
+    <div class="result"><span class="result-label">Floor</span><span class="result-value">${fmt(va.floor)}</span></div>
+    <div class="result"><span class="result-label">Ceil</span><span class="result-value">${va.ceil !== null ? fmt(va.ceil) : '<span class="err">overflow</span>'}</span></div>
+  `;
+
+  // Range visualization
+  if (va.decoded === va.decodedMax) {
+    rangeViz.innerHTML = `<div class="range-viz"><div class="range-viz-label">Decode Range</div><div style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">Identity: decoded = decodedMax = ${fmtShort(va.decoded)}</div></div>`;
+  } else {
+    const range = va.decodedMax - va.decoded;
+    const pos = range > 0n ? Number((state.value - va.decoded) * 1000n / range) / 10 : 0;
+    rangeViz.innerHTML = `
+      <div class="range-viz">
+        <div class="range-viz-label">Decode Range</div>
+        <div class="range-track"><div class="range-fill" style="width:100%"><div class="range-marker" style="left:${pos}%"></div></div></div>
+        <div class="range-labels" style="position:relative">
+          <span title="${fmtFull(va.decoded)}">${fmtShort(va.decoded)}</span>
+          <span style="position:absolute;left:${pos}%;transform:translateX(-50%);color:var(--text-bright);font-weight:600" title="${fmtFull(state.value)}">${fmtShort(state.value)}</span>
+          <span title="${fmtFull(va.decodedMax)}">${fmtShort(va.decodedMax)}</span>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function renderCode(c) {
+  if (!c.valid) { codeBlock.textContent = '// Invalid configuration'; return; }
+  const d = state.d, e = state.e;
+  codeBlock.innerHTML =
+    `<span class="kw">import</span> {<span class="ty">Quant</span>, <span class="ty">UintQuantizationLib</span> <span class="kw">as</span> QuantLib} <span class="kw">from</span> <span class="fn">"uint-quantization-lib/src/UintQuantizationLib.sol"</span>;
+
+<span class="ty">Quant</span> <span class="kw">private</span> <span class="kw">immutable</span> SCHEME = QuantLib.<span class="fn">create</span>(<span class="num">${d}</span>, <span class="num">${e}</span>);
+
+<span class="cm">// Step: ${fmt(c.stepSize)} | Max: ${fmt(c.maxVal)} | Type: ${c.uintType}</span>
+<span class="cm">// Per slot: ${c.perSlot} value${c.perSlot === 1 ? '' : 's'}${c.slotWaste > 0 ? ' (' + c.slotWaste + 'b waste)' : ''}</span>
+
+<span class="cm">// Encode (floor quantization):</span>
+<span class="ty">${c.uintType}</span> encoded = <span class="ty">${c.uintType}</span>(SCHEME.<span class="fn">encode</span>(value));
+
+<span class="cm">// Decode (restore lower bound):</span>
+<span class="ty">uint256</span> restored = SCHEME.<span class="fn">decode</span>(encoded);`;
+}
+
+function renderPrompt(c) {
+  if (!c.valid) {
+    promptText.textContent = 'Fix the configuration errors above to generate a prompt.';
+    return;
+  }
+  const d = state.d, e = state.e;
+  let text = `Integrate uint-quantization-lib with create(${d}, ${e}). `;
+  text += `Discards the lowest ${d} bit${d === 1 ? '' : 's'}, encoding values into ${e} bits (${c.uintType}). `;
+  text += `Step size is ${fmt(c.stepSize)}; max representable value is ${fmt(c.maxVal)}. `;
+  text += `${c.perSlot} encoded value${c.perSlot === 1 ? '' : 's'} fit${c.perSlot === 1 ? 's' : ''} per uint256 slot`;
+  text += c.slotWaste > 0 ? ` (${c.slotWaste} bits unused).\n` : '.\n';
+
+  if (c.va && c.va.fits) {
+    const va = c.va;
+    text += `\nTest value ${fmt(state.value)}: encodes to ${fmt(va.encoded)}, decodes to ${fmt(va.decoded)}`;
+    if (va.lossAbs > 0n) {
+      text += ` (${va.lossPct.toFixed(va.lossPct < 0.01 && va.lossPct > 0 ? 4 : 2)}% loss, ${fmt(va.lossAbs)} discarded)`;
+    } else {
+      text += ' (lossless)';
     }
+    text += '. ';
+    text += va.aligned ? 'Value is step-aligned.' : `Not step-aligned; floor=${fmt(va.floor)}, ceil=${va.ceil !== null ? fmt(va.ceil) : 'overflow'}.`;
+  } else if (c.va && !c.va.fits) {
+    text += `\nTest value exceeds max (${fmt(c.maxVal)}); increase encodedBitWidth or discardedBitWidth.`;
+  }
+  promptText.textContent = text;
+}
 
-    function renderVisualization() {
-      const panel = el('vizPanel');
-      const origSlots = packFields(false);
-      const quantSlots = packFields(true);
+function renderQuickVals(c) {
+  if (!c.valid) { $('quickVals').innerHTML = ''; return; }
+  const btns = [
+    ['0', '0'],
+    ['step', fmtFull(c.stepSize)],
+    ['max', fmtFull(c.maxVal)],
+    ['1e18', '1000000000000000000'],
+  ];
+  $('quickVals').innerHTML = btns.map(([label, val]) =>
+    `<button class="quick-btn" data-val="${val}">${label}</button>`
+  ).join('');
+}
 
-      if (viewMode === 'original') {
-        panel.innerHTML = '<div class="viz-container">' + renderSlotDiagram(origSlots, 'Original', false) + '</div>';
-      } else if (viewMode === 'quantized') {
-        panel.innerHTML = '<div class="viz-container">' + renderSlotDiagram(quantSlots, 'Quantized', true) + '</div>';
-      } else {
-        let sideHtml = '<div class="viz-side-by-side">' +
-          renderSlotDiagram(origSlots, 'Original', false) +
-          renderSlotDiagram(quantSlots, 'Quantized', true);
-        const delta = origSlots.length - quantSlots.length;
-        if (delta > 0 && fields.some(f => f.quantized && !fieldError(f))) {
-          sideHtml += '<div class="viz-delta-indicator">-' + delta + ' slot' + (delta !== 1 ? 's' : '') + '</div>';
-        }
-        sideHtml += '</div>';
-        panel.innerHTML = sideHtml;
-      }
-    }
+function updateAll() {
+  const c = compute();
 
-    // ── Render summary ──
-    function renderSummary() {
-      const panel = el('summaryPanel');
-      if (fields.length === 0) { panel.innerHTML = ''; return; }
-      const origSlots = packFields(false);
-      const quantSlots = packFields(true);
-      const oCount = origSlots.length, qCount = quantSlots.length;
-      const oUsed = totalBitsUsed(origSlots), qUsed = totalBitsUsed(quantSlots);
-      const oWaste = totalBitsWasted(origSlots), qWaste = totalBitsWasted(quantSlots);
-      const delta = oCount - qCount;
-      const hasQuantized = fields.some(f => f.quantized && !fieldError(f));
+  // Config error
+  configError.textContent = c.valid ? '' : c.error;
 
-      let html = '<div class="summary-grid">';
-      html += '<div class="summary-card">';
-      html += '<div class="summary-card-label">Original</div>';
-      html += '<div class="summary-stat"><span class="summary-val">' + oCount + '</span><span class="summary-unit">slot' + (oCount !== 1 ? 's' : '') + '</span></div>';
-      html += '<div class="summary-detail">' + oUsed + ' bits used, ' + oWaste + ' wasted</div>';
-      html += '</div>';
+  // Value error
+  if (state.valueStr && state.value === null) {
+    valueInput.classList.add('invalid');
+    valueError.textContent = 'Cannot parse value';
+  } else if (state.value !== null && state.value > UINT256_MAX) {
+    valueInput.classList.add('invalid');
+    valueError.textContent = 'Exceeds uint256';
+  } else if (state.value !== null && state.value < 0n) {
+    valueInput.classList.add('invalid');
+    valueError.textContent = 'Must be non-negative';
+  } else {
+    valueInput.classList.remove('invalid');
+    valueError.textContent = '';
+  }
 
-      html += '<div class="summary-card">';
-      html += '<div class="summary-card-label">Quantized</div>';
-      html += '<div class="summary-stat"><span class="summary-val">' + qCount + '</span><span class="summary-unit">slot' + (qCount !== 1 ? 's' : '') + '</span></div>';
-      html += '<div class="summary-detail">' + qUsed + ' bits used, ' + qWaste + ' wasted</div>';
-      html += '</div>';
-      html += '</div>';
+  renderZoneBar(c);
+  renderProperties(c);
+  renderResults(c);
+  renderCode(c);
+  renderPrompt(c);
+  renderQuickVals(c);
+  updatePresetHighlight();
+}
 
-      if (hasQuantized) {
-        html += '<div class="delta-row">';
-        html += '<div class="delta-item"><span class="delta-val ' + (delta > 0 ? 'positive' : 'neutral') + '">' + (delta > 0 ? '-' + delta : '0') + '</span><span class="delta-label">slot' + (delta !== 1 ? 's' : '') + ' saved</span></div>';
-        if (delta > 0) {
-          const gas = delta * 20000;
-          html += '<div class="delta-item"><span class="delta-val positive">~' + gas.toLocaleString() + '</span><span class="delta-label">gas saved per cold write</span></div>';
-        }
-        html += '</div>';
-      }
+// --- Presets ---
+function updatePresetHighlight() {
+  presetsEl.querySelectorAll('.preset-btn').forEach((btn, i) => {
+    const p = PRESETS[i];
+    btn.classList.toggle('active', state.d === p.d && state.e === p.e);
+  });
+}
 
-      panel.innerHTML = html;
-    }
+function applyPreset(i) {
+  const p = PRESETS[i];
+  state.d = p.d; state.e = p.e;
+  state.valueStr = p.val;
+  state.value = parseValue(p.val);
+  state.activePreset = i;
+  dSlider.value = dNum.value = p.d; dVal.textContent = p.d;
+  eSlider.value = eNum.value = p.e; eVal.textContent = p.e;
+  valueInput.value = p.val;
+  updateAll();
+}
 
-    // ── Syntax highlighting ──
-    function escHtml(s) {
-      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
+// --- Events ---
+function syncD(v) {
+  v = Math.max(0, Math.min(255, parseInt(v) || 0));
+  state.d = v;
+  dSlider.value = dNum.value = v;
+  dVal.textContent = v;
+  updateAll();
+}
+function syncE(v) {
+  v = Math.max(0, Math.min(255, parseInt(v) || 0));
+  state.e = v;
+  eSlider.value = eNum.value = v;
+  eVal.textContent = v;
+  updateAll();
+}
 
-    function highlightSolidity(code) {
-      // Process line by line so comments are handled cleanly
-      return code.split('\n').map(line => {
-        // Full-line comments
-        const commentMatch = line.match(/^(\s*)(\/\/.*)$/);
-        if (commentMatch) {
-          return escHtml(commentMatch[1]) + '<span style="color:var(--fg-2)">' + escHtml(commentMatch[2]) + '</span>';
-        }
-        // Lines with trailing comments
-        const trailingMatch = line.match(/^(.*?)(\/\/.*)$/);
-        let codePart = trailingMatch ? trailingMatch[1] : line;
-        let commentPart = trailingMatch ? trailingMatch[2] : '';
+dSlider.addEventListener('input', e => syncD(e.target.value));
+dNum.addEventListener('input', e => syncD(e.target.value));
+eSlider.addEventListener('input', e => syncE(e.target.value));
+eNum.addEventListener('input', e => syncE(e.target.value));
 
-        let result = highlightCodePart(codePart);
-        if (commentPart) {
-          result += '<span style="color:var(--fg-2)">' + escHtml(commentPart) + '</span>';
-        }
-        return result;
-      }).join('\n');
-    }
+valueInput.addEventListener('input', e => {
+  state.valueStr = e.target.value;
+  const parsed = parseValue(e.target.value);
+  if (parsed !== null && parsed >= 0n && parsed <= UINT256_MAX) {
+    state.value = parsed;
+  } else if (e.target.value.trim() === '') {
+    state.value = null;
+  } else {
+    state.value = parsed;
+  }
+  updateAll();
+});
 
-    function highlightCodePart(code) {
-      const escaped = escHtml(code);
-      // Tokenize: keywords, types, strings, hex literals, everything else
-      return escaped.replace(
-        /\b(import|from|struct|private|immutable|using|for|global)\b|\b(uint\d+|bool|Quant|UintQuantizationLib)\b|(&quot;[^&]*?&quot;)|\b(0x[0-9A-Fa-f]+)\b/g,
-        (match, kw, typ, str, hex) => {
-          if (kw) return '<span style="color:var(--accent)">' + kw + '</span>';
-          if (typ) return '<span style="color:var(--green)">' + typ + '</span>';
-          if (str) return '<span style="color:var(--amber)">' + str + '</span>';
-          if (hex) return '<span style="color:var(--amber)">' + hex + '</span>';
-          return match;
-        }
-      );
-    }
+preciseCheck.addEventListener('change', e => {
+  state.precise = e.target.checked;
+  updateAll();
+});
 
-    // ── Generate Solidity code ──
-    function renderCode() {
-      const codeEl = el('codeOut');
-      if (fields.length === 0) { codeEl.textContent = '// Add fields to generate code'; return; }
+$('quickVals').addEventListener('click', e => {
+  const btn = e.target.closest('.quick-btn');
+  if (!btn) return;
+  const val = btn.dataset.val;
+  valueInput.value = val;
+  state.valueStr = val;
+  state.value = parseValue(val);
+  updateAll();
+});
 
-      const hasQuantized = fields.some(f => f.quantized && !fieldError(f));
-      const origSlots = packFields(false);
-      const quantSlots = packFields(true);
+// Preset buttons
+PRESETS.forEach((p, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'preset-btn';
+  btn.textContent = p.name;
+  btn.title = p.desc;
+  btn.addEventListener('click', () => applyPreset(i));
+  presetsEl.appendChild(btn);
+});
 
-      // Compute max type width for alignment
-      const origTypes = fields.map(f => origType(f));
-      const quantTypes = fields.map(f => quantType(f));
-      const maxOrigType = Math.max(...origTypes.map(t => t.length));
-      const maxQuantType = Math.max(...quantTypes.map(t => t.length));
+// Copy
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(promptText.textContent).then(() => {
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+  });
+});
 
-      let code = '';
-
-      if (hasQuantized) {
-        code += 'import {Quant, UintQuantizationLib} from\n';
-        code += '  "uint-quantization-lib/src/UintQuantizationLib.sol";\n\n';
-      }
-
-      // Original struct (as comment if quantized, as code if not)
-      if (hasQuantized) {
-        code += '// Before quantization: ' + origSlots.length + ' slot' + (origSlots.length !== 1 ? 's' : '') + '\n';
-        code += '// struct ' + structName + ' {\n';
-        fields.forEach((f, i) => {
-          code += '//     ' + origTypes[i].padEnd(maxOrigType) + ' ' + f.name + ';\n';
-        });
-        code += '// }\n\n';
-      }
-
-      // Quantized (or only) struct
-      const slotLabel = hasQuantized
-        ? quantSlots.length + ' slot' + (quantSlots.length !== 1 ? 's' : '')
-        : origSlots.length + ' slot' + (origSlots.length !== 1 ? 's' : '');
-      const types = hasQuantized ? quantTypes : origTypes;
-      const maxType = hasQuantized ? maxQuantType : maxOrigType;
-
-      code += 'struct ' + structName + ' {';
-      const slotComment = hasQuantized
-        ? ' // ' + slotLabel + ' (was ' + origSlots.length + ')'
-        : ' // ' + slotLabel;
-      code += slotComment + '\n';
-
-      fields.forEach((f, i) => {
-        const line = '    ' + types[i].padEnd(maxType) + ' ' + f.name + ';';
-        if (f.quantized && !fieldError(f)) {
-          code += line + '  // >> create(' + f.shift + ', ' + f.targetBits + ')\n';
-        } else {
-          code += line + '\n';
-        }
-      });
-      code += '}\n';
-
-      // Scheme declarations
-      const quantizedFields = fields.filter(f => f.quantized && !fieldError(f));
-      if (quantizedFields.length > 0) {
-        code += '\n';
-        quantizedFields.forEach(f => {
-          const schemeName = f.name.toUpperCase() + '_SCHEME';
-          code += 'Quant private immutable ' + schemeName + ' =\n';
-          code += '    UintQuantizationLib.create(' + f.shift + ', ' + f.targetBits + ');  // ' + quantHex(f) + '\n';
-        });
-      }
-
-      codeEl.innerHTML = highlightSolidity(code);
-    }
-
-    // ── Main render (right panel only) ──
-    function render() {
-      renderVisualization();
-      renderSummary();
-      renderCode();
-    }
-
-    // ── Field mutations ──
-    function addField(data) {
-      fields.push({ id: nextId++, ...data });
-      activePreset = -1;
-      renderFieldList();
-      render();
-      updatePresetButtons();
-    }
-
-    function removeField(id) {
-      fields = fields.filter(f => f.id !== id);
-      activePreset = -1;
-      renderFieldList();
-      render();
-      updatePresetButtons();
-    }
-
-    function moveField(id, dir) {
-      const idx = fields.findIndex(f => f.id === id);
-      const ni = idx + dir;
-      if (ni < 0 || ni >= fields.length) return;
-      [fields[idx], fields[ni]] = [fields[ni], fields[idx]];
-      renderFieldList();
-      render();
-    }
-
-    function updateFieldValue(id, key, value) {
-      const f = fields.find(x => x.id === id);
-      if (!f) return;
-      f[key] = value;
-      activePreset = -1;
-      renderFieldList();
-      render();
-      updatePresetButtons();
-    }
-
-    // ── Event delegation ──
-    el('fieldList').addEventListener('click', e => {
-      const btn = e.target.closest('[data-action]');
-      if (btn) {
-        const id = parseInt(btn.dataset.id);
-        if (btn.dataset.action === 'up') moveField(id, -1);
-        if (btn.dataset.action === 'down') moveField(id, 1);
-        return;
-      }
-      const toggle = e.target.closest('.quant-toggle');
-      if (toggle && !toggle.disabled) {
-        const id = parseInt(toggle.dataset.id);
-        const f = fields.find(x => x.id === id);
-        if (f) {
-          f.quantized = !f.quantized;
-          if (f.quantized) {
-            f.shift = 0;
-            f.targetBits = Math.max(8, Math.floor(f.bits / 2 / 8) * 8);
-          }
-          activePreset = -1;
-          renderFieldList();
-          render();
-          updatePresetButtons();
-        }
-        return;
-      }
-      const rmBtn = e.target.closest('.field-remove');
-      if (rmBtn) { removeField(parseInt(rmBtn.dataset.id)); return; }
-    });
-
-    // Name updates live as user types
-    el('fieldList').addEventListener('input', e => {
-      const input = e.target;
-      if (input.dataset.prop !== 'name') return;
-      const id = parseInt(input.dataset.id);
-      if (isNaN(id)) return;
-      updateFieldValue(id, 'name', input.value);
-    });
-
-    // Type, shift, targetBits update on commit (blur/enter) so users can type full values
-    el('fieldList').addEventListener('change', e => {
-      const input = e.target;
-      const id = parseInt(input.dataset.id);
-      const prop = input.dataset.prop;
-      if (!prop || isNaN(id)) return;
-      const f = fields.find(x => x.id === id);
-      if (!f) return;
-
-      if (prop === 'type') {
-        if (input.value === 'bool') {
-          f.isBool = true; f.bits = 8; f.quantized = false;
-        } else {
-          f.isBool = false; f.bits = parseInt(input.value);
-          if (f.bits <= 8) f.quantized = false;
-          if (f.quantized && ceilTo8(f.targetBits) >= f.bits) {
-            f.targetBits = Math.max(8, Math.floor(f.bits / 2 / 8) * 8);
-          }
-        }
-        activePreset = -1;
-        renderFieldList();
-        render();
-        updatePresetButtons();
-      } else if (prop === 'shift') {
-        const v = Math.max(0, Math.min(248, snap8(parseInt(input.value) || 0)));
-        updateFieldValue(id, 'shift', v);
-      } else if (prop === 'targetBits') {
-        const v = Math.max(8, Math.min(248, snap8(parseInt(input.value) || 8)));
-        updateFieldValue(id, 'targetBits', v);
-      }
-    });
-
-    el('structNameInput').addEventListener('input', e => {
-      structName = e.target.value || 'MyStruct';
-      activePreset = -1;
-      render();
-      updatePresetButtons();
-    });
-
-    el('addFieldBtn').addEventListener('click', () => {
-      const n = fields.length;
-      addField({
-        name: 'field' + n,
-        bits: 256,
-        isBool: false,
-        quantized: false,
-        shift: 0,
-        targetBits: 128,
-      });
-    });
-
-    // ── Cross-highlighting ──
-    function clearHighlights() {
-      document.querySelectorAll('.field-row.highlight').forEach(n => n.classList.remove('highlight'));
-      document.querySelectorAll('.slot-seg.highlight, .slot-seg.dimmed').forEach(n => {
-        n.classList.remove('highlight', 'dimmed');
-      });
-    }
-
-    el('fieldList').addEventListener('mouseover', e => {
-      const row = e.target.closest('.field-row[data-field-id]');
-      if (!row) return;
-      clearHighlights();
-      const fid = row.dataset.fieldId;
-      row.classList.add('highlight');
-      document.querySelectorAll('.slot-seg[data-field-id]').forEach(seg => {
-        seg.classList.add(seg.dataset.fieldId === fid ? 'highlight' : 'dimmed');
-      });
-    });
-    el('fieldList').addEventListener('mouseleave', clearHighlights);
-
-    el('vizPanel').addEventListener('mouseover', e => {
-      const seg = e.target.closest('.slot-seg[data-field-id]');
-      if (!seg) return;
-      clearHighlights();
-      const fid = seg.dataset.fieldId;
-      document.querySelectorAll('.slot-seg[data-field-id]').forEach(s => {
-        s.classList.add(s.dataset.fieldId === fid ? 'highlight' : 'dimmed');
-      });
-      const row = document.querySelector('.field-row[data-field-id="' + fid + '"]');
-      if (row) row.classList.add('highlight');
-    });
-    el('vizPanel').addEventListener('mouseleave', clearHighlights);
-
-    // ── View tabs ──
-    el('viewTabs').addEventListener('click', e => {
-      const tab = e.target.closest('.view-tab');
-      if (!tab) return;
-      viewMode = tab.dataset.view;
-      el('viewTabs').querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t === tab));
-      render();
-    });
-
-    // ── Copy button ──
-    el('copyBtn').addEventListener('click', () => {
-      const text = el('codeOut').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        const b = el('copyBtn');
-        b.textContent = 'Copied';
-        setTimeout(() => { b.textContent = 'Copy'; }, 1500);
-      });
-    });
-
-    // ── Presets ──
-    function loadPreset(idx) {
-      const p = PRESETS[idx];
-      structName = p.structName;
-      el('structNameInput').value = structName;
-      nextId = 1;
-      fields = p.fields.map(f => ({ id: nextId++, ...f }));
-      activePreset = idx;
-      renderFieldList();
-      render();
-      updatePresetButtons();
-    }
-
-    function updatePresetButtons() {
-      document.querySelectorAll('.preset-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', i === activePreset);
-      });
-    }
-
-    const presetsContainer = el('presets');
-    PRESETS.forEach((p, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'preset-btn';
-      btn.innerHTML = escAttr(p.name) + '<span class="preset-desc">' + escAttr(p.desc) + '</span>';
-      btn.addEventListener('click', () => loadPreset(i));
-      presetsContainer.appendChild(btn);
-    });
-
-    // ── Initialize with ETH Staking (quantized), Side by Side ──
-    loadPreset(1);
-  })();
-  </script>
+// --- Init ---
+updateAll();
+</script>
 </body>
 </html>
