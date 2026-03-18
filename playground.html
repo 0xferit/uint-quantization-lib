@@ -3,649 +3,167 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>uint-quantization-lib Playground</title>
+<title>uint-quantization-lib Planner</title>
 <style>
 :root {
-  --bg: #0d0d0d;
-  --surface: #151515;
-  --surface-2: #1c1c1c;
-  --surface-3: #262626;
-  --border: #2e2e2e;
-  --text: #d4d4d4;
-  --text-dim: #666;
-  --text-bright: #f5f5f5;
-  --accent: #14b8a6;
-  --accent-dim: #0d7d72;
-  --warn: #d97706;
-  --warn-dim: #92510a;
-  --unused-c: #333;
-  --err: #ef4444;
+  --bg: #0d0d0d; --surface: #151515; --surface-2: #1c1c1c; --border: #2e2e2e;
+  --text: #d4d4d4; --text-dim: #666; --text-bright: #f5f5f5;
+  --accent: #14b8a6; --accent-dim: #0d7d72;
+  --warn: #d97706; --err: #ef4444;
   --mono: 'SF Mono','Fira Code','Cascadia Code','JetBrains Mono','Consolas',monospace;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-header h1 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-bright);
-  letter-spacing: -0.3px;
-}
-header .version {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text-dim);
-}
-.app {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-.controls {
-  width: 300px;
-  min-width: 300px;
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.preview {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-.section-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--text-dim);
-  margin-bottom: 10px;
-}
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* Presets */
-.presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.hdr {
+  padding: 14px 24px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 10px;
 }
-.preset-btn {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-}
-.preset-btn:hover { border-color: var(--accent); color: var(--text-bright); }
-.preset-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--text-bright); }
+.hdr h1 { font-size: 15px; font-weight: 600; color: var(--text-bright); }
+.hdr .ver { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+.hdr-links { margin-left: auto; display: flex; gap: 16px; }
+.hdr-links a { font-size: 12px; color: var(--text-dim); text-decoration: none; }
+.hdr-links a:hover { color: var(--text-bright); }
+
+.pg { max-width: 1200px; margin: 0 auto; padding: 32px 24px 24px; }
 
 /* Inputs */
-.field { margin-bottom: 12px; }
-.field:last-child { margin-bottom: 0; }
-.field-label {
-  font-size: 12px;
-  color: var(--text-dim);
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.input-row { display: flex; gap: 16px; margin-bottom: 6px; }
+.input-field { flex: 1; }
+.input-field label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+.input-field input {
+  width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-bright); font-family: var(--mono); font-size: 14px;
+  padding: 10px 12px; border-radius: 6px; outline: none; transition: border-color 0.15s;
 }
-.field-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.field-row input[type="range"] {
-  flex: 1;
-  accent-color: var(--accent);
-  height: 4px;
-}
-.field-row input[type="number"],
-.val-input {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text-bright);
-  font-family: var(--mono);
-  font-size: 13px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.field-row input[type="number"] { width: 56px; text-align: center; }
-.field-row input[type="number"]:focus,
-.val-input:focus { border-color: var(--accent); }
-.val-input { width: 100%; }
-.val-input.invalid { border-color: var(--err); }
-.quick-vals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-.quick-btn {
-  background: var(--surface-3);
-  border: 1px solid transparent;
-  color: var(--text-dim);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-family: var(--mono);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.quick-btn:hover { color: var(--text); border-color: var(--border); }
-.error-msg {
-  color: var(--err);
-  font-size: 11px;
-  margin-top: 4px;
-  font-family: var(--mono);
-  min-height: 16px;
-}
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--text-dim);
-  cursor: pointer;
-}
-.checkbox-row input { accent-color: var(--accent); }
+.input-field input:focus { border-color: var(--accent); }
+.input-field input.invalid { border-color: var(--err); }
+.input-field .hint { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
+.error-msg { color: var(--err); font-size: 11px; font-family: var(--mono); margin-top: 4px; min-height: 16px; }
 
-/* Zone bar */
-.zone-container { position: relative; }
-.zone-bar {
-  display: flex;
-  height: 64px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
-.zone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 3px;
-  transition: flex-basis 0.35s ease;
-  position: relative;
-  overflow: hidden;
-}
-.zone.unused-zone { background: var(--unused-c); }
-.zone.encoded-zone { background: var(--accent-dim); }
-.zone.discarded-zone { background: var(--warn-dim); }
-.zone-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  white-space: nowrap;
-}
-.zone-name {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: rgba(255,255,255,0.7);
-}
-.zone-bits-label {
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.9);
-}
-.zone-indices {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 2px 0;
-  position: relative;
-  height: 18px;
-}
-.zone-idx {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text-dim);
-  position: absolute;
-  transform: translateX(-50%);
-}
-.zone-idx:first-child { transform: translateX(0); }
-.zone-idx:last-child { transform: translateX(-100%); }
-.zone-desc {
-  font-size: 11px;
-  color: var(--text-dim);
-  margin-top: 8px;
-  line-height: 1.5;
-}
+/* Output */
+.output { margin-top: 24px; display: none; }
+.output.visible { display: block; }
 
-/* Properties grid */
-.props-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--border);
+.compare {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px; font-family: var(--mono); font-size: 13px;
 }
-.prop {
-  background: var(--surface);
-  padding: 10px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.compare-box {
+  flex: 1; padding: 12px 14px; border-radius: 6px; text-align: center;
 }
-.prop-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--text-dim);
-}
-.prop-value {
-  font-family: var(--mono);
-  font-size: 14px;
-  color: var(--text-bright);
-  word-break: break-all;
-}
-.prop-sub {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text-dim);
-}
+.compare-box.before { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim); }
+.compare-box.after { background: rgba(20,184,166,0.08); border: 1px solid var(--accent-dim); color: var(--accent); }
+.compare-box .type { font-size: 18px; font-weight: 700; color: var(--text-bright); }
+.compare-box.after .type { color: var(--accent); }
+.compare-box .sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.compare-arrow { color: var(--text-dim); font-size: 18px; flex-shrink: 0; }
+.compare-save { font-size: 11px; color: var(--accent); text-align: center; flex-shrink: 0; }
 
-/* Results */
-.results-section { display: none; }
-.results-section.visible { display: block; }
-.result-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--border);
+.result-table {
+  width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px;
+  margin-bottom: 20px;
 }
-.result-grid.full { grid-template-columns: 1fr; }
-.result {
-  background: var(--surface);
-  padding: 10px 14px;
-}
-.result-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--text-dim);
-  margin-bottom: 2px;
-}
-.result-value {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--text-bright);
-  word-break: break-all;
-}
-.result-value.loss { color: var(--warn); }
-.result-value.ok { color: var(--accent); }
-.result-value.err { color: var(--err); }
-.result-sub {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text-dim);
-}
+.result-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.result-table td:first-child { color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; width: 140px; padding-top: 10px; }
+.result-table td:last-child { color: var(--text-bright); }
+.result-table .sub { font-size: 10px; color: var(--text-dim); display: block; margin-top: 1px; }
+.result-table .ok { color: var(--accent); }
+.result-table .warn { color: var(--warn); }
 
-/* Range bar */
-.range-viz {
-  margin-top: 12px;
-  padding: 12px 14px;
-  background: var(--surface);
-  border-radius: 8px;
-  border: 1px solid var(--border);
+.no-quant {
+  padding: 16px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 8px; font-size: 13px; color: var(--text); margin-bottom: 20px;
 }
-.range-viz-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--text-dim);
-  margin-bottom: 8px;
-}
-.range-track {
-  height: 24px;
-  background: var(--surface-3);
-  border-radius: 4px;
-  position: relative;
-  overflow: hidden;
-}
-.range-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent-dim) 0%, var(--accent) 100%);
-  border-radius: 4px;
-  position: relative;
-}
-.range-marker {
-  position: absolute;
-  top: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--text-bright);
-  box-shadow: 0 0 4px rgba(255,255,255,0.5);
-}
-.range-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 4px;
-}
-.range-labels span {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text-dim);
-}
-.range-labels .marker-label {
-  position: absolute;
-  transform: translateX(-50%);
-  color: var(--text-bright);
-  font-weight: 600;
-}
+.no-quant strong { color: var(--text-bright); }
 
 /* Code */
+.code-wrap { position: relative; margin-bottom: 8px; }
 .code-block {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 16px;
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--text);
-  overflow-x: auto;
-  white-space: pre;
-  position: relative;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px; font-family: var(--mono); font-size: 12px; line-height: 1.6;
+  color: var(--text); overflow-x: auto; white-space: pre;
 }
 .code-block .cm { color: var(--text-dim); }
 .code-block .kw { color: #c084fc; }
 .code-block .ty { color: #38bdf8; }
 .code-block .num { color: #fbbf24; }
 .code-block .fn { color: #34d399; }
+.code-copy {
+  position: absolute; top: 8px; right: 8px;
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim);
+  padding: 3px 10px; border-radius: 4px; font-size: 11px; font-family: inherit;
+  cursor: pointer; transition: all 0.15s;
+}
+.code-copy:hover { color: var(--text-bright); border-color: var(--accent); }
+.code-copy.copied { color: #16a34a; border-color: #16a34a; }
 
 /* Prompt */
-.prompt-area {
-  border-top: 1px solid var(--border);
-  padding: 16px 24px;
-  background: var(--surface);
-}
-.prompt-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-.prompt-header .section-label { margin-bottom: 0; }
+.prompt-area { border-top: 1px solid var(--border); padding: 16px 24px; background: var(--surface); margin-top: 16px; }
+.prompt-inner { max-width: 1200px; margin: 0 auto; }
+.prompt-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.prompt-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
 .copy-btn {
-  background: var(--accent-dim);
-  border: none;
-  color: var(--text-bright);
-  padding: 5px 14px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
+  background: var(--accent-dim); border: none; color: var(--text-bright);
+  padding: 5px 14px; border-radius: 6px; font-size: 12px; font-family: inherit;
+  cursor: pointer; transition: all 0.15s;
 }
 .copy-btn:hover { background: var(--accent); }
 .copy-btn.copied { background: #16a34a; }
 .prompt-text {
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-word;
-  min-height: 40px;
+  font-family: var(--mono); font-size: 12px; line-height: 1.6;
+  color: var(--text); white-space: pre-wrap; word-break: break-word; min-height: 36px;
 }
 
-/* Intro */
-.intro {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  position: relative;
-}
-.intro-content { max-width: 820px; }
-.intro-text {
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--text);
-  margin-bottom: 16px;
-}
-.intro-flow {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  font-family: var(--mono);
-  overflow-x: auto;
-}
-.intro-step {
-  text-align: center;
-  padding: 10px 16px;
-  background: var(--surface-2);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  min-width: 100px;
-}
-.intro-step.compact {
-  border-color: var(--accent);
-  background: rgba(20, 184, 166, 0.08);
-}
-.intro-val {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-bright);
-}
-.intro-sub {
-  font-size: 10px;
-  color: var(--text-dim);
-  margin-top: 2px;
-}
-.intro-arrow {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 10px;
-  color: var(--text-dim);
-  font-size: 12px;
-  flex-shrink: 0;
-}
-.intro-arrow-label {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.intro-close {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px;
-  line-height: 1;
-  font-family: inherit;
-}
-.intro-close:hover { color: var(--text); }
-
-/* Responsive */
-@media (max-width: 800px) {
-  .app { flex-direction: column; }
-  .controls {
-    width: 100%;
-    min-width: 0;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-  .props-grid, .result-grid { grid-template-columns: 1fr; }
+@media (max-width: 500px) {
+  .input-row { flex-direction: column; gap: 12px; }
+  .compare { flex-direction: column; }
+  .compare-arrow { transform: rotate(90deg); }
 }
 </style>
 </head>
 <body>
 
-<header>
+<div class="hdr">
   <h1>uint-quantization-lib</h1>
-  <span class="version">v7.1.0</span>
-</header>
-
-<div class="intro" id="intro">
-  <div class="intro-content">
-    <p class="intro-text">
-      Ethereum storage charges 20,000 gas per cold write to a 256-bit slot, even when values use a fraction of the bits available. This library shrinks values by discarding low-order bits (right-shift), packs the result into a smaller type, and restores it by shifting back. The tradeoff: controlled precision loss for cheaper, denser storage.
-    </p>
-    <div class="intro-flow">
-      <div class="intro-step">
-        <div class="intro-val">1,000,000</div>
-        <div class="intro-sub">original (20 bits)</div>
-      </div>
-      <div class="intro-arrow">
-        <span>&gt;&gt; 8</span>
-        <span class="intro-arrow-label">encode</span>
-      </div>
-      <div class="intro-step compact">
-        <div class="intro-val">3,906</div>
-        <div class="intro-sub">stored (12 bits)</div>
-      </div>
-      <div class="intro-arrow">
-        <span>&lt;&lt; 8</span>
-        <span class="intro-arrow-label">decode</span>
-      </div>
-      <div class="intro-step">
-        <div class="intro-val">999,936</div>
-        <div class="intro-sub">restored (64 lost)</div>
-      </div>
-    </div>
+  <span class="ver">v7.1.0 planner</span>
+  <div class="hdr-links">
+    <a href="index.html">Home</a>
+    <a href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Docs</a>
+    <a href="https://github.com/0xferit/uint-quantization-lib">GitHub</a>
   </div>
-  <button class="intro-close" onclick="this.parentElement.style.display='none'" title="Hide intro">&times;</button>
 </div>
 
-<div class="app">
-  <aside class="controls">
-
-    <div>
-      <div class="section-label">Presets</div>
-      <div class="presets" id="presets"></div>
+<div class="pg">
+  <div class="input-row">
+    <div class="input-field">
+      <label for="maxInput">Domain maximum</label>
+      <input type="text" id="maxInput" value="1000000000000000000" placeholder="e.g., 1e21" spellcheck="false" autocomplete="off">
+      <div class="hint">largest value this field will ever hold</div>
     </div>
-
-    <div>
-      <div class="section-label">Scheme</div>
-      <div class="field">
-        <div class="field-label">discardedBitWidth <span id="dVal" style="font-family:var(--mono);color:var(--text-bright)">16</span></div>
-        <div class="field-row">
-          <input type="range" id="dSlider" min="0" max="255" value="16">
-          <input type="number" id="dNum" min="0" max="255" value="16">
-        </div>
-      </div>
-      <div class="field">
-        <div class="field-label">encodedBitWidth <span id="eVal" style="font-family:var(--mono);color:var(--text-bright)">96</span></div>
-        <div class="field-row">
-          <input type="range" id="eSlider" min="0" max="255" value="96">
-          <input type="number" id="eNum" min="0" max="255" value="96">
-        </div>
-      </div>
-      <div class="error-msg" id="configError"></div>
+    <div class="input-field">
+      <label for="stepInput">Acceptable step size</label>
+      <input type="text" id="stepInput" value="65536" placeholder="e.g., 1e9" spellcheck="false" autocomplete="off">
+      <div class="hint">smallest meaningful difference (1 = exact)</div>
     </div>
+  </div>
+  <div class="error-msg" id="errorMsg"></div>
 
-    <div>
-      <div class="section-label">Test Value</div>
-      <input type="text" class="val-input" id="valueInput" placeholder="Enter a uint256 value" value="1000000000000000000" spellcheck="false" autocomplete="off">
-      <div class="quick-vals" id="quickVals"></div>
-      <div class="error-msg" id="valueError"></div>
-      <label class="checkbox-row">
-        <input type="checkbox" id="preciseCheck"> precise mode (require step-aligned)
-      </label>
-    </div>
-
-  </aside>
-
-  <main class="preview">
-    <div>
-      <div class="section-label">Bit Layout (uint256)</div>
-      <div class="zone-container">
-        <div class="zone-bar" id="zoneBar"></div>
-        <div class="zone-indices" id="zoneIndices"></div>
-      </div>
-    </div>
-
-    <div>
-      <div class="section-label">Scheme Properties</div>
-      <div class="props-grid" id="propsGrid"></div>
-    </div>
-
-    <div class="results-section" id="resultsSection">
-      <div class="section-label">Encode / Decode</div>
-      <div class="result-grid" id="resultGrid"></div>
-      <div id="rangeViz"></div>
-    </div>
-
-    <div>
-      <div class="section-label">Solidity</div>
-      <div class="code-block" id="codeBlock"></div>
-    </div>
-  </main>
+  <div class="output" id="output"></div>
 </div>
 
 <div class="prompt-area">
-  <div class="prompt-header">
-    <div class="section-label">Prompt</div>
-    <button class="copy-btn" id="copyBtn">Copy</button>
+  <div class="prompt-inner">
+    <div class="prompt-header">
+      <span class="prompt-label">Prompt</span>
+      <button class="copy-btn" id="copyBtn">Copy</button>
+    </div>
+    <div class="prompt-text" id="promptText"></div>
   </div>
-  <div class="prompt-text" id="promptText"></div>
 </div>
 
 <script>
 const UINT256_MAX = (1n << 256n) - 1n;
-
-const PRESETS = [
-  { name: 'ETH Staking', d: 16, e: 96, val: '1000000000000000000', desc: 'Staking with 65,536 wei step' },
-  { name: 'Extreme Pack', d: 8, e: 20, val: '1000000', desc: '12 values per uint256 slot' },
-  { name: 'NatSpec Example', d: 32, e: 24, val: '1000000000000000', desc: 'From the docs: create(32, 24)' },
-  { name: 'Identity', d: 0, e: 8, val: '200', desc: 'No quantization, 8-bit' },
-  { name: 'Full Range', d: 128, e: 128, val: '100000000000000000000000000000000000000', desc: 'Maximum uint256 coverage' },
-];
-
-const state = { d: 16, e: 96, value: 1000000000000000000n, valueStr: '1000000000000000000', precise: false, activePreset: 0 };
-
-// --- DOM refs ---
-const $ = id => document.getElementById(id);
-const dSlider = $('dSlider'), dNum = $('dNum'), dVal = $('dVal');
-const eSlider = $('eSlider'), eNum = $('eNum'), eVal = $('eVal');
-const configError = $('configError');
-const valueInput = $('valueInput'), valueError = $('valueError');
-const preciseCheck = $('preciseCheck');
-const presetsEl = $('presets');
-const zoneBar = $('zoneBar'), zoneIndices = $('zoneIndices');
-const propsGrid = $('propsGrid');
-const resultsSection = $('resultsSection'), resultGrid = $('resultGrid'), rangeViz = $('rangeViz');
-const codeBlock = $('codeBlock');
-const promptText = $('promptText'), copyBtn = $('copyBtn');
 
 // --- Parsing ---
 function parseValue(str) {
@@ -669,344 +187,154 @@ function fmt(n) {
   if (s.length <= 22) return s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return '~' + s[0] + '.' + s.slice(1, 5) + 'e' + (s.length - 1);
 }
-function fmtShort(n) {
-  const s = n.toString();
-  if (s.length <= 10) return s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return '~' + s[0] + '.' + s.slice(1, 3) + 'e' + (s.length - 1);
-}
 function fmtFull(n) { return n.toString(); }
-function fmtHex(n) { return '0x' + n.toString(16); }
-function fmtPow(n) { return '2^' + n; }
 
-// --- Validation ---
-function validateConfig(d, e) {
-  if (e === 0) return 'encodedBitWidth must be > 0';
-  if (e >= 256) return 'encodedBitWidth must be < 256';
-  if (d >= 256) return 'discardedBitWidth must be < 256';
-  if (d + e > 256) return 'd + e = ' + (d + e) + ', exceeds 256';
-  return null;
+function bitLength(n) {
+  if (n <= 0n) return 0;
+  return n.toString(2).length;
 }
 
-// --- Compute ---
-function compute() {
-  const d = state.d, e = state.e;
-  const err = validateConfig(d, e);
-  if (err) return { valid: false, error: err };
+// --- Derive scheme ---
+function derive(maxVal, resolution) {
+  if (maxVal <= 0n) return { valid: false, error: 'Domain max must be > 0' };
+  if (resolution <= 0n) return { valid: false, error: 'Step size must be > 0' };
+  if (maxVal > UINT256_MAX) return { valid: false, error: 'Exceeds uint256' };
 
-  const dn = BigInt(d), en = BigInt(e);
-  const stepSize = 1n << dn;
-  const maxVal = ((1n << en) - 1n) << dn;
-  const unused = 256 - d - e;
+  // d = floor(log2(resolution))
+  const d = resolution > 1n ? bitLength(resolution) - 1 : 0;
+  const step = 1n << BigInt(d);
+
+  // e = bits needed for ceil(maxVal / step)
+  const dn = BigInt(d);
+  const encodedMax = (maxVal + step - 1n) >> dn; // ceiling division
+  const e = encodedMax > 0n ? bitLength(encodedMax) : 1;
+
+  if (d + e > 256) return { valid: false, error: `Needs ${d + e} bits (exceeds 256). Increase step size or reduce domain max.` };
+
+  // Native (no quantization) comparison
+  const nativeBits = maxVal > 0n ? bitLength(maxVal) : 1;
+  const nativeType = 'uint' + (Math.ceil(nativeBits / 8) * 8);
+
+  const actualMax = ((1n << BigInt(e)) - 1n) << dn;
   const uintBits = Math.ceil(e / 8) * 8;
   const uintType = uintBits > 256 ? 'uint256' : 'uint' + uintBits;
   const perSlot = Math.floor(256 / e);
   const slotWaste = 256 - perSlot * e;
-  const quantRaw = (e << 8) | d;
-  const quantHex = '0x' + quantRaw.toString(16).padStart(4, '0');
+  const maxError = step - 1n;
+  const identity = d === 0;
 
-  let va = null;
-  if (state.value !== null && state.value >= 0n) {
-    const v = state.value;
-    const fits = v <= maxVal;
-    const aligned = (v & (stepSize - 1n)) === 0n;
-    const remainder = v & (stepSize - 1n);
-    const floorVal = v & ~(stepSize - 1n);
-
-    if (fits) {
-      const encoded = v >> dn;
-      const decoded = encoded << dn;
-      const decodedMax = d === 0 ? decoded : (encoded << dn) | (stepSize - 1n);
-      const lossAbs = v - decoded;
-      const lossPct = v > 0n ? Number(lossAbs * 10000n / v) / 100 : 0;
-      let ceilVal;
-      if (d === 0) { ceilVal = v; }
-      else if (aligned) { ceilVal = v; }
-      else {
-        const c = (v | (stepSize - 1n)) + 1n;
-        ceilVal = c > UINT256_MAX ? null : c;
-      }
-      const preciseErr = state.precise && !aligned;
-      va = { fits: true, encoded, decoded, decodedMax, lossAbs, lossPct, aligned, remainder, floor: floorVal, ceil: ceilVal, preciseErr };
-    } else {
-      va = { fits: false, maxVal };
-    }
-  }
-
-  return { valid: true, stepSize, maxVal, unused, uintType, uintBits, perSlot, slotWaste, quantRaw, quantHex, va };
+  return {
+    valid: true, d, e, step, actualMax, uintType, uintBits,
+    nativeBits, nativeType,
+    perSlot, slotWaste, maxError,
+    totalBits: d + e, identity,
+    coversMax: actualMax >= maxVal
+  };
 }
+
+// --- DOM ---
+const maxInput = document.getElementById('maxInput');
+const stepInput = document.getElementById('stepInput');
+const errorMsg = document.getElementById('errorMsg');
+const output = document.getElementById('output');
+const promptText = document.getElementById('promptText');
+const copyBtn = document.getElementById('copyBtn');
 
 // --- Render ---
-function renderZoneBar(c) {
-  if (!c.valid) {
-    zoneBar.innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--err);font-size:12px">Invalid configuration</div>';
-    zoneIndices.innerHTML = '';
-    return;
-  }
-  const d = state.d, e = state.e, u = c.unused;
-  const total = 256;
-  const pU = u / total * 100, pE = e / total * 100, pD = d / total * 100;
+function update() {
+  const maxVal = parseValue(maxInput.value);
+  const resolution = parseValue(stepInput.value);
 
-  let html = '';
-  if (u > 0) {
-    html += `<div class="zone unused-zone" style="flex-basis:${pU}%"><div class="zone-inner"><span class="zone-name">unused</span><span class="zone-bits-label">${u}b</span></div></div>`;
-  }
-  html += `<div class="zone encoded-zone" style="flex-basis:${pE}%"><div class="zone-inner"><span class="zone-name">encoded</span><span class="zone-bits-label">${e}b</span></div></div>`;
-  if (d > 0) {
-    html += `<div class="zone discarded-zone" style="flex-basis:${pD}%"><div class="zone-inner"><span class="zone-name">discarded</span><span class="zone-bits-label">${d}b</span></div></div>`;
-  }
-  zoneBar.innerHTML = html;
+  maxInput.classList.toggle('invalid', maxInput.value.trim() && maxVal === null);
+  stepInput.classList.toggle('invalid', stepInput.value.trim() && resolution === null);
 
-  // Indices
-  let idxHtml = `<span class="zone-idx" style="left:0">255</span>`;
-  if (u > 0 && e > 0) {
-    const pos = u / total * 100;
-    idxHtml += `<span class="zone-idx" style="left:${pos}%">${d + e - 1}</span>`;
-  }
-  if (d > 0 && e > 0) {
-    const pos = (u + e) / total * 100;
-    idxHtml += `<span class="zone-idx" style="left:${pos}%">${d - 1}</span>`;
-  }
-  idxHtml += `<span class="zone-idx" style="left:100%">0</span>`;
-  zoneIndices.innerHTML = idxHtml;
-}
-
-function renderProperties(c) {
-  if (!c.valid) { propsGrid.innerHTML = ''; return; }
-  propsGrid.innerHTML = `
-    <div class="prop"><span class="prop-label">Step Size</span><span class="prop-value">${fmt(c.stepSize)}</span><span class="prop-sub">${fmtPow(state.d)}</span></div>
-    <div class="prop"><span class="prop-label">Max Value</span><span class="prop-value" title="${fmtFull(c.maxVal)}">${fmt(c.maxVal)}</span><span class="prop-sub">${fmtHex(c.maxVal).length < 80 ? fmtHex(c.maxVal) : ''}</span></div>
-    <div class="prop"><span class="prop-label">Encoded Type</span><span class="prop-value">${c.uintType}</span><span class="prop-sub">${c.uintBits} bits</span></div>
-    <div class="prop"><span class="prop-label">Per Slot</span><span class="prop-value">${c.perSlot} value${c.perSlot === 1 ? '' : 's'}</span><span class="prop-sub">${c.slotWaste > 0 ? c.slotWaste + 'b waste' : 'exact fit'}</span></div>
-    <div class="prop"><span class="prop-label">Unused Bits</span><span class="prop-value">${c.unused}</span><span class="prop-sub">${c.unused > 0 ? 'bits 255 down to ' + (state.d + state.e) : 'all 256 bits used'}</span></div>
-    <div class="prop"><span class="prop-label">Quant (uint16)</span><span class="prop-value">${c.quantHex}</span><span class="prop-sub">raw ${c.quantRaw}</span></div>
-  `;
-}
-
-function renderResults(c) {
-  if (!c.valid || !c.va) {
-    resultsSection.classList.remove('visible');
-    return;
-  }
-  resultsSection.classList.add('visible');
-  const va = c.va;
-
-  if (!va.fits) {
-    resultGrid.innerHTML = `<div class="result" style="grid-column:1/-1"><span class="result-label">Overflow</span><span class="result-value err">Value exceeds max (${fmt(va.maxVal)})</span></div>`;
-    rangeViz.innerHTML = '';
+  if (maxVal === null || resolution === null) {
+    errorMsg.textContent = '';
+    output.classList.remove('visible');
+    promptText.textContent = '';
     return;
   }
 
-  let alignedHtml;
-  if (va.aligned) {
-    alignedHtml = '<span class="result-value ok">yes</span>';
-  } else {
-    alignedHtml = '<span class="result-value loss">no</span>';
-  }
-  let preciseHtml = '';
-  if (va.preciseErr) {
-    preciseHtml = '<span class="result-sub" style="color:var(--err)">NotAligned revert</span>';
+  const r = derive(maxVal, resolution);
+
+  if (!r.valid) {
+    errorMsg.textContent = r.error;
+    output.classList.remove('visible');
+    promptText.textContent = '';
+    return;
   }
 
-  resultGrid.innerHTML = `
-    <div class="result"><span class="result-label">Encoded</span><span class="result-value">${fmt(va.encoded)}</span><span class="result-sub">${fmtHex(va.encoded)}</span></div>
-    <div class="result"><span class="result-label">Decoded (floor)</span><span class="result-value">${fmt(va.decoded)}</span></div>
-    <div class="result"><span class="result-label">Decode Max (ceil)</span><span class="result-value">${fmt(va.decodedMax)}</span></div>
-    <div class="result"><span class="result-label">Precision Loss</span><span class="result-value ${va.lossPct > 0 ? 'loss' : 'ok'}">${va.lossPct.toFixed(va.lossPct < 0.01 && va.lossPct > 0 ? 4 : 2)}%</span><span class="result-sub">${va.lossAbs > 0n ? fmt(va.lossAbs) + ' lost' : 'lossless'}</span></div>
-    <div class="result"><span class="result-label">Aligned</span>${alignedHtml}${preciseHtml}</div>
-    <div class="result"><span class="result-label">Remainder</span><span class="result-value">${fmt(va.remainder)}</span></div>
-    <div class="result"><span class="result-label">Floor</span><span class="result-value">${fmt(va.floor)}</span></div>
-    <div class="result"><span class="result-label">Ceil</span><span class="result-value">${va.ceil !== null ? fmt(va.ceil) : '<span class="err">overflow</span>'}</span></div>
-  `;
+  errorMsg.textContent = '';
+  output.classList.add('visible');
 
-  // Range visualization
-  if (va.decoded === va.decodedMax) {
-    rangeViz.innerHTML = `<div class="range-viz"><div class="range-viz-label">Decode Range</div><div style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">Identity: decoded = decodedMax = ${fmtShort(va.decoded)}</div></div>`;
-  } else {
-    const range = va.decodedMax - va.decoded;
-    const pos = range > 0n ? Number((state.value - va.decoded) * 1000n / range) / 10 : 0;
-    rangeViz.innerHTML = `
-      <div class="range-viz">
-        <div class="range-viz-label">Decode Range</div>
-        <div class="range-track"><div class="range-fill" style="width:100%"><div class="range-marker" style="left:${pos}%"></div></div></div>
-        <div class="range-labels" style="position:relative">
-          <span title="${fmtFull(va.decoded)}">${fmtShort(va.decoded)}</span>
-          <span style="position:absolute;left:${pos}%;transform:translateX(-50%);color:var(--text-bright);font-weight:600" title="${fmtFull(state.value)}">${fmtShort(state.value)}</span>
-          <span title="${fmtFull(va.decodedMax)}">${fmtShort(va.decodedMax)}</span>
-        </div>
+  if (r.identity) {
+    output.innerHTML = `
+      <div class="no-quant">
+        <strong>No quantization needed.</strong> Your field fits natively in <strong>${r.nativeType}</strong> (${r.nativeBits} bits).
+        Store it directly without the library.
+      </div>
+      <div class="code-wrap">
+        <div class="code-block"><span class="cm">// No quantization needed: ${r.nativeType} covers your domain max</span>
+<span class="ty">${r.nativeType}</span> myField;</div>
+        <button class="code-copy" onclick="copyCode(this)">Copy</button>
       </div>
     `;
-  }
-}
-
-function renderCode(c) {
-  if (!c.valid) { codeBlock.textContent = '// Invalid configuration'; return; }
-  const d = state.d, e = state.e;
-  codeBlock.innerHTML =
-    `<span class="kw">import</span> {<span class="ty">Quant</span>, <span class="ty">UintQuantizationLib</span> <span class="kw">as</span> QuantLib} <span class="kw">from</span> <span class="fn">"uint-quantization-lib/src/UintQuantizationLib.sol"</span>;
-
-<span class="ty">Quant</span> <span class="kw">private</span> <span class="kw">immutable</span> SCHEME = QuantLib.<span class="fn">create</span>(<span class="num">${d}</span>, <span class="num">${e}</span>);
-
-<span class="cm">// Step: ${fmt(c.stepSize)} | Max: ${fmt(c.maxVal)} | Type: ${c.uintType}</span>
-<span class="cm">// Per slot: ${c.perSlot} value${c.perSlot === 1 ? '' : 's'}${c.slotWaste > 0 ? ' (' + c.slotWaste + 'b waste)' : ''}</span>
-
-<span class="cm">// Encode (floor quantization):</span>
-<span class="ty">${c.uintType}</span> encoded = <span class="ty">${c.uintType}</span>(SCHEME.<span class="fn">encode</span>(value));
-
-<span class="cm">// Decode (restore lower bound):</span>
-<span class="ty">uint256</span> restored = SCHEME.<span class="fn">decode</span>(encoded);`;
-}
-
-function renderPrompt(c) {
-  if (!c.valid) {
-    promptText.textContent = 'Fix the configuration errors above to generate a prompt.';
+    promptText.textContent = `Field with domain max ${fmt(maxVal)}: no quantization needed. Use ${r.nativeType} natively (${r.nativeBits} bits).`;
     return;
   }
-  const d = state.d, e = state.e;
-  let text = `Integrate uint-quantization-lib with create(${d}, ${e}). `;
-  text += `Discards the lowest ${d} bit${d === 1 ? '' : 's'}, encoding values into ${e} bits (${c.uintType}). `;
-  text += `Step size is ${fmt(c.stepSize)}; max representable value is ${fmt(c.maxVal)}. `;
-  text += `${c.perSlot} encoded value${c.perSlot === 1 ? '' : 's'} fit${c.perSlot === 1 ? 's' : ''} per uint256 slot`;
-  text += c.slotWaste > 0 ? ` (${c.slotWaste} bits unused).\n` : '.\n';
 
-  if (c.va && c.va.fits) {
-    const va = c.va;
-    text += `\nTest value ${fmt(state.value)}: encodes to ${fmt(va.encoded)}, decodes to ${fmt(va.decoded)}`;
-    if (va.lossAbs > 0n) {
-      text += ` (${va.lossPct.toFixed(va.lossPct < 0.01 && va.lossPct > 0 ? 4 : 2)}% loss, ${fmt(va.lossAbs)} discarded)`;
-    } else {
-      text += ' (lossless)';
-    }
-    text += '. ';
-    text += va.aligned ? 'Value is step-aligned.' : `Not step-aligned; floor=${fmt(va.floor)}, ceil=${va.ceil !== null ? fmt(va.ceil) : 'overflow'}.`;
-  } else if (c.va && !c.va.fits) {
-    text += `\nTest value exceeds max (${fmt(c.maxVal)}); increase encodedBitWidth or discardedBitWidth.`;
-  }
-  promptText.textContent = text;
+  const saved = Math.ceil(r.nativeBits / 8) * 8 - r.uintBits;
+
+  output.innerHTML = `
+    <div class="compare">
+      <div class="compare-box before">
+        <div class="type">${r.nativeType}</div>
+        <div class="sub">native (${r.nativeBits} bits)</div>
+      </div>
+      <div class="compare-arrow">&rarr;</div>
+      <div class="compare-box after">
+        <div class="type">${r.uintType}</div>
+        <div class="sub">quantized (${r.e} bits encoded)</div>
+      </div>
+      ${saved > 0 ? `<div class="compare-save">&minus;${saved} bits</div>` : ''}
+    </div>
+    <table class="result-table">
+      <tr><td>Scheme</td><td>create(${r.d}, ${r.e})<span class="sub">discardedBitWidth = ${r.d}, encodedBitWidth = ${r.e}</span></td></tr>
+      <tr><td>Actual step</td><td>${fmt(r.step)}<span class="sub">2^${r.d}${r.step <= resolution ? ' (within your tolerance)' : ''}</span></td></tr>
+      <tr><td>Max representable</td><td>${fmt(r.actualMax)}<span class="sub ${r.coversMax ? 'ok' : 'warn'}">${r.coversMax ? 'covers your domain max' : 'does NOT cover domain max'}</span></td></tr>
+      <tr><td>Max error</td><td>${fmt(r.maxError)}<span class="sub">worst-case loss per value (step &minus; 1)</span></td></tr>
+      <tr><td>Per slot</td><td>${r.perSlot} value${r.perSlot === 1 ? '' : 's'}<span class="sub">${r.slotWaste > 0 ? r.slotWaste + ' bits unused per slot' : 'exact fit'}</span></td></tr>
+    </table>
+    <div class="code-wrap">
+      <div class="code-block"><span class="kw">import</span> {<span class="ty">Quant</span>, <span class="ty">UintQuantizationLib</span> <span class="kw">as</span> QuantLib} <span class="kw">from</span> <span class="fn">"uint-quantization-lib/src/UintQuantizationLib.sol"</span>;
+
+<span class="ty">Quant</span> <span class="kw">private</span> <span class="kw">immutable</span> SCHEME = QuantLib.<span class="fn">create</span>(<span class="num">${r.d}</span>, <span class="num">${r.e}</span>);
+
+<span class="cm">// Encode:</span>
+<span class="ty">${r.uintType}</span> encoded = <span class="ty">${r.uintType}</span>(SCHEME.<span class="fn">encode</span>(value));
+
+<span class="cm">// Decode:</span>
+<span class="ty">uint256</span> restored = SCHEME.<span class="fn">decode</span>(encoded);</div>
+      <button class="code-copy" onclick="copyCode(this)">Copy</button>
+    </div>
+  `;
+
+  promptText.textContent = `Field with domain max ${fmt(maxVal)} and acceptable step ${fmt(resolution)}: use create(${r.d}, ${r.e}). Stores in ${r.uintType} (down from ${r.nativeType}). Step size ${fmt(r.step)} (2^${r.d}), max representable ${fmt(r.actualMax)}, worst-case error ${fmt(r.maxError)} per value. ${r.perSlot} value${r.perSlot === 1 ? '' : 's'} per uint256 slot.`;
 }
 
-function renderQuickVals(c) {
-  if (!c.valid) { $('quickVals').innerHTML = ''; return; }
-  const btns = [
-    ['0', '0'],
-    ['step', fmtFull(c.stepSize)],
-    ['max', fmtFull(c.maxVal)],
-    ['1e18', '1000000000000000000'],
-  ];
-  $('quickVals').innerHTML = btns.map(([label, val]) =>
-    `<button class="quick-btn" data-val="${val}">${label}</button>`
-  ).join('');
-}
-
-function updateAll() {
-  const c = compute();
-
-  // Config error
-  configError.textContent = c.valid ? '' : c.error;
-
-  // Value error
-  if (state.valueStr && state.value === null) {
-    valueInput.classList.add('invalid');
-    valueError.textContent = 'Cannot parse value';
-  } else if (state.value !== null && state.value > UINT256_MAX) {
-    valueInput.classList.add('invalid');
-    valueError.textContent = 'Exceeds uint256';
-  } else if (state.value !== null && state.value < 0n) {
-    valueInput.classList.add('invalid');
-    valueError.textContent = 'Must be non-negative';
-  } else {
-    valueInput.classList.remove('invalid');
-    valueError.textContent = '';
-  }
-
-  renderZoneBar(c);
-  renderProperties(c);
-  renderResults(c);
-  renderCode(c);
-  renderPrompt(c);
-  renderQuickVals(c);
-  updatePresetHighlight();
-}
-
-// --- Presets ---
-function updatePresetHighlight() {
-  presetsEl.querySelectorAll('.preset-btn').forEach((btn, i) => {
-    const p = PRESETS[i];
-    btn.classList.toggle('active', state.d === p.d && state.e === p.e);
+function copyCode(btn) {
+  const code = btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
   });
 }
 
-function applyPreset(i) {
-  const p = PRESETS[i];
-  state.d = p.d; state.e = p.e;
-  state.valueStr = p.val;
-  state.value = parseValue(p.val);
-  state.activePreset = i;
-  dSlider.value = dNum.value = p.d; dVal.textContent = p.d;
-  eSlider.value = eNum.value = p.e; eVal.textContent = p.e;
-  valueInput.value = p.val;
-  updateAll();
-}
-
 // --- Events ---
-function syncD(v) {
-  v = Math.max(0, Math.min(255, parseInt(v) || 0));
-  state.d = v;
-  dSlider.value = dNum.value = v;
-  dVal.textContent = v;
-  updateAll();
-}
-function syncE(v) {
-  v = Math.max(0, Math.min(255, parseInt(v) || 0));
-  state.e = v;
-  eSlider.value = eNum.value = v;
-  eVal.textContent = v;
-  updateAll();
-}
+maxInput.addEventListener('input', update);
+stepInput.addEventListener('input', update);
 
-dSlider.addEventListener('input', e => syncD(e.target.value));
-dNum.addEventListener('input', e => syncD(e.target.value));
-eSlider.addEventListener('input', e => syncE(e.target.value));
-eNum.addEventListener('input', e => syncE(e.target.value));
-
-valueInput.addEventListener('input', e => {
-  state.valueStr = e.target.value;
-  const parsed = parseValue(e.target.value);
-  if (parsed !== null && parsed >= 0n && parsed <= UINT256_MAX) {
-    state.value = parsed;
-  } else if (e.target.value.trim() === '') {
-    state.value = null;
-  } else {
-    state.value = parsed;
-  }
-  updateAll();
-});
-
-preciseCheck.addEventListener('change', e => {
-  state.precise = e.target.checked;
-  updateAll();
-});
-
-$('quickVals').addEventListener('click', e => {
-  const btn = e.target.closest('.quick-btn');
-  if (!btn) return;
-  const val = btn.dataset.val;
-  valueInput.value = val;
-  state.valueStr = val;
-  state.value = parseValue(val);
-  updateAll();
-});
-
-// Preset buttons
-PRESETS.forEach((p, i) => {
-  const btn = document.createElement('button');
-  btn.className = 'preset-btn';
-  btn.textContent = p.name;
-  btn.title = p.desc;
-  btn.addEventListener('click', () => applyPreset(i));
-  presetsEl.appendChild(btn);
-});
-
-// Copy
 copyBtn.addEventListener('click', () => {
   navigator.clipboard.writeText(promptText.textContent).then(() => {
     copyBtn.textContent = 'Copied!';
@@ -1016,7 +344,7 @@ copyBtn.addEventListener('click', () => {
 });
 
 // --- Init ---
-updateAll();
+update();
 </script>
 </body>
 </html>
