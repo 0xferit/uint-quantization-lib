@@ -15,4 +15,7 @@ awk '
   END { if (!contract || !closed) exit 1 }
 ' README.md > "$consumer/src/Example.sol"
 
+printf '%s\n' '// SPDX-License-Identifier: MIT' 'pragma solidity ^0.8.25;' \
+  'import "uint-quantization-lib/src/showcase/ShowcaseSolidityFixtures.sol";' > "$consumer/src/ShowcaseImport.sol"
+
 forge build --root "$consumer" --remappings 'uint-quantization-lib/=dependencies/uint-quantization-lib/'
