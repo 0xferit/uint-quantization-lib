@@ -31,5 +31,11 @@ jobs:
       - name: Test
         run: forge test -vvv
 
+      - name: Build the documented package consumer
+        run: bash scripts/check-readme-example.sh
+
+      - name: Test planner boundaries
+        run: node --test test/playground.test.mjs
+
       - name: Test release planning
         run: bash test/release-plan.sh
