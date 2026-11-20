@@ -54,7 +54,7 @@ expect_plan 'pending_tag=v1.1.0' "$docs"
 newest=$(make_commit newest -p "$release")
 git update-ref "$main_ref" "$newest"
 expect_plan $'pending_tag=v1.1.0\nfollow_up=true' "$newest"
-expect_plan 'pending_tag=v1.0.0' "$newest" v1.0.0
+expect_plan $'pending_tag=v1.0.0\nhistorical=true' "$newest" v1.0.0
 expect_plan '' "$first"
 
 git update-ref "$PUBLISHED_REF" "$release"

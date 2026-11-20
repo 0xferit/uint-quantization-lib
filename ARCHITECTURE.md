@@ -18,6 +18,6 @@ The staking benchmark also compares an exact packed amount with the quantized fi
 
 ## Release and validation
 
-The release workflow calls the same read-only validation workflow used by pull requests. The version classifier sees the Solidity diff and must return a valid semantic version bump before semantic-release can prepare a release. Semantic-release validates the generated versioned source before it pushes the release commit and tag.
+The release workflow calls the same read-only validation workflow used by pull requests. The version classifier sees the Solidity diff and must return a valid semantic version bump before semantic-release can prepare a release. Semantic-release validates the generated versioned source before atomically pushing the release commit and version tag.
 
-A tagged release remains pending until the Soldeer registry serves its Solidity source. Release runs are serialized and recover the pending tag before preparing another version. Registry verification compares the published Solidity files with the selected tag before moving the publication marker. A manual backfill selects an existing version tag on main and leaves a newer marker in place.
+A tagged release remains pending until the Soldeer registry serves its Solidity source. Release runs are serialized and recover the pending tag before preparing another version. Registry verification compares the published Solidity files with the selected tag before moving the publication marker. A manual backfill selects an existing version tag on main and leaves a newer marker and GitHub Latest release in place.

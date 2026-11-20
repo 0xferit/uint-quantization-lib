@@ -39,3 +39,6 @@ jobs:
 
       - name: Test release planning
         run: bash test/release-plan.sh
+
+      - name: Test the release transaction
+        run: node --test test/release-commit.test.mjs

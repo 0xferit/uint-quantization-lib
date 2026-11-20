@@ -123,9 +123,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.plan.outputs.pending_tag }}
+          HISTORICAL: ${{ steps.plan.outputs.historical }}
         run: |
           if ! gh release view "$TAG" --json tagName >/dev/null; then
-            gh release create "$TAG" --verify-tag --generate-notes
+            args=(--verify-tag --generate-notes)
+            if [[ "$HISTORICAL" == true ]]; then
+              args+=(--latest=false)
+            fi
+            gh release create "$TAG" "${args[@]}"
           fi
 
       - name: Upload and verify Soldeer package

@@ -4,6 +4,9 @@ set -euo pipefail
 main_commit=$(git rev-parse 'refs/remotes/origin/main^{commit}')
 stable_tag_pattern='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
 
+last_tag=$(git tag --merged "$main_commit" --sort=-version:refname |
+  awk -v stable="$stable_tag_pattern" '$0 ~ stable && !tag {tag=$0} END {print tag}')
+
 if [[ -n "${REQUESTED_TAG:-}" ]]; then
   if [[ ! "$REQUESTED_TAG" =~ $stable_tag_pattern ]]; then
     echo 'Enter a stable release tag such as v6.0.2.' >&2
@@ -18,11 +21,11 @@ if [[ -n "${REQUESTED_TAG:-}" ]]; then
     exit 1
   fi
   printf 'pending_tag=%s\n' "$REQUESTED_TAG" >> "$GITHUB_OUTPUT"
+  if [[ "$REQUESTED_TAG" != "$last_tag" ]]; then
+    echo 'historical=true' >> "$GITHUB_OUTPUT"
+  fi
   exit 0
 fi
-
-last_tag=$(git tag --merged "$main_commit" --sort=-version:refname |
-  awk -v stable="$stable_tag_pattern" '$0 ~ stable && !tag {tag=$0} END {print tag}')
 
 if [[ "$main_commit" != "$GITHUB_SHA" ]]; then
   if [[ -z "$last_tag" || "$(git rev-parse "${last_tag}^{commit}")" != "$main_commit" ||
