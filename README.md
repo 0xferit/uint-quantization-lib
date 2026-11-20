@@ -62,10 +62,36 @@ contract Readings {
 [![Exact uint112 and strict uint96 stake gas][staking-equal-range]](test/showcase/ShowcaseGas.t.sol)
 [![Extreme packing gas reduction][extreme-savings]](test/showcase/ShowcaseGas.t.sol)
 
-The staking fixtures compare a two-slot raw record with two one-slot records covering the quantized deposit range. One stores the full amount in a `uint112`. The other stores a quantized `uint96`. The extreme-packing fixtures compare twelve raw slots with one packed slot. These contracts are benchmark fixtures.
+The badges use the repository's default Foundry profile. To reproduce them, run the showcase gas report.
 
 ```sh
 forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
+```
+
+### Cancun and projected Glamsterdam savings
+
+Each row shows the gas the sender pays for one successful first write to an already-deployed contract with empty storage. Cancun and Glamsterdam use the same Cancun-compiled bytecode, calldata and attached value. The samples satisfy strict encoding's alignment requirement. Savings are relative to the raw fixture in each group.
+
+| First write | Cancun gas | Cancun saving | Projected Glamsterdam gas | Projected saving |
+|---|---:|---:|---:|---:|
+| extreme raw | 289,917 | baseline | 1,338,957 | baseline |
+| extreme floor | 51,164 | 82.35% | 133,084 | 90.06% |
+| extreme strict | 52,859 | 81.77% | 134,779 | 89.93% |
+| staking raw | 66,123 | baseline | 242,163 | baseline |
+| staking exact uint112 | 43,990 | 33.47% | 132,010 | 45.49% |
+| staking floor | 44,313 | 32.98% | 132,333 | 45.35% |
+| staking strict | 44,473 | 32.74% | 132,493 | 45.29% |
+
+Extreme packing cuts twelve new slots to one. In the staking fixture, packing cuts the two-slot `uint128` record to one slot. An exact `uint112` also fits in one slot and covers the same deposit range as the quantized `uint96`. It preserves every wei and costs 483 gas less than strict quantization on either fork. Deployment and updates to existing slots have different costs.
+
+The proposed Glamsterdam schedule tested on November 20, 2026 charges 97,920 state gas per newly populated slot in addition to execution gas. The projection uses transaction receipts so it includes both charges. The schedule may change before mainnet activation. [State creation proposal](https://github.com/ethereum/EIPs/blob/b055feec322fbc37e9d77a393a50b3ff56b31c92/EIPS/eip-8037.md) · [State access proposal](https://github.com/ethereum/EIPs/blob/b055feec322fbc37e9d77a393a50b3ff56b31c92/EIPS/eip-8038.md) · [Ethereum Foundation testing update](https://blog.ethereum.org/2026/11/06/glamsterdam-8037-8038)
+
+To reproduce the table from this checkout, use Python 3.10 or later, Foundry 1.8.4 (`forge`, `cast`) and Geth 1.17.10 (`geth`, `evm`) on your path. The build caches the pinned Solidity compiler. The comparison then runs offline.
+
+```sh
+forge soldeer install
+forge build
+python3 scripts/compare-fork-gas.py
 ```
 
 [Benchmark suite](test/showcase/ShowcaseGas.t.sol) · [MIT license](LICENSE) · [0xferit](https://github.com/0xferit)
