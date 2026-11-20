@@ -3,6 +3,7 @@ src = "src"
 out = "out"
 libs = ["dependencies"]
 ast = true
+solc = "0.8.38"
 optimizer = true
 optimizer_runs = 0x10000
 
