@@ -12,6 +12,8 @@ The extreme packing pair compares a fixed array of full-width values with quanti
 
 The staking benchmark also compares an exact packed amount with the quantized fixture's deposit ceiling. That baseline isolates the effect of the amount representation when either record fits in one slot. On main, a read-only job measures gas and passes the numbers to a separate job that publishes the README badges on the `gh-badges` branch.
 
+The [fork comparison](scripts/compare-fork-gas.py) takes deployed bytecode, calldata and attached value from those same tests. It replays each first write in a fresh local state under Cancun and the proposed Glamsterdam rules. Geth supplies the fork rules and transaction receipts. Each Cancun receipt must match the corresponding Forge measurement before the comparison is reported.
+
 ## Documentation site
 
 [`index.html`](index.html) links to installation instructions and shows a worked example. [`playground.html`](playground.html) renders planner inputs and results. The page and the Node.js regression tests use [`planner.js`](planner.js) to validate the cap and shift and derive a scheme that covers the input domain.
