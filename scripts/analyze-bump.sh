@@ -7,7 +7,7 @@ if [[ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]]; then
   exit 1
 fi
 
-if ! bump=$(
+if ! reply=$(
   {
     cat <<'PROMPT'
 Determine the semantic version bump for this Solidity package.
@@ -28,7 +28,12 @@ PROMPT
   exit 1
 fi
 
-case "$bump" in
-  major|minor|patch) printf '%s\n' "$bump" ;;
-  *) echo 'The Solidity release classifier must return exactly major, minor, or patch.' >&2; exit 1 ;;
-esac
+reply=$(printf '%s' "$reply" | LC_ALL=C tr '[:upper:]' '[:lower:]')
+emphasis='([*]{1,2}|_{1,2}|`)?'
+answer="^[[:space:]]*${emphasis}(major|minor|patch)${emphasis}[.]?[[:space:]]*$"
+if [[ $reply =~ $answer && ${BASH_REMATCH[1]} == "${BASH_REMATCH[3]}" ]]; then
+  printf '%s\n' "${BASH_REMATCH[2]}"
+else
+  echo 'The Solidity release classifier must return one of major, minor, or patch.' >&2
+  exit 1
+fi
