@@ -63,6 +63,7 @@
 
     /* ── Sections ── */
     .section { padding: 72px 0; }
+    .install-guide { margin-bottom: 16px; }
     .section-title { font-size: 1.5rem; font-weight: 700; color: var(--fg-0); margin-bottom: 32px; letter-spacing: -0.02em; }
 
     /* ── Code blocks ── */
@@ -185,20 +186,24 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="quick-start">
       <h2 class="section-title sr">Quick Start</h2>
+      <p class="install-guide sr">Install the library and configure its import alias using the <a href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md#installation">installation instructions</a>.</p>
       <div class="code-block sr" style="transition-delay:0.1s">
-        <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">Terminal</span></div>
-        <div class="code-body">forge soldeer install uint-quantization-lib</div>
-      </div>
-      <div class="code-block sr" style="transition-delay:0.2s">
-        <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">MyContract.sol</span></div>
-        <div class="code-body">import {Quant, UintQuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
+        <div class="code-header"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span><span class="code-label">QuantizationExample.sol</span></div>
+        <div class="code-body">// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.25;
 
-Quant private immutable SCHEME = UintQuantizationLib.create(32, 24);
+import {Quant, UintQuantizationLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
 
-uint24 stored = uint24(SCHEME.encode(largeValue));   // compress
-uint256 restored = SCHEME.decode(stored);             // decompress</div>
+contract QuantizationExample {
+    Quant private immutable SCHEME = UintQuantizationLib.create(32, 32);
+
+    function roundTrip(uint256 value) external view returns (uint32 encoded, uint256 restored) {
+        encoded = uint32(SCHEME.encode(value));
+        restored = SCHEME.decode(encoded);
+    }
+}</div>
       </div>
     </section>
 
@@ -209,14 +214,14 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
           <div class="ig-label">Original</div>
           <div class="ig-num">1e18 wei</div>
           <div class="ig-bar">
-            <div class="ig-seg ig-kept" style="flex:224"></div>
+            <div class="ig-seg ig-kept" style="flex:32"></div>
             <div class="ig-seg ig-lost" style="flex:32"></div>
           </div>
           <div class="ig-legend">
-            <span class="ig-legend-item"><span class="ig-dot ig-kept"></span>kept: 224 bits</span>
+            <span class="ig-legend-item"><span class="ig-dot ig-kept"></span>kept: 32 bits</span>
             <span class="ig-legend-item"><span class="ig-dot ig-lost"></span>discarded: 32 bits</span>
           </div>
-          <div class="ig-sub">256 bits total (1 token, 18 decimals)</div>
+          <div class="ig-sub">1 ether fits in uint64</div>
         </div>
         <div class="ig-arrow">
           <div class="ig-arrow-op">&gt;&gt; 32</div>
@@ -224,11 +229,11 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
         </div>
         <div class="ig-stage ig-hl">
           <div class="ig-label">Stored</div>
-          <div class="ig-num">232,830,643 wei</div>
+          <div class="ig-num">232,830,643</div>
           <div class="ig-bar">
             <div class="ig-seg ig-kept" style="flex:1"></div>
           </div>
-          <div class="ig-sub">fits in uint224</div>
+          <div class="ig-sub">units of 2<sup>32</sup> wei, stored as uint32</div>
         </div>
         <div class="ig-arrow">
           <div class="ig-arrow-op">&lt;&lt; 32</div>
@@ -236,16 +241,16 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
         </div>
         <div class="ig-stage">
           <div class="ig-label">Restored</div>
-          <div class="ig-num">&asymp; 1e18 wei</div>
+          <div class="ig-num">999,999,997,191,651,328 wei</div>
           <div class="ig-bar">
-            <div class="ig-seg ig-kept" style="flex:224"></div>
+            <div class="ig-seg ig-kept" style="flex:32"></div>
             <div class="ig-seg ig-zeros" style="flex:32"></div>
           </div>
           <div class="ig-legend">
-            <span class="ig-legend-item"><span class="ig-dot ig-kept"></span>preserved: 224 bits</span>
+            <span class="ig-legend-item"><span class="ig-dot ig-kept"></span>preserved: 32 bits</span>
             <span class="ig-legend-item"><span class="ig-dot ig-zeros"></span>zero-filled: 32 bits</span>
           </div>
-          <div class="ig-sub">max error &lt; 2^32 wei (~4.3 gwei)</div>
+          <div class="ig-sub">max floor loss is 2<sup>32</sup> &minus; 1 wei</div>
         </div>
       </div>
     </section>
@@ -268,12 +273,12 @@ uint256 restored = SCHEME.decode(stored);             // decompress</div>
       <div class="api-list sr" style="transition-delay:0.1s">
         <div class="api-item"><code class="api-fn">create(discardedBitWidth, encodedBitWidth)</code><span class="api-desc">Create a quantization scheme</span></div>
         <div class="api-item"><code class="api-fn">encode(value)</code><span class="api-desc">Floor-encode a value (reverts on overflow)</span></div>
-        <div class="api-item"><code class="api-fn">encode(value, true)</code><span class="api-desc">Strict encode (reverts if not step-aligned)</span></div>
+        <div class="api-item"><code class="api-fn">encode(value, true)</code><span class="api-desc">Strict encode (reverts on overflow or misalignment)</span></div>
         <div class="api-item"><code class="api-fn">decode(encoded) / decodeMax(encoded)</code><span class="api-desc">Restore lower-bound or upper-bound value</span></div>
-        <div class="api-item"><code class="api-fn">fits(value) / fitsEncoded(encoded)</code><span class="api-desc">Check if value is representable</span></div>
+        <div class="api-item"><code class="api-fn">fits(value) / fitsEncoded(encoded)</code><span class="api-desc">Check encoder and decoder ranges</span></div>
         <div class="api-item"><code class="api-fn">isAligned(value) / remainder(value)</code><span class="api-desc">Check step alignment and lost bits</span></div>
         <div class="api-item"><code class="api-fn">requireAligned(value) / requireMinStep(value)</code><span class="api-desc">Guard helpers that revert on bad input</span></div>
-        <div class="api-item"><code class="api-fn">floor(value) / ceil(value)</code><span class="api-desc">Snap to nearest step boundary</span></div>
+        <div class="api-item"><code class="api-fn">floor(value) / ceil(value)</code><span class="api-desc">Round down or up to a step boundary</span></div>
         <div class="api-item"><code class="api-fn">stepSize() / max()</code><span class="api-desc">Query scheme parameters</span></div>
       </div>
     </section>

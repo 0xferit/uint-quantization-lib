@@ -30,12 +30,12 @@ forge fmt                                                            # format So
 
 ### Showcase: `src/showcase/ShowcaseSolidityFixtures.sol`
 
-Production-style contracts for gas benchmarks only. Raw vs quantized pairs: `RawETHStakingShowcase` / `QuantizedETHStakingShowcase` (real-life staking) and `RawExtremePackingShowcase` / `QuantizedExtremePackingShowcase` (12 slots into 1).
+Benchmark fixtures for staking and extreme packing. The staking lifecycle and storage comparisons are documented in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Tests: `test/`
 
 - `UintQuantizationLib.t.sol`: `QuantHarness` exposes library via method-call syntax for external calls. `UintQuantizationLibSmokeTest` has concrete regression tests and fuzz tests. Fuzz parameters use `uint8` for discardedBitWidth/encodedBitWidth; use `bound()` over `vm.assume` for value-in-range constraints.
-- `showcase/ShowcaseGas.t.sol`: Real-life benchmark asserts >= 32% gas savings vs raw on zero-to-nonzero writes. Extreme benchmark logs gas numbers for documentation (not a regression gate).
+- `showcase/ShowcaseGas.t.sol`: The staking regression threshold applies to the two-slot raw baseline. Report the equal-range exact baseline alongside it. The extreme benchmark logs first-write gas.
 
 ### Configuration
 
@@ -68,9 +68,11 @@ Do not write a test that re-implements the function under test, proves the langu
 
 ## Release pipeline
 
-Fully automated on push to main (`.github/workflows/release.yml`):
-1. `scripts/analyze-bump.sh` checks if any `src/**/*.sol` files changed since the last Soldeer publish (`soldeer-published` tag). If no Solidity source changed, no release is created.
-2. If source changed, Claude (Opus, max effort) analyzes the diff and determines the semver bump (major/minor/patch). Falls back to "patch" if Claude is unavailable.
-3. `@semantic-release/exec` bumps the `VERSION` constant in `UintQuantizationLib.sol`.
-4. GitHub release created, CHANGELOG.md + source committed with `[skip ci]`.
-5. `forge soldeer push` publishes to the Soldeer registry, then tags `soldeer-published`.
+The release workflow runs on pushes to main and supports a manual retry on main.
+It requires the same build and tests as pull requests before publication. Supply an existing stable release tag to backfill an older Soldeer version without moving the publication marker backwards.
+
+1. `scripts/plan-release.sh` checks for Solidity changes under `src/` since the latest release tag. It retries a pending tagged release before preparing another version.
+2. For a new release, `scripts/analyze-bump.sh` asks Claude to classify the Solidity diff. A missing credential, failed call or invalid classification stops the release.
+3. Semantic-release updates `VERSION` and the README installation command, builds and tests the versioned source, and writes the changelog, GitHub release and tag.
+4. The workflow uploads the tagged Solidity sources to Soldeer and verifies the registry archive. It moves the `soldeer-published` tag only after verification.
+5. After retrying a pending release, run the workflow again if main contains additional unreleased Solidity changes.

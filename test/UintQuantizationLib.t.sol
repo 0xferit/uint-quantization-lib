@@ -96,7 +96,7 @@ contract QuantHarness {
     }
 }
 
-/// @notice Fast concrete regression checks. Mathematical completeness is covered by fuzz tests.
+/// @notice Concrete boundary checks and fuzz properties for validated quantization schemes.
 contract UintQuantizationLibSmokeTest is Test {
     QuantHarness harness;
 
@@ -366,27 +366,37 @@ contract UintQuantizationLibSmokeTest is Test {
         assertTrue(harness.isAligned(q, floored));
     }
 
-    function testFuzz_lower_bound_round_trip(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value)
-        public
-        view
-    {
+    function testFuzz_floor_round_trip(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value) public view {
         vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
-        // Use bound instead of assume: schemes with small max reject most random uint256 values.
         value = bound(value, 0, harness.max(q));
-        uint256 decoded = harness.decode(q, harness.encode(q, value));
-        assertLe(decoded, value);
+        uint256 step = 2 ** uint256(discardedBitWidth_);
+        uint256 encoded = harness.encode(q, value);
+        uint256 lower = harness.decode(q, encoded);
+        assertTrue(harness.isValid(q));
+        assertEq(encoded, value / step);
+        assertEq(harness.encode(q, value, false), encoded);
+        assertEq(lower, value - value % step);
+        assertEq(harness.decodeUnchecked(q, encoded), lower);
     }
 
-    function testFuzz_decodeMax_ge_decode(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 encoded)
+    function testFuzz_decoding_bucket_bounds(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 encoded)
         public
         view
     {
         vm.assume(encodedBitWidth_ > 0 && uint256(discardedBitWidth_) + uint256(encodedBitWidth_) <= 256);
         Quant q = UintQuantizationLib.create(uint256(discardedBitWidth_), uint256(encodedBitWidth_));
-        // Bound to valid encoded range so the test exercises the documented domain.
-        encoded = bound(encoded, 0, (uint256(1) << harness.encodedBitWidth(q)) - 1);
-        assertGe(harness.decodeMax(q, encoded), harness.decode(q, encoded));
+        uint256 bucketCount = 2 ** uint256(encodedBitWidth_);
+        encoded = bound(encoded, 0, bucketCount - 1);
+        uint256 step = 2 ** uint256(discardedBitWidth_);
+        uint256 lower = encoded * step;
+        uint256 upper = lower + (step - 1);
+
+        assertTrue(harness.fitsEncoded(q, bucketCount - 1));
+        assertFalse(harness.fitsEncoded(q, bucketCount));
+        assertEq(harness.decode(q, encoded), lower);
+        assertEq(harness.decodeMax(q, encoded), upper);
+        assertEq(harness.decodeMaxUnchecked(q, encoded), upper);
     }
 
     function testFuzz_remainder_lt_stepSize(uint8 discardedBitWidth_, uint8 encodedBitWidth_, uint256 value)

@@ -15,7 +15,7 @@ pragma solidity ^0.8.25;
  *
  *         Usage:
  *         ```solidity
- *         import {Quant, UintQuantizationLib as QuantLib} from "src/UintQuantizationLib.sol";
+ *         import {Quant, UintQuantizationLib as QuantLib} from "uint-quantization-lib/src/UintQuantizationLib.sol";
  *
  *         Quant private immutable SCHEME = QuantLib.create(32, 24);
  *
@@ -23,22 +23,16 @@ pragma solidity ^0.8.25;
  *         restored = SCHEME.decode(stored);
  *         ```
  *
- *         **Important:** Always construct `Quant` values via `create()`. Using `Quant.wrap()`
- *         directly bypasses validation and produces undefined behavior in all library functions.
- *         Use `isValid()` to check a `Quant` of unknown origin.
- *
- *         Design note: library functions do not validate `q` on every call. All functions are
- *         `internal pure` and run inside the integrator's contract; the expected pattern is a
- *         single `create()` at construction time (typically `immutable`). Adding per-call
- *         validation would penalize the correct-usage path for a scenario that only arises
- *         from explicit `Quant.wrap()` misuse.
+ *         Construct schemes with `create()`. The default zero value is invalid. Packed values
+ *         from storage or callers need an `isValid()` check unless their origin guarantees validity.
+ *         Encoding, decoding and rounding assume a valid scheme.
  */
 type Quant is uint16;
 
 /// @notice Thrown when a value exceeds the maximum representable by the scheme.
 error Overflow(uint256 value, uint256 max);
 
-/// @notice Thrown by `encode` (precise mode) when a value is not aligned to the step size.
+/// @notice Thrown by precise encoding or `requireAligned` when a value is not step-aligned.
 error NotAligned(uint256 value, uint256 stepSize);
 
 /// @notice Thrown by `create` when the (discardedBitWidth, encodedBitWidth) pair is invalid.
@@ -59,8 +53,7 @@ library UintQuantizationLib {
 
     /// @notice Creates a `Quant` scheme from discardedBitWidth and encodedBitWidth.
     /// @dev    Reverts when discardedBitWidth >= 256, encodedBitWidth == 0, encodedBitWidth >= 256, or
-    ///         discardedBitWidth + encodedBitWidth > 256. Any of these conditions would produce a scheme
-    ///         where the computed max overflows or the step size is undefined.
+    ///         discardedBitWidth + encodedBitWidth > 256.
     function create(uint256 discardedBitWidth_, uint256 encodedBitWidth_) internal pure returns (Quant) {
         if (
             discardedBitWidth_ >= 256 || encodedBitWidth_ == 0 || encodedBitWidth_ >= 256
@@ -138,7 +131,8 @@ library UintQuantizationLib {
         }
     }
 
-    /// @notice Like `decode` but fills the discarded bits with ones (upper bound within the step).
+    /// @notice Returns the upper end of the encoded bucket, filling discarded bits with ones.
+    ///         For the final bucket this can exceed `max(q)`. Only `max(q)` can encode to its index.
     ///         Reverts with `Overflow` when `encoded >= 2**encodedBitWidth(q)`.
     function decodeMax(Quant q, uint256 encoded) internal pure returns (uint256) {
         uint256 e = encodedBitWidth(q);
@@ -150,7 +144,8 @@ library UintQuantizationLib {
     }
 
     /// @notice Unchecked `decode`: no bounds check on `encoded`. Use when `encoded` is known to be
-    ///         valid (e.g., returned by `encode`). Passing an out-of-range value wraps silently.
+    ///         valid (e.g., returned by `encode`). An oversized input can produce an out-of-scheme
+    ///         result or lose high bits in the left shift.
     function decodeUnchecked(Quant q, uint256 encoded) internal pure returns (uint256) {
         unchecked {
             return encoded << discardedBitWidth(q);
@@ -174,7 +169,7 @@ library UintQuantizationLib {
         return value & ((uint256(1) << discardedBitWidth(q)) - 1);
     }
 
-    /// @notice Returns true when `value` is exactly representable (step-aligned).
+    /// @notice Tests divisibility by the step size. Exact encoding requires both `fits` and `isAligned`.
     function isAligned(Quant q, uint256 value) internal pure returns (bool) {
         return remainder(q, value) == 0;
     }

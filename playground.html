@@ -20,7 +20,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
   display: flex; align-items: baseline; gap: 10px;
 }
 .hdr h1 { font-size: 15px; font-weight: 600; color: var(--text-bright); }
-.hdr .ver { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+.hdr .page-label { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
 .hdr-links { margin-left: auto; display: flex; gap: 16px; }
 .hdr-links a { font-size: 12px; color: var(--text-dim); text-decoration: none; }
 .hdr-links a:hover { color: var(--text-bright); }
@@ -77,7 +77,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 }
 .result-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .result-table td:first-child { color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; width: 140px; padding-top: 10px; }
-.result-table td:last-child { color: var(--text-bright); }
+.result-table td:last-child { color: var(--text-bright); overflow-wrap: anywhere; }
 .result-table .sub { font-size: 10px; color: var(--text-dim); display: block; margin-top: 1px; }
 .result-table .ok { color: var(--accent); }
 .result-table .warn { color: var(--warn); }
@@ -119,7 +119,8 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
   padding: 5px 14px; border-radius: 6px; font-size: 12px; font-family: inherit;
   cursor: pointer; transition: all 0.15s;
 }
-.copy-btn:hover { background: var(--accent); }
+.copy-btn:enabled:hover { background: var(--accent); }
+.copy-btn:disabled { opacity: 0.5; cursor: default; }
 .copy-btn.copied { background: #16a34a; }
 .prompt-text {
   font-family: var(--mono); font-size: 12px; line-height: 1.6;
@@ -127,6 +128,8 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 }
 
 @media (max-width: 500px) {
+  .hdr { flex-wrap: wrap; }
+  .hdr-links { margin-left: 0; }
   .input-row { flex-direction: column; gap: 12px; }
   .compare { flex-direction: column; }
   .compare-arrow { transform: rotate(90deg); }
@@ -137,9 +140,9 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 
 <div class="hdr">
   <h1>uint-quantization-lib</h1>
-  <span class="ver">v7.1.0 planner</span>
+  <span class="page-label">Planner</span>
   <div class="hdr-links">
-    <a href="index.html">Home</a>
+    <a href="index.html#quick-start">Quick Start</a>
     <a href="https://github.com/0xferit/uint-quantization-lib/blob/main/README.md">Docs</a>
     <a href="https://github.com/0xferit/uint-quantization-lib">GitHub</a>
   </div>
@@ -148,13 +151,13 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
 <div class="pg">
   <div class="intro">
     <h2>Thinking through a quantization scheme</h2>
-    <p>Say you are building a staking contract and need to store ETH balances. ETH has 18 decimals, so 1 ETH = 10<sup>18</sup> wei. Where do you start?</p>
+    <p>Say your staking contract enforces a limit of 1 million ether on the amount it records. In base units, the cap is 10<sup>24</sup> wei.</p>
     <ol>
-      <li><strong>What is the largest value I will ever store?</strong> The total ETH supply is ~120M ETH = 1.2 &times; 10<sup>26</sup> wei. No single balance can exceed that, so it is a safe domain max. If the field is an accumulator (e.g., total staked across all users), estimate the worst-case accumulated total instead.</li>
-      <li><strong>How many bits does that need?</strong> log<sub>2</sub>(1.2 &times; 10<sup>26</sup>) &asymp; 86.6, so 87 bits minimum. Next byte boundary: <code>uint88</code>.</li>
-      <li><strong>How much resolution can I sacrifice?</strong> Do you need wei-level resolution? Probably not for staking. If you accept rounding to the nearest 65,536 wei (2<sup>16</sup>), that is roughly 0.000000000000065 ETH: invisible to any user. So discarding 16 bits is safe.</li>
-      <li><strong>What is the result?</strong> With <code>uint88</code> and 16 discarded bits: 88 &minus; 16 = 72 encoded bits, stored as <code>uint72</code>. The call is <code>create(16, 72)</code>.</li>
-      <li><strong>What do I lose?</strong> Max error per value is 2<sup>16</sup> &minus; 1 = 65,535 wei &asymp; 0.000000000000065 ETH. Values within 65,535 of <code>uint88.max</code> will revert with <code>Overflow</code>. Both are negligible for ETH staking. If you want zero error, enforce step-aligned inputs: the library provides <code>requireAligned()</code> and <code>encode(value, true)</code> which revert on non-aligned values, guaranteeing lossless round-trips.</li>
+      <li><strong>What is the largest value the field can store?</strong> Use a cap the contract enforces. If the field accumulates deposits, enforce the cap on the accumulated amount.</li>
+      <li><strong>How many bits does it need?</strong> The cap needs 80 bits, so the smallest exact Solidity type is <code>uint80</code>.</li>
+      <li><strong>How much resolution can you trade for a narrower field?</strong> Discarding 16 bits sets a step of 65,536 wei. Floor encoding rounds down to a multiple of the step.</li>
+      <li><strong>Does the scheme cover the cap?</strong> Divide the cap by the step and round up. That coefficient needs 64 bits, so <code>create(16, 64)</code> accepts the cap and stores the encoded value in a <code>uint64</code> field.</li>
+      <li><strong>What is the maximum loss?</strong> This scheme loses up to 65,535 wei per floor-encoded value. Use <code>encode(value, true)</code> to require alignment and a lossless round-trip for values the encoder accepts.</li>
     </ol>
     <p>Enter your domain max below to run this reasoning for your own field.</p>
   </div>
@@ -162,18 +165,18 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
   <div class="input-row">
     <div class="input-field">
       <label for="maxInput">Domain maximum</label>
-      <input type="text" id="maxInput" value="120000000e18" placeholder="e.g., 120000000e18" spellcheck="false" autocomplete="off">
-      <div class="hint">your cap, worst-case accumulation, or supply bound in base units</div>
+      <input type="text" id="maxInput" value="1000000e18" placeholder="e.g., 1000000e18" spellcheck="false" autocomplete="off">
+      <div class="hint">positive cap in base units, in decimal, hexadecimal, or integer scientific notation</div>
       <div class="hex-readout" id="maxHex"></div>
     </div>
     <div class="input-field">
       <label for="stepInput">Discarded bits</label>
-      <input type="number" id="stepInput" value="16" min="0" max="248" step="8">
-      <div class="hint">low-order bits to discard, multiples of 8 (0 = none)</div>
+      <input type="text" id="stepInput" value="16" inputmode="numeric" spellcheck="false" autocomplete="off">
+      <div class="hint">number of low-order bits to discard, entered as a whole number</div>
       <div class="hex-readout" id="stepHex"></div>
     </div>
   </div>
-  <div class="error-msg" id="errorMsg"></div>
+  <div class="error-msg" id="errorMsg" role="status"></div>
 
   <div class="output" id="output"></div>
 </div>
@@ -188,24 +191,8 @@ body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
   </div>
 </div>
 
+<script src="planner.js"></script>
 <script>
-const UINT256_MAX = (1n << 256n) - 1n;
-
-// --- Parsing ---
-function parseValue(str) {
-  str = str.trim().replace(/_/g, '');
-  if (!str) return null;
-  try {
-    if (str.startsWith('0x') || str.startsWith('0X')) return BigInt(str);
-    if (/^\d+[eE]\d+$/.test(str)) {
-      const [b, x] = str.split(/[eE]/);
-      return BigInt(b) * (10n ** BigInt(x));
-    }
-    if (/^\d+$/.test(str)) return BigInt(str);
-    return null;
-  } catch { return null; }
-}
-
 // --- Formatting ---
 function fmt(n) {
   if (n < 0n) return '-' + fmt(-n);
@@ -213,42 +200,7 @@ function fmt(n) {
   if (s.length <= 22) return s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return '~' + s[0] + '.' + s.slice(1, 5) + 'e' + (s.length - 1);
 }
-function fmtFull(n) { return n.toString(); }
 function fmtHex(n) { return '0x' + n.toString(16); }
-
-function bitLength(n) {
-  if (n <= 0n) return 0;
-  return n.toString(2).length;
-}
-
-// --- Derive scheme ---
-function derive(domainMax, dBits) {
-  if (domainMax <= 0n) return { valid: false, error: 'Domain max must be > 0' };
-  if (domainMax > UINT256_MAX) return { valid: false, error: 'Exceeds uint256' };
-
-  // Derive field width from domain max
-  const rawBits = bitLength(domainMax);
-  const nativeBits = Math.ceil(rawBits / 8) * 8; // byte-aligned
-  const nativeType = 'uint' + nativeBits;
-  const fieldMax = (1n << BigInt(nativeBits)) - 1n;
-
-  if (dBits < 0) return { valid: false, error: 'Discarded bits must be >= 0' };
-  if (dBits >= nativeBits) return { valid: false, error: 'Discarded bits (' + dBits + ') must be < derived field width (' + nativeBits + ')' };
-
-  const d = dBits;
-  const e = nativeBits - dBits;
-  const step = 1n << BigInt(d);
-  const actualMax = ((1n << BigInt(e)) - 1n) << BigInt(d);
-  const uintBits = Math.ceil(e / 8) * 8;
-  const uintType = 'uint' + uintBits;
-  const maxError = step - 1n;
-  const identity = d === 0;
-
-  return {
-    valid: true, d, e, step, actualMax, fieldMax, domainMax, uintType, uintBits,
-    rawBits, nativeBits, nativeType, maxError, identity
-  };
-}
 
 // --- DOM ---
 const maxInput = document.getElementById('maxInput');
@@ -260,90 +212,68 @@ const copyBtn = document.getElementById('copyBtn');
 
 // --- Render ---
 function update() {
-  const domainMax = parseValue(maxInput.value);
-  const dBits = parseInt(stepInput.value);
+  const r = planQuantization(maxInput.value, stepInput.value);
+  const valid = !r.error;
+  const invalidCap = r.invalidInput === 'domainMax';
+  const invalidWidth = r.invalidInput === 'discardedBitWidth';
+  maxInput.classList.toggle('invalid', invalidCap);
+  stepInput.classList.toggle('invalid', invalidWidth);
+  maxInput.setAttribute('aria-invalid', invalidCap);
+  stepInput.setAttribute('aria-invalid', invalidWidth);
+  errorMsg.textContent = r.error ?? '';
+  output.classList.toggle('visible', valid);
+  copyBtn.disabled = !valid;
+  document.getElementById('maxHex').textContent = valid ? fmtHex(r.domainMax) : '';
+  document.getElementById('stepHex').textContent = valid ? 'step = ' + fmtHex(r.step) + ' (' + fmt(r.step) + ')' : '';
 
-  const maxValid = domainMax !== null && domainMax > 0n && domainMax <= UINT256_MAX;
-  const dValid = !isNaN(dBits) && dBits >= 0 && dBits % 8 === 0;
-  maxInput.classList.toggle('invalid', maxInput.value.trim() && !maxValid);
-  stepInput.classList.toggle('invalid', stepInput.value.trim() && !dValid);
-
-  if (maxValid) {
-    const rawBits = bitLength(domainMax);
-    const nb = Math.ceil(rawBits / 8) * 8;
-    const nt = 'uint' + nb;
-    const fm = (1n << BigInt(nb)) - 1n;
-    document.getElementById('maxHex').textContent = 'needs ' + rawBits + ' bits \u2192 ' + nt + ' (max ' + fmtHex(fm) + ')';
-    stepInput.max = nb - 8;
-  } else {
-    document.getElementById('maxHex').textContent = '';
-  }
-  if (dValid) {
-    const step = 1n << BigInt(dBits);
-    document.getElementById('stepHex').textContent = 'step = ' + fmtHex(step) + ' (' + fmt(step) + ')';
-  } else {
-    document.getElementById('stepHex').textContent = '';
-  }
-
-  if (!maxValid || !dValid) {
-    errorMsg.textContent = '';
-    output.classList.remove('visible');
+  if (!valid) {
+    output.replaceChildren();
     promptText.textContent = '';
     return;
   }
 
-  const r = derive(domainMax, dBits);
-
-  if (!r.valid) {
-    errorMsg.textContent = r.error;
-    output.classList.remove('visible');
-    promptText.textContent = '';
-    return;
-  }
-
-  errorMsg.textContent = '';
-  output.classList.add('visible');
-
+  const nativeType = 'uint' + r.nativeBits;
   if (r.identity) {
     output.innerHTML = `
       <div class="no-quant">
-        <strong>0 bits discarded:</strong> domain max ${fmt(r.domainMax)} needs ${r.rawBits} bits, stored as <strong>${r.nativeType}</strong>. No compression.
-        Increase discarded bits to reduce the encoded width.
+        <strong>Exact storage:</strong> The domain needs ${r.rawBits} bits. Store it directly as <strong>${nativeType}</strong> for zero loss and no quantization.
       </div>
     `;
-    promptText.textContent = `Domain max ${fmt(r.domainMax)} needs ${r.rawBits} bits (${r.nativeType}), 0 bits discarded: no compression.`;
+    promptText.textContent = `My Solidity field has a maximum of ${r.domainMax} base units. Show how to enforce the cap and store the value exactly as ${nativeType}.`;
     return;
   }
 
+  const uintType = 'uint' + r.uintBits;
   const saved = r.nativeBits - r.uintBits;
 
   output.innerHTML = `
     <div class="compare">
       <div class="compare-box before">
-        <div class="type">${r.nativeType}</div>
+        <div class="type">${nativeType}</div>
         <div class="sub">${r.rawBits} bits needed, ${r.nativeBits}-bit type</div>
       </div>
       <div class="compare-arrow">&rarr;</div>
       <div class="compare-box after">
-        <div class="type">${r.uintType}</div>
-        <div class="sub">${r.nativeBits} &minus; ${r.d} = ${r.e} bits encoded</div>
+        <div class="type">${uintType}</div>
+        <div class="sub">${r.e} bits encoded, ${r.uintBits}-bit type</div>
       </div>
-      ${saved > 0 ? `<div class="compare-save">&minus;${saved} bits</div>` : ''}
+      <div class="compare-save">${saved > 0 ? saved + ' bits narrower' : 'Same field width'}</div>
     </div>
     <table class="result-table">
-      <tr><td>Domain max</td><td>${fmt(r.domainMax)}<span class="sub">${fmtHex(r.domainMax)} (needs ${r.rawBits} bits &rarr; ${r.nativeType})</span></td></tr>
+      <tr><td>Domain max</td><td>${fmt(r.domainMax)}<span class="sub">${fmtHex(r.domainMax)} (needs ${r.rawBits} bits &rarr; ${nativeType})</span></td></tr>
       <tr><td>Scheme</td><td>create(${r.d}, ${r.e})<span class="sub">discard ${r.d} low bits, keep ${r.e} bits</span></td></tr>
       <tr><td>Step size</td><td>${fmtHex(r.step)}<span class="sub">2^${r.d} = ${fmt(r.step)}</span></td></tr>
-      <tr><td>Max representable</td><td>${fmtHex(r.actualMax)}<span class="sub">${fmt(r.actualMax)}${r.actualMax < r.fieldMax ? ' (values above this revert with Overflow)' : ''}</span></td></tr>
-      <tr><td>Max error</td><td>${fmtHex(r.maxError)}<span class="sub">${fmt(r.maxError)} (step &minus; 1)</span></td></tr>
+      <tr><td>Max accepted</td><td>${fmtHex(r.actualMax)}<span class="sub">${fmt(r.actualMax)} (values above this revert with Overflow)</span></td></tr>
+      <tr><td>Max floor loss</td><td>${fmtHex(r.maxError)}<span class="sub">${fmt(r.maxError)} base units within the domain</span></td></tr>
     </table>
+    ${r.domainMax < r.step ? '<p class="no-quant">Every value in this domain rounds down to zero.</p>' : ''}
     <div class="code-wrap">
       <div class="code-block"><span class="kw">import</span> {<span class="ty">Quant</span>, <span class="ty">UintQuantizationLib</span> <span class="kw">as</span> QuantLib} <span class="kw">from</span> <span class="fn">"uint-quantization-lib/src/UintQuantizationLib.sol"</span>;
 
 <span class="ty">Quant</span> <span class="kw">private</span> <span class="kw">immutable</span> SCHEME = QuantLib.<span class="fn">create</span>(<span class="num">${r.d}</span>, <span class="num">${r.e}</span>);
 
 <span class="cm">// Encode:</span>
-<span class="ty">${r.uintType}</span> encoded = <span class="ty">${r.uintType}</span>(SCHEME.<span class="fn">encode</span>(value));
+<span class="ty">${uintType}</span> encoded = <span class="ty">${uintType}</span>(SCHEME.<span class="fn">encode</span>(value));
 
 <span class="cm">// Decode:</span>
 <span class="ty">uint256</span> restored = SCHEME.<span class="fn">decode</span>(encoded);</div>
@@ -351,14 +281,7 @@ function update() {
     </div>
   `;
 
-  let p = `I'm building a Solidity contract that stores __________ (describe your field: e.g., ETH staking balances, token amounts, timestamps).\n\n`;
-  p += `Using uint-quantization-lib (https://github.com/0xferit/uint-quantization-lib), help me:\n`;
-  p += `1. Determine the domain max for this field (contract cap, supply bound, or worst-case accumulation)\n`;
-  p += `2. Derive the minimum bit width and native Solidity type\n`;
-  p += `3. Decide how many bits of resolution to discard and justify the tradeoff\n`;
-  p += `4. Compute the quantization scheme: create(discardedBitWidth, encodedBitWidth)\n`;
-  p += `5. Show the Solidity integration code with encode/decode calls`;
-  promptText.textContent = p;
+  promptText.textContent = `My Solidity field has a cap of ${r.domainMax} base units. Using uint-quantization-lib (https://github.com/0xferit/uint-quantization-lib), show how to enforce that cap and use create(${r.d}, ${r.e}) with ${uintType} storage. Explain the maximum floor loss of ${r.maxError} base units and whether the narrower field saves a slot in my layout.`;
 }
 
 function copyCode(btn) {

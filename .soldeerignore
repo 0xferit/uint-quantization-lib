@@ -11,3 +11,8 @@ foundry.toml
 remappings.txt
 soldeer.lock
 *.tar.gz
+package.json
+package-lock.json
+.npmrc
+.releaserc.json
+scripts/

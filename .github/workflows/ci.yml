@@ -1,34 +1,50 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   test:
     name: Build & Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          cache: true
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
-      - name: Cache Soldeer dependencies
-        uses: actions/cache@v4
-        with:
-          path: dependencies
-          key: soldeer-${{ hashFiles('soldeer.lock') }}
+      - uses: ./.github/actions/setup-foundry
 
       - name: Install dependencies
-        run: forge soldeer install
+        run: |
+          forge soldeer install
+          git diff --exit-code -- soldeer.lock
 
       - name: Build
         run: forge build
 
       - name: Test
         run: forge test -vvv
+
+      - name: Build the documented package consumer
+        run: bash scripts/check-readme-example.sh
+
+      - name: Test planner boundaries
+        run: node --test test/playground.test.mjs
+
+      - name: Test release planning
+        run: bash test/release-plan.sh
+
+      - name: Test release classification
+        run: bash test/release-classifier.sh
+
+      - name: Test the release transaction
+        run: node --test test/release-commit.test.mjs
+
+      - name: Test Soldeer registry responses
+        run: python3 -B -m unittest discover -s test -p test_publish_soldeer.py

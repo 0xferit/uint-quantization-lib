@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import {Quant, UintQuantizationLib} from "src/UintQuantizationLib.sol";
+import {Quant, UintQuantizationLib} from "../UintQuantizationLib.sol";
 
-/// @notice Production-style ETH staking baseline with default Solidity struct packing.
+uint64 constant STAKING_SHOWCASE_COOLDOWN = 1 days;
+
+/// @notice Ether staking benchmark fixture with default Solidity struct packing.
+/// @dev Each address can hold one active stake. Withdrawal is available when its cooldown expires.
 contract RawETHStakingShowcase {
     error RawETHStakingShowcase__ZeroAmount();
     error RawETHStakingShowcase__AmountOverflow();
+    error RawETHStakingShowcase__StakeAlreadyActive();
     error RawETHStakingShowcase__NoStake();
+    error RawETHStakingShowcase__CooldownActive();
     error RawETHStakingShowcase__TransferFailed();
 
-    uint64 public constant COOLDOWN = 1 days;
+    uint64 public constant COOLDOWN = STAKING_SHOWCASE_COOLDOWN;
 
     struct UserStakeRaw {
         uint128 amount;
@@ -24,6 +29,7 @@ contract RawETHStakingShowcase {
     function stake() external payable {
         if (msg.value == 0) revert RawETHStakingShowcase__ZeroAmount();
         if (msg.value > type(uint128).max) revert RawETHStakingShowcase__AmountOverflow();
+        if (stakes[msg.sender].active) revert RawETHStakingShowcase__StakeAlreadyActive();
 
         stakes[msg.sender] = UserStakeRaw({
             amount: uint128(msg.value),
@@ -36,6 +42,7 @@ contract RawETHStakingShowcase {
     function unstake() external {
         UserStakeRaw memory s = stakes[msg.sender];
         if (!s.active) revert RawETHStakingShowcase__NoStake();
+        if (block.timestamp < s.cooldownEndsAt) revert RawETHStakingShowcase__CooldownActive();
 
         delete stakes[msg.sender];
 
@@ -44,15 +51,18 @@ contract RawETHStakingShowcase {
     }
 }
 
-/// @notice Storage-optimized ETH staking showcase operating on an already packed struct.
+/// @notice Ether staking benchmark fixture with a quantized amount packed beside the timestamps and active flag.
+/// @dev Each address can hold one active stake. Withdrawal is available when its cooldown expires.
 contract QuantizedETHStakingShowcase {
     error QuantizedETHStakingShowcase__ZeroAmount();
+    error QuantizedETHStakingShowcase__StakeAlreadyActive();
     error QuantizedETHStakingShowcase__NoStake();
+    error QuantizedETHStakingShowcase__CooldownActive();
     error QuantizedETHStakingShowcase__TransferFailed();
 
     /// @dev Uses `immutable` with `create()` for readability and self-documenting configuration.
     Quant private immutable SCHEME;
-    uint64 public constant COOLDOWN = 1 days;
+    uint64 public constant COOLDOWN = STAKING_SHOWCASE_COOLDOWN;
 
     struct UserStake {
         uint96 amount;
@@ -67,22 +77,22 @@ contract QuantizedETHStakingShowcase {
         SCHEME = UintQuantizationLib.create(16, 96);
     }
 
-    /// @notice Floor-encodes msg.value. Intentionally lossy: the remainder (msg.value mod stepSize)
-    ///         stays in the contract as unrecoverable dust. Use `stakeExact` for lossless deposits.
+    /// @notice Floor-encodes a positive deposit. The discarded remainder stays in the contract as unrecoverable
+    ///         dust. A deposit smaller than one step opens a stake with zero withdrawable value.
     function stake() external payable {
-        if (msg.value == 0) revert QuantizedETHStakingShowcase__ZeroAmount();
-        uint96 encoded = uint96(SCHEME.encode(msg.value));
-        stakes[msg.sender] = UserStake({
-            amount: encoded,
-            stakedAt: uint64(block.timestamp),
-            cooldownEndsAt: uint64(block.timestamp + COOLDOWN),
-            active: true
-        });
+        _stake(false);
     }
 
+    /// @notice Stakes a positive deposit aligned to the scheme's step size without rounding.
     function stakeExact() external payable {
+        _stake(true);
+    }
+
+    function _stake(bool exact) private {
         if (msg.value == 0) revert QuantizedETHStakingShowcase__ZeroAmount();
-        uint96 encoded = uint96(SCHEME.encode(msg.value, true));
+        if (stakes[msg.sender].active) revert QuantizedETHStakingShowcase__StakeAlreadyActive();
+
+        uint96 encoded = uint96(SCHEME.encode(msg.value, exact));
         stakes[msg.sender] = UserStake({
             amount: encoded,
             stakedAt: uint64(block.timestamp),
@@ -94,6 +104,7 @@ contract QuantizedETHStakingShowcase {
     function unstake() external {
         UserStake memory s = stakes[msg.sender];
         if (!s.active) revert QuantizedETHStakingShowcase__NoStake();
+        if (block.timestamp < s.cooldownEndsAt) revert QuantizedETHStakingShowcase__CooldownActive();
 
         uint256 amount = SCHEME.decodeUnchecked(s.amount);
         delete stakes[msg.sender];
@@ -128,62 +139,65 @@ contract QuantizedETHStakingShowcase {
     }
 }
 
+uint256 constant EXTREME_PACKING_LANES = 12;
+uint256 constant EXTREME_PACKING_DISCARDED_BITS = 8;
+
 /// @notice Deliberately verbose baseline used to demonstrate upper-bound packing gains.
 contract RawExtremePackingShowcase {
-    uint256[12] public rawValues;
+    uint256[EXTREME_PACKING_LANES] public rawValues;
 
-    function setExtremeRaw(uint256[12] calldata values) external {
-        for (uint256 i; i < 12; ++i) {
+    function setExtremeRaw(uint256[EXTREME_PACKING_LANES] calldata values) external {
+        for (uint256 i; i < values.length; ++i) {
             rawValues[i] = values[i];
         }
     }
 }
 
-/// @notice Extreme packing showcase: 12 quantized values packed into one slot.
-///         `setExtremeFloor` intentionally favors throughput over safety and does not
-///         enforce lane-width bounds (it masks to width). Use strict mode for safety.
+/// @notice Extreme packing benchmark fixture storing all quantized values in one slot.
+/// @dev Both setters enforce the lane range. The floor setter rounds down and the strict setter requires alignment.
 contract QuantizedExtremePackingShowcase {
     /// @dev Uses `immutable` with `create()` for readability and self-documenting configuration.
     Quant private immutable SCHEME;
 
-    uint256 internal constant LANES = 12;
-    uint256 internal constant LANE_MASK = (uint256(1) << 20) - 1;
+    uint256 internal constant LANES = EXTREME_PACKING_LANES;
+    uint256 private constant LANE_WIDTH = 20;
+    uint256 internal constant LANE_MASK = (uint256(1) << LANE_WIDTH) - 1;
 
     uint256 public packedExtreme;
 
     constructor() {
-        SCHEME = UintQuantizationLib.create(8, 20);
+        SCHEME = UintQuantizationLib.create(EXTREME_PACKING_DISCARDED_BITS, LANE_WIDTH);
     }
 
-    function setExtremeFloor(uint256[12] calldata values) external {
-        uint256 p;
+    function setExtremeFloor(uint256[EXTREME_PACKING_LANES] calldata values) external {
+        uint256 packed = 0;
         for (uint256 i; i < LANES; ++i) {
-            uint256 lane = SCHEME.encode(values[i]) & LANE_MASK;
-            p |= lane << (i * 20);
+            uint256 lane = SCHEME.encode(values[i]);
+            packed |= lane << (i * LANE_WIDTH);
         }
-        packedExtreme = p;
+        packedExtreme = packed;
     }
 
-    function setExtremeStrict(uint256[12] calldata values) external {
-        uint256 p;
+    function setExtremeStrict(uint256[EXTREME_PACKING_LANES] calldata values) external {
+        uint256 packed = 0;
         for (uint256 i; i < LANES; ++i) {
             uint256 lane = SCHEME.encode(values[i], true);
-            p |= lane << (i * 20);
+            packed |= lane << (i * LANE_WIDTH);
         }
-        packedExtreme = p;
+        packedExtreme = packed;
     }
 
-    function encodedExtreme() external view returns (uint256[12] memory lanes) {
-        uint256 p = packedExtreme;
+    function encodedExtreme() external view returns (uint256[EXTREME_PACKING_LANES] memory lanes) {
+        uint256 packed = packedExtreme;
         for (uint256 i; i < LANES; ++i) {
-            lanes[i] = (p >> (i * 20)) & LANE_MASK;
+            lanes[i] = (packed >> (i * LANE_WIDTH)) & LANE_MASK;
         }
     }
 
-    function decodeExtremeFloor() external view returns (uint256[12] memory values) {
-        uint256 p = packedExtreme;
+    function decodeExtremeFloor() external view returns (uint256[EXTREME_PACKING_LANES] memory values) {
+        uint256 packed = packedExtreme;
         for (uint256 i; i < LANES; ++i) {
-            values[i] = SCHEME.decodeUnchecked((p >> (i * 20)) & LANE_MASK);
+            values[i] = SCHEME.decodeUnchecked((packed >> (i * LANE_WIDTH)) & LANE_MASK);
         }
     }
 }
