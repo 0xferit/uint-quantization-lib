@@ -30,12 +30,12 @@ forge fmt                                                            # format So
 
 ### Showcase: `src/showcase/ShowcaseSolidityFixtures.sol`
 
-Production-style contracts for gas benchmarks only. Raw vs quantized pairs: `RawETHStakingShowcase` / `QuantizedETHStakingShowcase` (real-life staking) and `RawExtremePackingShowcase` / `QuantizedExtremePackingShowcase` (12 slots into 1).
+Benchmark fixtures for staking and extreme packing. The staking lifecycle and storage comparisons are documented in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Tests: `test/`
 
 - `UintQuantizationLib.t.sol`: `QuantHarness` exposes library via method-call syntax for external calls. `UintQuantizationLibSmokeTest` has concrete regression tests and fuzz tests. Fuzz parameters use `uint8` for discardedBitWidth/encodedBitWidth; use `bound()` over `vm.assume` for value-in-range constraints.
-- `showcase/ShowcaseGas.t.sol`: Real-life benchmark asserts >= 32% gas savings vs raw on zero-to-nonzero writes. Extreme benchmark logs gas numbers for documentation (not a regression gate).
+- `showcase/ShowcaseGas.t.sol`: The staking regression threshold applies to the two-slot raw baseline. Report the equal-range exact baseline alongside it. The extreme benchmark logs first-write gas.
 
 ### Configuration
 

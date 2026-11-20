@@ -10,7 +10,7 @@
 
 The extreme packing pair compares a fixed array of full-width values with quantized values packed into one slot. The tests in [`test/showcase/`](test/showcase/) measure first-write costs and exercise the staking lifecycle.
 
-The staking benchmark also compares an exact packed amount with the quantized fixture's deposit ceiling. That baseline isolates the effect of the amount representation when either record fits in one slot.
+The staking benchmark also compares an exact packed amount with the quantized fixture's deposit ceiling. That baseline isolates the effect of the amount representation when either record fits in one slot. On main, a read-only job measures gas and passes the numbers to a separate job that publishes the README badges on the `gh-badges` branch.
 
 ## Documentation site
 

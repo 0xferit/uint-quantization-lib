@@ -59,9 +59,10 @@ contract Readings {
 ## Gas benchmarks
 
 [![Strict stake versus raw uint128][staking-savings]](test/showcase/ShowcaseGas.t.sol)
+[![Exact uint112 and strict uint96 stake gas][staking-equal-range]](test/showcase/ShowcaseGas.t.sol)
 [![Extreme packing gas reduction][extreme-savings]](test/showcase/ShowcaseGas.t.sol)
 
-The staking fixtures compare a two-slot raw `uint128` record with a one-slot quantized `uint96` record. The extreme-packing fixtures compare twelve raw slots with one packed slot. These contracts are benchmark fixtures.
+The staking fixtures compare a two-slot raw record with two one-slot records covering the quantized deposit range. One stores the full amount in a `uint112`. The other stores a quantized `uint96`. The extreme-packing fixtures compare twelve raw slots with one packed slot. These contracts are benchmark fixtures.
 
 ```sh
 forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
@@ -70,4 +71,5 @@ forge test --match-path test/showcase/ShowcaseGas.t.sol --gas-report -vv
 [Benchmark suite](test/showcase/ShowcaseGas.t.sol) · [MIT license](LICENSE) · [0xferit](https://github.com/0xferit)
 
 [staking-savings]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/staking-savings.json
+[staking-equal-range]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/staking-equal-range.json
 [extreme-savings]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/0xferit/uint-quantization-lib/gh-badges/.badges/extreme-savings.json
