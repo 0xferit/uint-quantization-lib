@@ -28,15 +28,19 @@ def registry_archive(version):
         raise
     with response:
         metadata = json.load(response)
-    revisions = metadata["data"]
-    if metadata["status"] != "success" or len(revisions) != 1:
+    revisions = metadata.get("data") if isinstance(metadata, dict) else None
+    if not isinstance(revisions, list) or metadata.get("status") != "success" or len(revisions) > 1:
         sys.exit(f"Unexpected Soldeer registry response for {PACKAGE} {version}.")
+    if not revisions:
+        return None
     revision = revisions[0]
+    if not isinstance(revision, dict) or not isinstance(revision.get("url"), str):
+        sys.exit(f"Unexpected Soldeer registry entry for {PACKAGE} {version}.")
     url = urlsplit(revision["url"])
     if (
-        revision["version"] != version
-        or revision["deleted"]
-        or revision["private"]
+        revision.get("version") != version
+        or revision.get("deleted") is not False
+        or revision.get("private") is not False
         or url.scheme != "https"
         or url.netloc != "soldeer-revisions.s3.amazonaws.com"
         or not url.path.startswith(f"/{PACKAGE}/")

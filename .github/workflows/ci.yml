@@ -42,3 +42,6 @@ jobs:
 
       - name: Test the release transaction
         run: node --test test/release-commit.test.mjs
+
+      - name: Test Soldeer registry responses
+        run: python3 -B -m unittest discover -s test -p test_publish_soldeer.py
