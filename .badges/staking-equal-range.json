@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "label": "stake gas: exact uint112 / strict uint96",
+  "message": "43990 / 44473",
+  "color": "blue"
+}

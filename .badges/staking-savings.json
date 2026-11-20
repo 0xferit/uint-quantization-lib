@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "label": "staking case: gas usage reduction",
-  "message": "48.3%",
-  "color": "brightgreen"
+  "label": "strict stake vs raw uint128",
+  "message": "32.7%",
+  "color": "blue"
 }

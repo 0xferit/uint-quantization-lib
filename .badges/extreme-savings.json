@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "label": "extreme case: gas usage reduction",
-  "message": "88.8%",
-  "color": "brightgreen"
+  "label": "12 slots to 1",
+  "message": "81.8%",
+  "color": "blue"
 }
