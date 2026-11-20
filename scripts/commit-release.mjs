@@ -15,7 +15,7 @@ export function prepare(_, { branch, cwd, env, nextRelease, options }) {
   const message = `chore(release): ${version} [skip ci]\n\n${notes}`;
   execFileSync(
     "git",
-    ["commit", "--only", "-m", message, "--", "CHANGELOG.md", "src/UintQuantizationLib.sol"],
+    ["commit", "--only", "-m", message, "--", "CHANGELOG.md", "README.md", "src/UintQuantizationLib.sol"],
     gitOptions,
   );
 

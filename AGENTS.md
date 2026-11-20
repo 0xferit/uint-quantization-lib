@@ -73,6 +73,6 @@ It requires the same build and tests as pull requests before publication. Supply
 
 1. `scripts/plan-release.sh` checks for Solidity changes under `src/` since the latest release tag. It retries a pending tagged release before preparing another version.
 2. For a new release, `scripts/analyze-bump.sh` asks Claude to classify the Solidity diff. A missing credential, failed call or invalid classification stops the release.
-3. Semantic-release updates `VERSION`, builds and tests the versioned source, and writes the changelog, GitHub release and tag.
+3. Semantic-release updates `VERSION` and the README installation command, builds and tests the versioned source, and writes the changelog, GitHub release and tag.
 4. The workflow uploads the tagged Solidity sources to Soldeer and verifies the registry archive. It moves the `soldeer-published` tag only after verification.
 5. After retrying a pending release, run the workflow again if main contains additional unreleased Solidity changes.

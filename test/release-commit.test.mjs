@@ -25,7 +25,7 @@ function releaseFixture(context) {
   mkdirSync(join(cwd, "src"), { recursive: true });
   git("init", "--quiet", "--bare", repositoryUrl);
   git("init", "--quiet", "--initial-branch=main");
-  const files = ["CHANGELOG.md", "src/UintQuantizationLib.sol"];
+  const files = ["CHANGELOG.md", "README.md", "src/UintQuantizationLib.sol"];
   for (const file of files) writeFileSync(join(cwd, file), "original\n");
   git("add", "--", ...files);
   git("commit", "--quiet", "-m", "test: base");
@@ -50,6 +50,7 @@ test("the remote branch and version tag point to the same prepared commit", asyn
   const { git, release, repositoryUrl } = releaseFixture(context);
   await release();
   const commit = git("rev-parse", "HEAD");
+  assert.equal(git("show", `${commit}:README.md`), "prepared");
   assert.equal(
     git("ls-remote", repositoryUrl, "refs/heads/main", "refs/tags/v1.0.1"),
     `${commit}\trefs/heads/main\n${commit}\trefs/tags/v1.0.1`,
