@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import {Quant, UintQuantizationLib} from "src/UintQuantizationLib.sol";
+import {Quant, UintQuantizationLib} from "../UintQuantizationLib.sol";
 
 uint64 constant STAKING_SHOWCASE_COOLDOWN = 1 days;
 
@@ -136,62 +136,65 @@ contract QuantizedETHStakingShowcase {
     }
 }
 
+uint256 constant EXTREME_PACKING_LANES = 12;
+uint256 constant EXTREME_PACKING_DISCARDED_BITS = 8;
+
 /// @notice Deliberately verbose baseline used to demonstrate upper-bound packing gains.
 contract RawExtremePackingShowcase {
-    uint256[12] public rawValues;
+    uint256[EXTREME_PACKING_LANES] public rawValues;
 
-    function setExtremeRaw(uint256[12] calldata values) external {
-        for (uint256 i; i < 12; ++i) {
+    function setExtremeRaw(uint256[EXTREME_PACKING_LANES] calldata values) external {
+        for (uint256 i; i < values.length; ++i) {
             rawValues[i] = values[i];
         }
     }
 }
 
-/// @notice Extreme packing showcase: 12 quantized values packed into one slot.
-///         `setExtremeFloor` intentionally favors throughput over safety and does not
-///         enforce lane-width bounds (it masks to width). Use strict mode for safety.
+/// @notice Extreme packing benchmark fixture storing all quantized values in one slot.
+/// @dev Both setters enforce the lane range. The floor setter rounds down and the strict setter requires alignment.
 contract QuantizedExtremePackingShowcase {
     /// @dev Uses `immutable` with `create()` for readability and self-documenting configuration.
     Quant private immutable SCHEME;
 
-    uint256 internal constant LANES = 12;
-    uint256 internal constant LANE_MASK = (uint256(1) << 20) - 1;
+    uint256 internal constant LANES = EXTREME_PACKING_LANES;
+    uint256 private constant LANE_WIDTH = 20;
+    uint256 internal constant LANE_MASK = (uint256(1) << LANE_WIDTH) - 1;
 
     uint256 public packedExtreme;
 
     constructor() {
-        SCHEME = UintQuantizationLib.create(8, 20);
+        SCHEME = UintQuantizationLib.create(EXTREME_PACKING_DISCARDED_BITS, LANE_WIDTH);
     }
 
-    function setExtremeFloor(uint256[12] calldata values) external {
-        uint256 p;
+    function setExtremeFloor(uint256[EXTREME_PACKING_LANES] calldata values) external {
+        uint256 packed = 0;
         for (uint256 i; i < LANES; ++i) {
-            uint256 lane = SCHEME.encode(values[i]) & LANE_MASK;
-            p |= lane << (i * 20);
+            uint256 lane = SCHEME.encode(values[i]);
+            packed |= lane << (i * LANE_WIDTH);
         }
-        packedExtreme = p;
+        packedExtreme = packed;
     }
 
-    function setExtremeStrict(uint256[12] calldata values) external {
-        uint256 p;
+    function setExtremeStrict(uint256[EXTREME_PACKING_LANES] calldata values) external {
+        uint256 packed = 0;
         for (uint256 i; i < LANES; ++i) {
             uint256 lane = SCHEME.encode(values[i], true);
-            p |= lane << (i * 20);
+            packed |= lane << (i * LANE_WIDTH);
         }
-        packedExtreme = p;
+        packedExtreme = packed;
     }
 
-    function encodedExtreme() external view returns (uint256[12] memory lanes) {
-        uint256 p = packedExtreme;
+    function encodedExtreme() external view returns (uint256[EXTREME_PACKING_LANES] memory lanes) {
+        uint256 packed = packedExtreme;
         for (uint256 i; i < LANES; ++i) {
-            lanes[i] = (p >> (i * 20)) & LANE_MASK;
+            lanes[i] = (packed >> (i * LANE_WIDTH)) & LANE_MASK;
         }
     }
 
-    function decodeExtremeFloor() external view returns (uint256[12] memory values) {
-        uint256 p = packedExtreme;
+    function decodeExtremeFloor() external view returns (uint256[EXTREME_PACKING_LANES] memory values) {
+        uint256 packed = packedExtreme;
         for (uint256 i; i < LANES; ++i) {
-            values[i] = SCHEME.decodeUnchecked((p >> (i * 20)) & LANE_MASK);
+            values[i] = SCHEME.decodeUnchecked((packed >> (i * LANE_WIDTH)) & LANE_MASK);
         }
     }
 }
