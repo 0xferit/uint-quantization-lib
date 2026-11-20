@@ -3,14 +3,17 @@ pragma solidity ^0.8.25;
 
 import {Quant, UintQuantizationLib} from "src/UintQuantizationLib.sol";
 
-/// @notice Production-style ETH staking baseline with default Solidity struct packing.
+uint64 constant STAKING_SHOWCASE_COOLDOWN = 1 days;
+
+/// @notice Ether staking benchmark fixture with default Solidity struct packing.
+/// @dev Each address can hold one active stake. Withdrawal is available when its cooldown expires.
 contract RawETHStakingShowcase {
     error RawETHStakingShowcase__ZeroAmount();
     error RawETHStakingShowcase__AmountOverflow();
     error RawETHStakingShowcase__NoStake();
     error RawETHStakingShowcase__TransferFailed();
 
-    uint64 public constant COOLDOWN = 1 days;
+    uint64 public constant COOLDOWN = STAKING_SHOWCASE_COOLDOWN;
 
     struct UserStakeRaw {
         uint128 amount;
@@ -24,6 +27,7 @@ contract RawETHStakingShowcase {
     function stake() external payable {
         if (msg.value == 0) revert RawETHStakingShowcase__ZeroAmount();
         if (msg.value > type(uint128).max) revert RawETHStakingShowcase__AmountOverflow();
+        require(!stakes[msg.sender].active, "stake already active");
 
         stakes[msg.sender] = UserStakeRaw({
             amount: uint128(msg.value),
@@ -37,6 +41,8 @@ contract RawETHStakingShowcase {
         UserStakeRaw memory s = stakes[msg.sender];
         if (!s.active) revert RawETHStakingShowcase__NoStake();
 
+        require(block.timestamp >= s.cooldownEndsAt, "stake cooldown");
+
         delete stakes[msg.sender];
 
         (bool ok,) = msg.sender.call{value: s.amount}("");
@@ -44,7 +50,8 @@ contract RawETHStakingShowcase {
     }
 }
 
-/// @notice Storage-optimized ETH staking showcase operating on an already packed struct.
+/// @notice Ether staking benchmark fixture with a quantized amount packed beside the timestamps and active flag.
+/// @dev Each address can hold one active stake. Withdrawal is available when its cooldown expires.
 contract QuantizedETHStakingShowcase {
     error QuantizedETHStakingShowcase__ZeroAmount();
     error QuantizedETHStakingShowcase__NoStake();
@@ -52,7 +59,7 @@ contract QuantizedETHStakingShowcase {
 
     /// @dev Uses `immutable` with `create()` for readability and self-documenting configuration.
     Quant private immutable SCHEME;
-    uint64 public constant COOLDOWN = 1 days;
+    uint64 public constant COOLDOWN = STAKING_SHOWCASE_COOLDOWN;
 
     struct UserStake {
         uint96 amount;
@@ -67,22 +74,22 @@ contract QuantizedETHStakingShowcase {
         SCHEME = UintQuantizationLib.create(16, 96);
     }
 
-    /// @notice Floor-encodes msg.value. Intentionally lossy: the remainder (msg.value mod stepSize)
-    ///         stays in the contract as unrecoverable dust. Use `stakeExact` for lossless deposits.
+    /// @notice Floor-encodes a positive deposit. The discarded remainder stays in the contract as unrecoverable
+    ///         dust. A deposit smaller than one step opens a stake with zero withdrawable value.
     function stake() external payable {
-        if (msg.value == 0) revert QuantizedETHStakingShowcase__ZeroAmount();
-        uint96 encoded = uint96(SCHEME.encode(msg.value));
-        stakes[msg.sender] = UserStake({
-            amount: encoded,
-            stakedAt: uint64(block.timestamp),
-            cooldownEndsAt: uint64(block.timestamp + COOLDOWN),
-            active: true
-        });
+        _stake(false);
     }
 
+    /// @notice Stakes a positive deposit aligned to the scheme's step size without rounding.
     function stakeExact() external payable {
+        _stake(true);
+    }
+
+    function _stake(bool exact) private {
         if (msg.value == 0) revert QuantizedETHStakingShowcase__ZeroAmount();
-        uint96 encoded = uint96(SCHEME.encode(msg.value, true));
+        require(!stakes[msg.sender].active, "stake already active");
+
+        uint96 encoded = uint96(SCHEME.encode(msg.value, exact));
         stakes[msg.sender] = UserStake({
             amount: encoded,
             stakedAt: uint64(block.timestamp),
@@ -94,6 +101,7 @@ contract QuantizedETHStakingShowcase {
     function unstake() external {
         UserStake memory s = stakes[msg.sender];
         if (!s.active) revert QuantizedETHStakingShowcase__NoStake();
+        require(block.timestamp >= s.cooldownEndsAt, "stake cooldown");
 
         uint256 amount = SCHEME.decodeUnchecked(s.amount);
         delete stakes[msg.sender];
