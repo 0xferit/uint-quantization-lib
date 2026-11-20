@@ -22,7 +22,7 @@ contract StakingShowcaseTest is Test {
         raw.stake{value: step}();
         vm.warp(vm.getBlockTimestamp() + raw.COOLDOWN());
 
-        vm.expectRevert("stake already active");
+        vm.expectRevert(RawETHStakingShowcase.RawETHStakingShowcase__StakeAlreadyActive.selector);
         raw.stake{value: step}();
 
         raw.unstake();
@@ -33,9 +33,9 @@ contract StakingShowcaseTest is Test {
         quantized.stakeExact{value: step}();
         vm.warp(vm.getBlockTimestamp() + quantized.COOLDOWN());
 
-        vm.expectRevert("stake already active");
+        vm.expectRevert(QuantizedETHStakingShowcase.QuantizedETHStakingShowcase__StakeAlreadyActive.selector);
         quantized.stake{value: step}();
-        vm.expectRevert("stake already active");
+        vm.expectRevert(QuantizedETHStakingShowcase.QuantizedETHStakingShowcase__StakeAlreadyActive.selector);
         quantized.stakeExact{value: step}();
 
         uint256 balanceBefore = address(this).balance;
@@ -49,7 +49,7 @@ contract StakingShowcaseTest is Test {
         uint256 deadline = vm.getBlockTimestamp() + raw.COOLDOWN();
         vm.warp(deadline - 1);
 
-        vm.expectRevert("stake cooldown");
+        vm.expectRevert(RawETHStakingShowcase.RawETHStakingShowcase__CooldownActive.selector);
         raw.unstake();
 
         vm.warp(deadline);
@@ -67,7 +67,7 @@ contract StakingShowcaseTest is Test {
         uint256 deadline = vm.getBlockTimestamp() + quantized.COOLDOWN();
         vm.warp(deadline - 1);
 
-        vm.expectRevert("stake cooldown");
+        vm.expectRevert(QuantizedETHStakingShowcase.QuantizedETHStakingShowcase__CooldownActive.selector);
         quantized.unstake();
 
         vm.warp(deadline);
@@ -84,7 +84,7 @@ contract StakingShowcaseTest is Test {
         quantized.stake{value: step - 1}();
 
         assertEq(quantized.getStake(address(this)), 0);
-        vm.expectRevert("stake already active");
+        vm.expectRevert(QuantizedETHStakingShowcase.QuantizedETHStakingShowcase__StakeAlreadyActive.selector);
         quantized.stakeExact{value: step}();
     }
 }

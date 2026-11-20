@@ -14,6 +14,10 @@ import {
 
 /// @dev Matches the quantized deposit ceiling and stores the original amount in one slot with the stake metadata.
 contract ExactETHStakingBaseline {
+    error ExactETHStakingBaseline__ZeroAmount();
+    error ExactETHStakingBaseline__AmountOverflow();
+    error ExactETHStakingBaseline__StakeAlreadyActive();
+
     uint256 private immutable MAX_DEPOSIT;
 
     struct Stake {
@@ -31,9 +35,9 @@ contract ExactETHStakingBaseline {
     }
 
     function stake() external payable {
-        require(msg.value != 0, "zero stake");
-        require(msg.value <= MAX_DEPOSIT, "stake overflow");
-        require(!stakes[msg.sender].active, "stake already active");
+        if (msg.value == 0) revert ExactETHStakingBaseline__ZeroAmount();
+        if (msg.value > MAX_DEPOSIT) revert ExactETHStakingBaseline__AmountOverflow();
+        if (stakes[msg.sender].active) revert ExactETHStakingBaseline__StakeAlreadyActive();
 
         stakes[msg.sender] = Stake({
             amount: uint112(msg.value),
@@ -90,17 +94,17 @@ contract ShowcaseGasTest is Test {
         ExactETHStakingBaseline exact = new ExactETHStakingBaseline(cap);
         vm.deal(address(this), cap + 1);
 
-        vm.expectRevert("zero stake");
+        vm.expectRevert(ExactETHStakingBaseline.ExactETHStakingBaseline__ZeroAmount.selector);
         exact.stake();
 
-        vm.expectRevert("stake overflow");
+        vm.expectRevert(ExactETHStakingBaseline.ExactETHStakingBaseline__AmountOverflow.selector);
         exact.stake{value: cap + 1}();
 
         exact.stake{value: cap}();
         (uint112 amount,,,) = exact.stakes(address(this));
         assertEq(amount, cap);
 
-        vm.expectRevert("stake already active");
+        vm.expectRevert(ExactETHStakingBaseline.ExactETHStakingBaseline__StakeAlreadyActive.selector);
         exact.stake{value: 1}();
     }
 
