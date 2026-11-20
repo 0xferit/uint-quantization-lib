@@ -9,3 +9,7 @@
 [`src/showcase/ShowcaseSolidityFixtures.sol`](src/showcase/ShowcaseSolidityFixtures.sol) holds two pairs of fixtures for measuring storage costs. The staking pair records each account's amount, timestamps and active flag. Each account can hold one active stake until it withdraws. Withdrawal is available at the one-day deadline. The quantized fixture stores the encoded amount and repays its decoded value. Strict deposits preserve the full amount. Floor deposits leave any discarded remainder in the fixture, including the entire deposit when it is smaller than one step.
 
 The extreme packing pair compares a fixed array of full-width values with quantized values packed into one slot. The tests in [`test/showcase/`](test/showcase/) measure first-write costs and exercise the staking lifecycle.
+
+## Documentation site
+
+[`index.html`](index.html) links to installation instructions and shows a worked example. [`playground.html`](playground.html) renders planner inputs and results. The page and the Node.js regression tests use [`planner.js`](planner.js) to validate the cap and shift and derive a scheme that covers the input domain.
