@@ -85,9 +85,9 @@ jobs:
 
       - name: Verify selected tag and archive its revision
         id: archive
+        if: &selected_tag ${{ steps.semantic.outputs.tag || steps.plan.outputs.pending_tag }}
         env:
-          TAG: ${{ steps.semantic.outputs.tag || steps.plan.outputs.pending_tag }}
-        if: env.TAG != ''
+          TAG: *selected_tag
         run: |
           git fetch origin --tags
           release_commit=$(git rev-parse --verify "refs/tags/$TAG^{commit}")
@@ -138,7 +138,7 @@ jobs:
         working-directory: ${{ steps.archive.outputs.path }}
         env:
           SOLDEER_API_TOKEN: ${{ secrets.SOLDEER_API_TOKEN }}
-          TAG: ${{ steps.semantic.outputs.tag || steps.plan.outputs.pending_tag }}
+          TAG: *selected_tag
         run: python3 "$GITHUB_WORKSPACE/scripts/publish-soldeer.py" "${TAG#v}"
 
       - name: Record successful Soldeer publication
