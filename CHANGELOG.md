@@ -1,3 +1,18 @@
+## [8.0.0](https://github.com/0xferit/uint-quantization-lib/compare/v7.1.0...v8.0.0) (2026-11-20)
+
+### Bug Fixes
+
+* accept formatted release classifications ([ea70125](https://github.com/0xferit/uint-quantization-lib/commit/ea70125ff2b53ef61f6c35e64539247aab702fde))
+* accept successful empty Soldeer revision lookups ([47dad63](https://github.com/0xferit/uint-quantization-lib/commit/47dad632ddd1b979a794f901a931475c8abd7398))
+* atomically record release versions ([e488ca2](https://github.com/0xferit/uint-quantization-lib/commit/e488ca2311cbcd76914847640ac70907b890298e))
+* compare equivalent showcase inputs and storage ([5ce1c1f](https://github.com/0xferit/uint-quantization-lib/commit/5ce1c1f8c1909903b24f2f2192acf23f1edbf342))
+* enforce staking showcase lifecycle ([4e0ad94](https://github.com/0xferit/uint-quantization-lib/commit/4e0ad94415fbc837604e72d0088bba1dfa119380))
+* keep the documented install version in sync ([cefc7a2](https://github.com/0xferit/uint-quantization-lib/commit/cefc7a2219721b1be3489c9aa31c298505ac2955))
+* log rejected release classifier replies ([fc6c725](https://github.com/0xferit/uint-quantization-lib/commit/fc6c725830ccba642f0627b49596be4bd676d7c0))
+* match literal dots in stable release tags ([17e857c](https://github.com/0xferit/uint-quantization-lib/commit/17e857cf29656e1becb60a6290aec2f3eb1763e3))
+* use custom errors for staking lifecycle checks ([eb750a4](https://github.com/0xferit/uint-quantization-lib/commit/eb750a4068d5adf6263b0e4aded609d2e49fee4a))
+* validate planner schemes against the domain cap ([9d2e0b8](https://github.com/0xferit/uint-quantization-lib/commit/9d2e0b8519178fa790e8f9477a142b01d54ce15b))
+
 ## [7.1.0](https://github.com/0xferit/uint-quantization-lib/compare/v7.0.1...v7.1.0) (2026-03-14)
 
 ### Features

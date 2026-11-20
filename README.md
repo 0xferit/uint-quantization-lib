@@ -12,7 +12,7 @@ remappings_version = false
 ```
 
 ```sh
-forge soldeer install 'uint-quantization-lib~7.1.0' --config-location foundry
+forge soldeer install 'uint-quantization-lib~8.0.0' --config-location foundry
 ```
 
 ## Solidity usage
